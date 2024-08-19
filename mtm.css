@@ -1,0 +1,272 @@
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    width: 90%;
+    padding-bottom: 30px;
+}
+
+div#version {
+    font-size: x-small;
+    color: #563acc;
+}
+div#instructions {
+    font-size: small;
+}
+
+#instance-div {
+    display: block;
+    text-align: center;
+}
+
+input {
+    height: 20px;
+    width: 300px;
+    padding: 5px;
+    background-color: #f2f2f2;
+    border: solid 1px #ccc;
+    border-radius: 4px;
+    margin-left: 4px;
+}
+
+button {
+    height: 30px;
+    padding: 5px;
+    color: white;
+    background-color: #563acc;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 10px;
+}
+
+button:hover {
+    background-color: #6364ff;
+}
+
+.content-container {
+    width: 600px;
+}
+
+.post-item {
+    width: 550px;
+    border: solid 1px gray;
+    border-radius: 4px;
+    display: flex;
+}
+
+.post-count {
+    display: inline-flex;
+    color: gray;
+    margin-top: 10px;
+}
+
+.cw-btn,
+.viz-select {
+    height: auto;
+    width: auto;
+    color: black;
+    display: inline-flex;
+    margin-top: 10px;
+    margin-right: 15px;
+    float: right;
+    border: solid 1px gray;
+    border-radius: 4px;
+    background-color: #f2f2f2;
+    display: inline;
+}
+
+.viz-select {
+    height: 28px;
+}
+.cw-btn:hover,
+select:hover {
+    background-color: #ccc;
+}
+
+.cw-div {
+    margin-top: 10px;
+}
+
+textarea {
+    border: solid 1px gray;
+    border-radius: 4px;
+    width: 500px;
+    height: 200px;
+    padding: 10px;
+    font-family: Arial, Helvetica, sans-serif;
+    resize: none;
+}
+
+.cw-text {
+    height: 50px;
+}
+
+.textarea,
+#content-container,
+#page-title,
+#post-thread-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    margin: 20px auto;
+}
+
+#content-container {
+    flex-direction: column;
+}
+
+.post-item {
+    margin-bottom: 20px;
+    background-color: #f2f2f2;
+}
+
+.add-post-btn,
+.delete-post-btn {
+    margin-bottom: 20px;
+}
+
+.delete-post-btn {
+    background-color: #cc0000;
+}
+
+.delete-post-btn:hover {
+    background-color: red;
+}
+
+.dropzone {
+    width: 500px;
+    height: 100px;
+    border: 2px dashed #ccc;
+    background-color: white;
+    color: gray;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    margin: 20px auto;
+    flex-direction: column;
+}
+
+.dz-active {
+    background-color: #e6e6ff;
+    border-color: #563acc;
+}
+
+.img-preview {
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+
+.img-preview div {
+    position: relative;
+    margin: 5px;
+}
+
+.img-preview img {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+}
+
+.char-count,
+.img-count {
+    text-align: right;
+    color: gray;
+    margin-right: 20px;
+    margin-top: 10px;
+}
+
+.remove-btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: red;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+}
+
+.img-preview div:hover .remove-btn {
+    display: flex;
+}
+
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba (0, 0, 0, 0.4);
+    display: none;
+}
+
+.img-preview div:hover .overlay {
+    display: flex;
+}
+
+.remove-btn:hover {
+    background: #cc0000;
+}
+
+button#post-thread-btn {
+    position: absolute;
+    margin: auto;
+    width: 200px;
+    height: 50px;
+    font-size: large;
+}
+
+div.btn-div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.spinner {
+    border: solid 10px #f2f2f2;
+    border-left: solid 10px #563acc;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+    display: none;
+    vertical-align: baseline;
+    margin-left: 10px;
+    margin-right: 20px;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+button#view-thread-btn {
+    width: 200px;
+    height: 50px;
+    margin: auto;
+    border-radius: 4px;
+    font-size: large;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+    background-color: #563acc;
+    color: white;
+    cursor: pointer;
+}
+
+button#view-thread-btn:hover {
+    background-color: #6364ff;
+}
