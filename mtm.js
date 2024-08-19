@@ -96,6 +96,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             instanceInput.disabled = false;
             instanceBtn.textContent = 'Valider';
             localStorage.removeItem('mastothreadinstance');
+            counter.style.display = 'none';
             removeToken();
             checkInstance();
             checkToken();
@@ -390,10 +391,10 @@ document.addEventListener('DOMContentLoaded', async function () {
         counter.style.display = 'block';
         await postThread();
         spinner.remove();
-        counter.remove();
+        counter.textContent = 'Votre fil a été publié. Pensez à cliquer sur « Réinitialiser » pour fermer votre session.';
         postThreadBtn.style.display = 'none';
         // viewThreadBtn.addEventListener('click', () => {
-            window.location.href = threadUrl;
+            window.open(threadUrl, '_blank');
         // });
         // viewThreadBtn.style.display = 'flex';
     });
