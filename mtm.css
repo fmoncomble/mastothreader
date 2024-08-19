@@ -51,6 +51,16 @@ button:hover {
     border: solid 1px gray;
     border-radius: 4px;
     display: flex;
+    position: relative;
+}
+
+.overlay {
+    width: 546px;
+    height: 531.55px;
+    border: dashed 2px #563acc;
+    border-radius: 4px;
+    position: absolute;
+    background-color: rgba(86, 58, 204, 0.2)
 }
 
 .post-count {
@@ -151,11 +161,6 @@ textarea {
     flex-direction: column;
 }
 
-.dz-active {
-    background-color: #e6e6ff;
-    border-color: #563acc;
-}
-
 .img-preview {
     display: flex;
     flex-wrap: wrap;
@@ -200,20 +205,6 @@ textarea {
 }
 
 .img-preview div:hover .remove-btn {
-    display: flex;
-}
-
-.overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba (0, 0, 0, 0.4);
-    display: none;
-}
-
-.img-preview div:hover .overlay {
     display: flex;
 }
 

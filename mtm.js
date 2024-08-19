@@ -285,19 +285,21 @@ document.addEventListener('DOMContentLoaded', async function () {
         const dzInst = dropzone.querySelector('.dz-inst');
         const imgPreview = dropzone.querySelector('.img-preview');
 
-        dropzone.addEventListener('dragover', (e) => {
+        const overlay = newPost.querySelector('div.overlay');
+        newPost.addEventListener('dragover', (e) => {
             e.preventDefault();
-            dropzone.classList.add('dz-active');
+            overlay.style.display = 'flex';
         });
 
-        dropzone.addEventListener('dragleave', (e) => {
+        newPost.addEventListener('dragleave', (e) => {
             e.preventDefault();
-            dropzone.classList.remove('dz-active');
+            overlay.style.display = 'none';
         });
 
-        dropzone.addEventListener('drop', (e) => {
+        newPost.addEventListener('drop', (e) => {
             e.preventDefault();
             dropzone.classList.remove('dz-active');
+            overlay.style.display = 'none';
             dzInst.style.display = 'none';
             const newFiles = e.dataTransfer.files;
             if (files[`files${i}`].length >= maxMedia) {
