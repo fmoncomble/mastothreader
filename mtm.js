@@ -7,10 +7,10 @@ document.addEventListener('DOMContentLoaded', async function () {
     const postThreadBtn = document.getElementById('post-thread-btn');
     const spinner = document.getElementById('spinner');
     const viewThreadBtn = document.getElementById('view-thread-btn');
-    const viewThreadLink = viewThreadBtn.querySelector('a');
 
     let maxChars;
     let maxMedia;
+    let lang;
     let postItems = [];
     let files = {};
 
@@ -124,7 +124,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     client_name: 'MastoThreader',
                     redirect_uris: redirectUri,
                     scopes: 'write',
-                    website: redirectUri
+                    website: redirectUri,
                 }),
             });
             if (!response.ok) {
@@ -176,9 +176,9 @@ document.addEventListener('DOMContentLoaded', async function () {
             return;
         }
         const data = await response.json();
-        console.log(data);
         maxChars = Number(data.configuration.statuses.max_characters);
         maxMedia = Number(data.configuration.statuses.max_media_attachments);
+        lang = data.languages[0];
     }
 
     let i = 0;
@@ -196,6 +196,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             const newIndex = currentIndex + 1;
             postItems.splice(newIndex, 0, newPost);
         }
+
         const vizSelect = newPost.querySelector('.viz-select');
         const index = postItems.indexOf(newPost);
         if (index === 0) {
@@ -206,6 +207,10 @@ document.addEventListener('DOMContentLoaded', async function () {
         } else {
             vizSelect.value = 'unlisted';
         }
+
+        const langSelect = newPost.querySelector('.lang-select');
+        langSelect.value = lang;
+
         i++;
         newPost.id = 'post-' + i;
         files[`files${i}`] = [];
@@ -381,13 +386,18 @@ document.addEventListener('DOMContentLoaded', async function () {
         for (let post of postItems) {
             const i = postItems.indexOf(post);
 
+            const langSelect = post.querySelector('.lang-select');
+            const postLang = langSelect.value;
+
             const vizSelect = post.querySelector('.viz-select');
             const visibility = vizSelect.value;
+
             const cwTextArea = post.querySelector('.cw-text');
             let cwText;
             if (cwTextArea.value) {
                 cwText = cwTextArea.value;
             }
+
             const textarea = post.querySelector('.post-text');
             const postText = textarea.value;
 
@@ -445,6 +455,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                             spoiler_text: cwText,
                             visibility: visibility,
                             in_reply_to_id: replyToId,
+                            language: postLang
                         }),
                     }
                 );

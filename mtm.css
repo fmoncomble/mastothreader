@@ -60,7 +60,8 @@ button:hover {
 }
 
 .cw-btn,
-.viz-select {
+.viz-select,
+.lang-select {
     height: auto;
     width: auto;
     color: black;
@@ -74,8 +75,11 @@ button:hover {
     display: inline;
 }
 
-.viz-select {
+.viz-select,
+.lang-select {
     height: 28px;
+    max-width: 200px;
+    text-overflow: ellipsis;
 }
 .cw-btn:hover,
 select:hover {
