@@ -6,7 +6,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     const postItem = document.getElementById('post-item');
     const postThreadBtn = document.getElementById('post-thread-btn');
     const spinner = document.getElementById('spinner');
-    const viewThreadBtn = document.getElementById('view-thread-btn');
+    // const viewThreadBtn = document.getElementById('view-thread-btn');
+    const counter = document.getElementById('counter');
 
     let maxChars;
     let maxMedia;
@@ -203,9 +204,19 @@ document.addEventListener('DOMContentLoaded', async function () {
             vizSelect.value = 'public';
             vizSelect.addEventListener('change', () => {
                 defaultViz = vizSelect.value;
+                if (defaultViz === 'private') {
+                    for (let p of postItems) {
+                        const vizS = p.querySelector('.viz-select');
+                        vizS.value = defaultViz;
+                    }
+                }
             });
         } else {
-            vizSelect.value = 'unlisted';
+            if (defaultViz === 'private') {
+                vizSelect.value = defaultViz;
+            } else {
+                vizSelect.value = 'unlisted';
+            }
         }
 
         const langSelect = newPost.querySelector('.lang-select');
@@ -370,13 +381,17 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     let threadUrl;
     postThreadBtn.addEventListener('click', async () => {
+        postThreadBtn.style.display = 'none';
+        contentContainer.remove();
+        counter.style.display = 'block';
         await postThread();
         spinner.remove();
+        counter.remove();
         postThreadBtn.style.display = 'none';
-        viewThreadBtn.addEventListener('click', () => {
+        // viewThreadBtn.addEventListener('click', () => {
             window.location.href = threadUrl;
-        });
-        viewThreadBtn.style.display = 'flex';
+        // });
+        // viewThreadBtn.style.display = 'flex';
     });
 
     async function postThread() {
@@ -385,6 +400,9 @@ document.addEventListener('DOMContentLoaded', async function () {
         let replyToId;
         for (let post of postItems) {
             const i = postItems.indexOf(post);
+            counter.textContent = `Publication du pouet ${i + 1}/${
+                postItems.length
+            }...`;
 
             const langSelect = post.querySelector('.lang-select');
             const postLang = langSelect.value;
@@ -455,7 +473,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                             spoiler_text: cwText,
                             visibility: visibility,
                             in_reply_to_id: replyToId,
-                            language: postLang
+                            language: postLang,
                         }),
                     }
                 );

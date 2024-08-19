@@ -233,6 +233,7 @@ div.btn-div {
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-direction: column;
 }
 
 .spinner {
@@ -245,7 +246,9 @@ div.btn-div {
     display: none;
     vertical-align: baseline;
     margin-left: 10px;
-    margin-right: 20px;
+    margin-right: 10px;
+    margin-top: 75px;
+    margin-bottom: 20px;
 }
 
 @keyframes spin {
@@ -261,6 +264,7 @@ button#view-thread-btn {
     width: 200px;
     height: 50px;
     margin: auto;
+    margin-top: 75px;
     border-radius: 4px;
     font-size: large;
     text-align: center;
