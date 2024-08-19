@@ -60,7 +60,14 @@ button:hover {
     border: dashed 2px #563acc;
     border-radius: 4px;
     position: absolute;
-    background-color: rgba(86, 58, 204, 0.2)
+    background-color: rgba(86, 58, 204, 0.2);
+    color: white;
+    font-size: 50px;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    flex-direction: column;
+    text-shadow: 0 0 10px #563acc 
 }
 
 .post-count {
