@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         instance = localStorage.getItem('mastothreadinstance');
         if (instance) {
             instanceInput.value = instance;
-            instanceBtn.textContent = 'Changer';
+            instanceBtn.textContent = 'Réinitialiser';
             instanceInput.disabled = true;
         } else if (!instance) {
             instanceInput.value = null;
@@ -70,6 +70,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     function removeToken() {
         localStorage.removeItem('mastothreadtoken');
+        localStorage.removeItem('mastothreadid');
+        localStorage.removeItem('mastothreadsecret');
     }
 
     instanceInput.addEventListener('keydown', async (event) => {
