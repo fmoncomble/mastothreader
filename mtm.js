@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     let maxMedia;
     let lang;
     let postItems = [];
-    let files = {};
+    let mediaIds = {};
 
     let instance;
     checkInstance();
@@ -227,7 +227,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         i++;
         newPost.id = 'post-' + i;
-        files[`files${i}`] = [];
         for (let p of postItems) {
             const deletePostBtn = p.querySelector('.delete-post-btn');
             if (postItems.length > 1) {
@@ -279,6 +278,9 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
         });
 
+        let files = [];
+        mediaIds[`mediaIds${i}`] = [];
+
         const imgCount = newPost.querySelector('.img-count');
         imgCount.textContent = `0/${maxMedia}`;
 
@@ -297,23 +299,32 @@ document.addEventListener('DOMContentLoaded', async function () {
             overlay.style.display = 'none';
         });
 
-        newPost.addEventListener('drop', (e) => {
+        newPost.addEventListener('drop', async (e) => {
             e.preventDefault();
             dropzone.classList.remove('dz-active');
             overlay.style.display = 'none';
             dzInst.style.display = 'none';
             const newFiles = e.dataTransfer.files;
-            if (files[`files${i}`].length >= maxMedia) {
+            if (files.length >= maxMedia) {
                 window.alert("Le nombre maximum d'images est atteint.");
                 return;
             } else {
                 for (let f of newFiles) {
-                    if (files[`files${i}`].length < maxMedia) {
-                        files[`files${i}`].push(f);
+                    if (files.length < maxMedia) {
+                        files.push(f);
+                        const imgSpinnerDiv =
+                            dropzone.querySelector('.img-spinner-div');
+                        imgSpinnerDiv.style.display = 'flex';
+                        let mediaId = await uploadMedia(f);
+                        if (mediaId) {
+                            mediaIds[`mediaIds${i}`].push(mediaId);
+                            imgCount.textContent = `${files.length}/${maxMedia}`;
+                            imgSpinnerDiv.style.display = 'none';
+                        } else {
+                            imgSpinnerDiv.style.display = 'none';
+                            continue;
+                        }
                         displayThumbnail(f, imgPreview, imgCount, dzInst);
-                        imgCount.textContent = `${
-                            files[`files${i}`].length
-                        }/${maxMedia}`;
                     } else {
                         window.alert("Le nombre maximum d'images est atteint");
                         break;
@@ -330,19 +341,18 @@ document.addEventListener('DOMContentLoaded', async function () {
                 const removeBtn = document.createElement('button');
 
                 img.src = e.target.result;
-                removeBtn.textContent = 'X';
+                removeBtn.textContent = '✖';
                 removeBtn.classList.add('remove-btn');
 
-                removeBtn.addEventListener('click', () => {
-                    const index = files[`files${i}`].indexOf(file);
+                removeBtn.addEventListener('click', async () => {
+                    const index = files.indexOf(file);
                     if (index > -1) {
-                        files[`files${i}`].splice(index, 1);
+                        files.splice(index, 1);
+                        mediaIds[`mediaIds${i}`].splice(index, 1);
                     }
                     div.remove();
-                    imgCount.textContent = `${
-                        files[`files${i}`].length
-                    }/${maxMedia}`;
-                    if (files[`files${i}`].length === 0) {
+                    imgCount.textContent = `${files.length}/${maxMedia}`;
+                    if (files.length === 0) {
                         dzInst.style.display = 'block';
                     }
                 });
@@ -350,8 +360,145 @@ document.addEventListener('DOMContentLoaded', async function () {
                 div.appendChild(img);
                 div.appendChild(removeBtn);
                 imgPreview.appendChild(div);
+
+                const altBtn = document.createElement('button');
+                altBtn.textContent = 'ALT';
+                altBtn.classList.add('alt-btn');
+                const altDiv = imgPreview.querySelector('.alt-div');
+                const newAltDiv = altDiv.cloneNode(true);
+                const altTextArea = newAltDiv.querySelector('.alt-text');
+
+                const altCounter = newAltDiv.querySelector('.alt-counter');
+                altTextArea.addEventListener('input', () => {
+                    altCounter.textContent = `${altTextArea.value.length}/1500`;
+                    if (altTextArea.value.length > 0) {
+                        altCancelBtn.textContent = 'Effacer';
+                    } else if (altTextArea.value.length === 0) {
+                        altCancelBtn.textContent = 'Annuler';
+                    }
+                    if (altTextArea.value.length > 1500) {
+                        altCounter.style.color = '#cc0000';
+                        altCounter.style.fontWeight = 'bold';
+                    } else {
+                        altCounter.removeAttribute('style');
+                    }
+                });
+                altTextArea.addEventListener('keydown', (e) => {
+                    const altText = altTextArea.value;
+                    if (
+                        (e.key === 'Enter' && e.metaKey) ||
+                        (e.key === 'Enter' && e.ctrlKey)
+                    ) {
+                        updateMedia(file, altText);
+                        altBtn.style.color =  '#009900';
+                        newAltDiv.style.display = 'none';
+                    } else if (e.key === 'Escape') {
+                        newAltDiv.style.display = 'none';
+                    }
+                });
+
+                const altSaveBtn = newAltDiv.querySelector('.alt-save-btn');
+                const altCancelBtn = newAltDiv.querySelector('.alt-cancel-btn');
+                altBtn.addEventListener('click', () => {
+                    const altText = altTextArea.value;
+                    if (altText) {
+                        altCancelBtn.textContent = 'Effacer';
+                    } else {
+                        altCancelBtn.textContent = 'Annuler';
+                    }
+                    newAltDiv.style.display = 'flex';
+                    altTextArea.focus();
+                });
+                altSaveBtn.addEventListener('click', async () => {
+                    const altText = altTextArea.value;
+                    await updateMedia(file, altText);
+                    altBtn.style.color =  '#009900';
+                    newAltDiv.style.display = 'none';
+                });
+                altCancelBtn.addEventListener('click', async () => {
+                    const altText = altTextArea.value;
+                    if (altText.length > 0) {
+                        altTextArea.value = null;
+                        altCounter.textContent = '0/1500';
+                        altCancelBtn.textContent = 'Annuler';
+                    } else if (altText.length === 0) {
+                        await updateMedia(file, altText);
+                        altBtn.removeAttribute('style');
+                        newAltDiv.style.display = 'none';
+                    }
+                });
+
+                div.appendChild(altBtn);
+                div.appendChild(newAltDiv);
             };
             reader.readAsDataURL(file);
+        }
+
+        async function uploadMedia(f) {
+            const formData = new FormData();
+            formData.append('file', f);
+
+            try {
+                const response = await fetch(
+                    `https://${instance}/api/v2/media`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            scope: 'write',
+                        },
+                        body: formData,
+                    }
+                );
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('Error uploading media: ', errorData);
+                    window.alert(
+                        `Un média n'a pas pu être envoyé : ${errorData.error}`
+                    );
+                    return;
+                }
+
+                const data = await response.json();
+                return data.id;
+            } catch (error) {
+                console.error('Fetch error: ', error);
+            }
+        }
+
+        async function updateMedia(f, altText) {
+            const formData = new FormData();
+            formData.append('description', altText);
+
+            let mediaIndex = files.indexOf(f);
+            let mediaId = mediaIds[`mediaIds${i}`][mediaIndex];
+
+            try {
+                const response = await fetch(
+                    `https://${instance}/api/v1/media/${mediaId}`,
+                    {
+                        method: 'PUT',
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                        body: formData,
+                    }
+                );
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('Error updating media: ', errorData);
+                    window.alert(
+                        `Erreur en mettant à jour le média ${mediaId}`
+                    );
+                    return;
+                }
+                const data = await response.json();
+                return data.description;
+            } catch (error) {
+                console.error('Error fetching media update: ', error);
+                return;
+            }
         }
 
         const deletePostBtn = newPost.querySelector('.delete-post-btn');
@@ -389,14 +536,21 @@ document.addEventListener('DOMContentLoaded', async function () {
         postThreadBtn.style.display = 'none';
         contentContainer.remove();
         counter.style.display = 'block';
+        counter.style.marginTop = '50px';
         await postThread();
         spinner.remove();
-        counter.textContent = 'Votre fil a été publié. Pensez à cliquer sur « Réinitialiser » pour fermer votre session.';
+        counter.textContent =
+            'Votre fil a été publié. Pensez à cliquer sur « Réinitialiser » pour fermer votre session.';
+        counter.style.color = '#563acc';
+        const restartBtn = document.createElement('button');
+        restartBtn.textContent = 'Composer un nouveau fil';
+        restartBtn.style.marginTop = '50px';
+        restartBtn.onclick = () => {
+            location.reload(true);
+        };
+        counter.after(restartBtn);
         postThreadBtn.style.display = 'none';
-        // viewThreadBtn.addEventListener('click', () => {
-            window.open(threadUrl, '_blank');
-        // });
-        // viewThreadBtn.style.display = 'flex';
+        window.open(threadUrl, '_blank');
     });
 
     async function postThread() {
@@ -425,42 +579,40 @@ document.addEventListener('DOMContentLoaded', async function () {
             const postText = textarea.value;
 
             const id = post.id.split('-')[1];
-            const media = files[`files${id}`];
-            let mediaIds = [];
-            if (media) {
-                for (let m of media) {
-                    const formData = new FormData();
-                    formData.append('file', m);
-
-                    try {
-                        const response = await fetch(
-                            `https://${instance}/api/v2/media`,
-                            {
-                                method: 'POST',
-                                headers: {
-                                    Authorization: `Bearer ${token}`,
-                                    scope: 'write',
-                                },
-                                body: formData,
-                            }
-                        );
-
-                        if (!response.ok) {
-                            const errorData = await response.json();
-                            console.error('Error uploading media: ', errorData);
-                            window.alert(
-                                `Un fichier attaché au pouet n°${id} n'a pas pu être envoyé`
-                            );
-                            return;
-                        }
-
-                        const data = await response.json();
-                        mediaIds.push(data.id);
-                    } catch (error) {
-                        console.error('Fetch error: ', error);
-                    }
-                }
-            }
+            const postMedia = mediaIds[`mediaIds${id}`];
+            // const media = files[`files${id}`];
+            // let mediaIds = [];
+            // if (media) {
+            //     for (let m of media) {
+            // const formData = new FormData();
+            // formData.append('file', m);
+            // try {
+            //     const response = await fetch(
+            //         `https://${instance}/api/v2/media`,
+            //         {
+            //             method: 'POST',
+            //             headers: {
+            //                 Authorization: `Bearer ${token}`,
+            //                 scope: 'write',
+            //             },
+            //             body: formData,
+            //         }
+            //     );
+            //     if (!response.ok) {
+            //         const errorData = await response.json();
+            //         console.error('Error uploading media: ', errorData);
+            //         window.alert(
+            //             `Un fichier attaché au pouet n°${id} n'a pas pu être envoyé`
+            //         );
+            //         return;
+            //     }
+            //     const data = await response.json();
+            //     mediaIds.push(data.id);
+            // } catch (error) {
+            //     console.error('Fetch error: ', error);
+            // }
+            //     }
+            // }
 
             try {
                 const response = await fetch(
@@ -474,7 +626,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                         },
                         body: JSON.stringify({
                             status: postText,
-                            media_ids: mediaIds,
+                            media_ids: postMedia,
                             spoiler_text: cwText,
                             visibility: visibility,
                             in_reply_to_id: replyToId,

@@ -146,11 +146,13 @@ textarea {
     margin-bottom: 20px;
 }
 
-.delete-post-btn {
+.delete-post-btn,
+.alt-cancel-btn {
     background-color: #cc0000;
 }
 
-.delete-post-btn:hover {
+.delete-post-btn:hover,
+.alt-cancel-btn:hover {
     background-color: red;
 }
 
@@ -171,7 +173,7 @@ textarea {
 .img-preview {
     display: flex;
     flex-wrap: wrap;
-    margin-top: 10px;
+    /* margin-top: 10px; */
 }
 
 .img-preview div {
@@ -180,8 +182,8 @@ textarea {
 }
 
 .img-preview img {
-    width: 50px;
-    height: 50px;
+    width: 85px;
+    height: 85px;
     object-fit: cover;
 }
 
@@ -195,28 +197,114 @@ textarea {
 
 .remove-btn {
     position: absolute;
-    top: 0;
-    right: 0;
-    background: red;
-    color: white;
+    top: 2px;
+    right: 2px;
+    background: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 0, 0, 0.5);
     border: none;
     border-radius: 50%;
     cursor: pointer;
     width: 20px;
     height: 20px;
-    display: none;
+    display: flex;
     align-items: center;
     justify-content: center;
     padding: 0;
     margin: 0;
 }
 
-.img-preview div:hover .remove-btn {
-    display: flex;
+.remove-btn:hover {
+    background: white;
+    color: red;
 }
 
-.remove-btn:hover {
-    background: #cc0000;
+.alt-btn {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    background: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 102, 0, 0.8);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+}
+
+.alt-btn:hover {
+    background: white;
+    color: rgb(255, 102, 0);
+    font-weight: bold;
+}
+
+.alt-div {
+    position: absolute !important;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0 !important;
+    width: 500px;
+    height: 200px;
+    border-radius: 4px;
+    box-shadow: 0 0 5px gray;
+    background-color: white;
+}
+
+.alt-btn-div {
+    position: absolute !important;
+    bottom: 0;
+    right: 2px;
+}
+
+.alt-counter {
+    position: absolute !important;
+    bottom: 2px;
+    left: 4px;
+    color: gray;
+    font-size: small;
+}
+
+.alt-text {
+    margin: 0 !important;
+    box-sizing: border-box;
+    width: 98%;
+    height: 150px;
+    position: absolute;
+    top: 1%;
+    border: none;
+}
+
+.img-spinner-div {
+    position: absolute !important;
+    border-radius: 4px;
+    width: 85px;
+    height: 85px;
+    z-index: 1;
+}
+
+.img-spinner {
+    position: absolute;
+    box-sizing: border-box;
+    box-shadow: 0 0 5px gray;
+    top: 20px;
+    left: 20px;
+    border: solid 10px #f2f2f2;
+    border-left: solid 10px #563acc;
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    animation: spin 1s linear infinite;
+    display: flex;
+    vertical-align: baseline;
 }
 
 button#post-thread-btn {

@@ -15,7 +15,7 @@
                 width="300"
                 fill="currentColor"
             />
-            <div id="version">v0.4.4</div>
+            <div id="version">v0.5</div>
         </div>
         <div id="instance-div">
             <div id="instructions">
@@ -25,7 +25,10 @@
                         et cliquez sur "Valider" pour commencer.</b
                     >
                 </p>
-                <p style="text-decoration: underline">Ceci est un site statique qui ne collecte aucune de vos données.</p>
+                <p style="text-decoration: underline">
+                    Ceci est un site statique qui ne collecte aucune de vos
+                    données.
+                </p>
             </div>
             <div id="instance-input-div">
                 <span>https:// </span>
@@ -281,8 +284,26 @@
                 </div>
                 <div class="char-count"></div>
                 <div class="dropzone">
+                    <div class="img-spinner-div" style="display: none">
+                        <div class="img-spinner"></div>
+                    </div>
                     <div class="dz-inst">Glissez-déposez vos images ici</div>
-                    <div class="img-preview"></div>
+                    <div class="img-preview">
+                        <div class="alt-div" style="display: none">
+                            <div class="alt-counter">0/1500</div>
+                            <div class="alt-btn-div">
+                                <button class="alt-cancel-btn">Annuler</button>
+                                <button class="alt-save-btn">Valider</button>
+                            </div>
+                            <textarea
+                                class="alt-text"
+                                placeholder="Description"
+                            ></textarea>
+                        </div>
+                        <!-- <div class="img-spinner-div" style="display: none">
+                            <div class="img-spinner"></div>
+                        </div> -->
+                    </div>
                 </div>
                 <div class="img-count"></div>
                 <button class="add-post-btn">Ajouter un pouet</button>
