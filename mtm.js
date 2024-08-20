@@ -6,8 +6,17 @@ document.addEventListener('DOMContentLoaded', async function () {
     const postItem = document.getElementById('post-item');
     const postThreadBtn = document.getElementById('post-thread-btn');
     const spinner = document.getElementById('spinner');
-    // const viewThreadBtn = document.getElementById('view-thread-btn');
     const counter = document.getElementById('counter');
+
+    const dlPic = document.getElementById('dl-pic');
+    const dlMsg = document.getElementById('dl-msg');
+    dlPic.onclick = () => {
+        if (dlMsg.style.display === 'none') {
+            dlMsg.style.display = 'flex'
+        } else {
+            dlMsg.style.display = 'none'
+        }
+    }
 
     let maxChars;
     let maxMedia;
@@ -580,40 +589,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             const id = post.id.split('-')[1];
             const postMedia = mediaIds[`mediaIds${id}`];
-            // const media = files[`files${id}`];
-            // let mediaIds = [];
-            // if (media) {
-            //     for (let m of media) {
-            // const formData = new FormData();
-            // formData.append('file', m);
-            // try {
-            //     const response = await fetch(
-            //         `https://${instance}/api/v2/media`,
-            //         {
-            //             method: 'POST',
-            //             headers: {
-            //                 Authorization: `Bearer ${token}`,
-            //                 scope: 'write',
-            //             },
-            //             body: formData,
-            //         }
-            //     );
-            //     if (!response.ok) {
-            //         const errorData = await response.json();
-            //         console.error('Error uploading media: ', errorData);
-            //         window.alert(
-            //             `Un fichier attaché au pouet n°${id} n'a pas pu être envoyé`
-            //         );
-            //         return;
-            //     }
-            //     const data = await response.json();
-            //     mediaIds.push(data.id);
-            // } catch (error) {
-            //     console.error('Fetch error: ', error);
-            // }
-            //     }
-            // }
-
             try {
                 const response = await fetch(
                     `https://${instance}/api/v1/statuses`,

@@ -69,7 +69,7 @@ button:hover {
     justify-content: center;
     text-align: center;
     flex-direction: column;
-    text-shadow: 0 0 10px #563acc 
+    text-shadow: 0 0 10px #563acc;
 }
 
 .post-count {
@@ -140,6 +140,16 @@ textarea {
 
 #plugin-dl {
     margin-top: 20px;
+}
+
+#dl-pic {
+    cursor: pointer;
+}
+
+div#dl-msg {
+    font-size: small;
+    color: #563acc;
+    flex-direction: column;
 }
 
 #content-container {
