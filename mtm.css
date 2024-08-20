@@ -1,4 +1,6 @@
 body {
+    display: flex;
+    flex-direction: column;
     font-family: Arial, Helvetica, sans-serif;
     width: 90%;
     padding-bottom: 30px;
@@ -130,6 +132,14 @@ textarea {
     justify-content: center;
     text-align: center;
     margin: 20px auto;
+}
+
+#page-title {
+    flex-direction: column;
+}
+
+#plugin-dl {
+    margin-top: 20px;
 }
 
 #content-container {
