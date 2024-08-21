@@ -15,7 +15,7 @@
                 width="300"
                 fill="currentColor"
             />
-            <div id="version">v0.6</div>
+            <div id="version">v0.6.1</div>
             <div id="plugin-dl">
                 <img src="icons/Firefox add-on.png" id="dl-pic" />
                 <div id="dl-msg" style="display: none">
@@ -300,7 +300,16 @@
                     <div class="img-spinner-div" style="display: none">
                         <div class="img-spinner"></div>
                     </div>
-                    <div class="dz-inst">Glissez-déposez vos images ici</div>
+                    <div class="dz-inst" for="img-upload">
+                        <input
+                            type="file"
+                            id="img-upload"
+                            name="img-upload"
+                            class="img-upload"
+                            multiple
+                            accept="image/*"
+                        />Glissez-déposez vos images ici
+                    </div>
                     <div class="img-preview">
                         <div class="alt-div" style="display: none">
                             <div class="alt-counter">0/1500</div>
@@ -313,10 +322,8 @@
                                 placeholder="Description"
                             ></textarea>
                         </div>
-                        <!-- <div class="img-spinner-div" style="display: none">
-                            <div class="img-spinner"></div>
-                        </div> -->
                     </div>
+                    <div class="add-img"><span>+</span></div>
                 </div>
                 <div class="img-count"></div>
                 <button class="add-post-btn">Ajouter un pouet</button>
@@ -329,9 +336,6 @@
             <button id="post-thread-btn" style="display: none">
                 Poster le fil
             </button>
-            <!-- <button id="view-thread-btn" style="display: none">
-                Voir le fil
-            </button> -->
             <span id="spinner" class="spinner" style="display: none"></span>
             <div id="counter" style="display: none"></div>
         </div>

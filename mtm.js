@@ -12,11 +12,11 @@ document.addEventListener('DOMContentLoaded', async function () {
     const dlMsg = document.getElementById('dl-msg');
     dlPic.onclick = () => {
         if (dlMsg.style.display === 'none') {
-            dlMsg.style.display = 'flex'
+            dlMsg.style.display = 'flex';
         } else {
-            dlMsg.style.display = 'none'
+            dlMsg.style.display = 'none';
         }
-    }
+    };
 
     let maxChars;
     let maxMedia;
@@ -342,6 +342,42 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
         });
 
+        const imgUpload = newPost.querySelector('input.img-upload');
+        const addImg = newPost.querySelector('div.add-img');
+        addImg.onclick = () => {
+            imgUpload.click();
+        };
+        imgUpload.addEventListener('change', async (e) => {
+            dzInst.style.display = 'none';
+            const newFiles = e.target.files;
+            if (files.length >= maxMedia) {
+                window.alert("Le nombre maximum d'images est atteint.");
+                return;
+            } else {
+                for (let f of newFiles) {
+                    if (files.length < maxMedia) {
+                        files.push(f);
+                        const imgSpinnerDiv =
+                            dropzone.querySelector('.img-spinner-div');
+                        imgSpinnerDiv.style.display = 'flex';
+                        let mediaId = await uploadMedia(f);
+                        if (mediaId) {
+                            mediaIds[`mediaIds${i}`].push(mediaId);
+                            imgCount.textContent = `${files.length}/${maxMedia}`;
+                            imgSpinnerDiv.style.display = 'none';
+                        } else {
+                            imgSpinnerDiv.style.display = 'none';
+                            continue;
+                        }
+                        displayThumbnail(f, imgPreview, imgCount, dzInst);
+                    } else {
+                        window.alert("Le nombre maximum d'images est atteint");
+                        break;
+                    }
+                }
+            }
+        })
+
         function displayThumbnail(file, imgPreview, imgCount, dzInst) {
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -399,7 +435,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                         (e.key === 'Enter' && e.ctrlKey)
                     ) {
                         updateMedia(file, altText);
-                        altBtn.style.color =  '#009900';
+                        altBtn.style.color = '#009900';
                         newAltDiv.style.display = 'none';
                     } else if (e.key === 'Escape') {
                         newAltDiv.style.display = 'none';
@@ -421,7 +457,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 altSaveBtn.addEventListener('click', async () => {
                     const altText = altTextArea.value;
                     await updateMedia(file, altText);
-                    altBtn.style.color =  '#009900';
+                    altBtn.style.color = '#009900';
                     newAltDiv.style.display = 'none';
                 });
                 altCancelBtn.addEventListener('click', async () => {

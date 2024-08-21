@@ -6,6 +6,10 @@ body {
     padding-bottom: 30px;
 }
 
+*:focus-visible {
+    outline: 2px solid #6364ff;
+}
+
 div#version {
     font-size: x-small;
     color: #563acc;
@@ -23,8 +27,8 @@ input {
     height: 20px;
     width: 300px;
     padding: 5px;
-    background-color: #f2f2f2;
-    border: solid 1px #ccc;
+    background-color: #f9f9fb;
+    border: solid 1px #d9d9e8;
     border-radius: 4px;
     margin-left: 4px;
 }
@@ -50,7 +54,7 @@ button:hover {
 
 .post-item {
     width: 550px;
-    border: solid 1px gray;
+    border: solid 1px #d9d9e8;
     border-radius: 4px;
     display: flex;
     position: relative;
@@ -74,6 +78,8 @@ button:hover {
 
 .post-count {
     display: inline-flex;
+    height: 28px;
+    align-items: center;
     color: gray;
     margin-top: 10px;
 }
@@ -88,9 +94,9 @@ button:hover {
     margin-top: 10px;
     margin-right: 15px;
     float: right;
-    border: solid 1px gray;
+    border: solid 1px #d9d9e8;
     border-radius: 4px;
-    background-color: #f2f2f2;
+    background-color: #f9f9fb;
     display: inline;
 }
 
@@ -102,7 +108,7 @@ button:hover {
 }
 .cw-btn:hover,
 select:hover {
-    background-color: #ccc;
+    background-color: #d9d9e8;
 }
 
 .cw-div {
@@ -110,7 +116,8 @@ select:hover {
 }
 
 textarea {
-    border: solid 1px gray;
+    border: solid 1px #d9d9e8;
+    background-color: #f9f9fb;
     border-radius: 4px;
     width: 500px;
     height: 200px;
@@ -132,6 +139,10 @@ textarea {
     justify-content: center;
     text-align: center;
     margin: 20px auto;
+}
+
+.textarea {
+    margin: 10px auto 0 auto;
 }
 
 #page-title {
@@ -158,7 +169,7 @@ div#dl-msg {
 
 .post-item {
     margin-bottom: 20px;
-    background-color: #f2f2f2;
+    background-color: white;
 }
 
 .add-post-btn,
@@ -177,17 +188,43 @@ div#dl-msg {
 }
 
 .dropzone {
+    position: relative;
     width: 500px;
     height: 100px;
-    border: 2px dashed #ccc;
-    background-color: white;
+    border: 2px dashed #d9d9e8;
+    border-radius: 4px;
+    background-color: #f9f9fb;
     color: gray;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
-    margin: 20px auto;
+    margin: 10px auto 0 auto;
     flex-direction: column;
+}
+
+.add-img {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    right: 5px;
+    bottom: 5px;
+    width: 20px;
+    height: 20px;
+    border: dashed 2px #6364ff;
+    border-radius: 4px;
+    color: #6364ff;
+    cursor: pointer;
+}
+
+.add-img span {
+    font-size: large;
+    font-weight: bold;
+    width: 100%;
+}
+
+.img-upload {
+    display: none;
 }
 
 .img-preview {
