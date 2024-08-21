@@ -54,7 +54,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (instance) {
             instanceInput.value = instance;
             instanceBtn.textContent = 'Réinitialiser';
-            instanceInput.disabled = true;
         } else if (!instance) {
             instanceInput.value = null;
             instanceBtn.textContent = 'Valider';
@@ -66,6 +65,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         token = localStorage.getItem('mastothreadtoken');
         if (token) {
             instanceInput.value = instance + ' ✅';
+            instanceInput.disabled = true;
             instructionsDiv.style.display = 'none';
             if (postItems.length === 0) {
                 await getMax();
