@@ -26,6 +26,10 @@ div#plugin-install {
     color: #563acc;
 }
 
+div#plugin-install a {
+    color: #563acc;
+}
+
 div#plugin-install a:visited {
     color: #563acc;
 }
