@@ -1,12 +1,52 @@
 document.addEventListener('DOMContentLoaded', async function () {
     const instructionsDiv = document.getElementById('instructions');
     const instanceInput = document.getElementById('instance-input');
+    const instanceDataList = document.getElementById('inst-list');
     const instanceBtn = document.getElementById('instance-btn');
     const contentContainer = document.getElementById('content-container');
     const postItem = document.getElementById('post-item');
+    const languageSelect = document.querySelector('.lang-select');
     const postThreadBtn = document.getElementById('post-thread-btn');
     const spinner = document.getElementById('spinner');
     const counter = document.getElementById('counter');
+
+    async function getData(url) {
+        try {
+            const res = await fetch(url);
+            if (res && res.ok) {
+                const data = await res.json();
+                return data;
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    async function buildInstList() {
+        const instanceDataUrl =
+            'https://raw.githubusercontent.com/fmoncomble/mastothreader/main/data/instances.json';
+        const instanceData = await getData(instanceDataUrl);
+        for (let iD of instanceData) {
+            const instName = iD.instance;
+            const option = document.createElement('option');
+            option.value = instName;
+            instanceDataList.appendChild(option);
+        }
+    }
+
+    async function buildLangList() {
+        const langDataUrl =
+            'https://raw.githubusercontent.com/fmoncomble/mastothreader/main/data/languages.json';
+        const langData = await getData(langDataUrl);
+        for (let lD of langData) {
+            const langValue = lD.value;
+            const langName = lD.full_name;
+            const option = document.createElement('option');
+            option.value = langValue;
+            option.textContent = langName;
+            languageSelect.appendChild(option);
+        }
+    }
 
     const dlPic = document.getElementById('dl-pic');
     const dlMsg = document.getElementById('dl-msg');
@@ -23,6 +63,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     let lang;
     let postItems = [];
     let mediaIds = {};
+    let i = 0;
 
     let instance;
     checkInstance();
@@ -41,6 +82,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 }
             }
         }
+        await buildInstList();
     };
 
     let clientId;
@@ -69,6 +111,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             instructionsDiv.style.display = 'none';
             if (postItems.length === 0) {
                 await getMax();
+                await buildLangList();
                 createNewPost();
                 postThreadBtn.style.display = 'flex';
             }
@@ -194,7 +237,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         lang = data.languages[0];
     }
 
-    let i = 0;
     let defaultViz = 'public';
     let currentPost;
     function createNewPost() {
@@ -214,15 +256,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         const index = postItems.indexOf(newPost);
         if (index === 0) {
             vizSelect.value = 'public';
-            vizSelect.addEventListener('change', () => {
-                defaultViz = vizSelect.value;
-                if (defaultViz === 'private') {
-                    for (let p of postItems) {
-                        const vizS = p.querySelector('.viz-select');
-                        vizS.value = defaultViz;
-                    }
-                }
-            });
         } else {
             if (defaultViz === 'private') {
                 vizSelect.value = defaultViz;
@@ -230,6 +263,19 @@ document.addEventListener('DOMContentLoaded', async function () {
                 vizSelect.value = 'unlisted';
             }
         }
+
+        vizSelect.addEventListener('change', () => {
+            const newIndex = postItems.indexOf(newPost)
+            if (newIndex === 0) {
+                defaultViz = vizSelect.value;
+                if (defaultViz === 'private') {
+                    for (let p of postItems) {
+                        const vizS = p.querySelector('.viz-select');
+                        vizS.value = defaultViz;
+                    }
+                }
+            }
+        });
 
         const langSelect = newPost.querySelector('.lang-select');
         langSelect.value = lang;
@@ -376,7 +422,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     }
                 }
             }
-        })
+        });
 
         function displayThumbnail(file, imgPreview, imgCount, dzInst) {
             const reader = new FileReader();
