@@ -74,6 +74,7 @@ button:hover {
     text-align: center;
     flex-direction: column;
     text-shadow: 0 0 10px #563acc;
+    z-index: 100;
 }
 
 .post-count {
@@ -108,7 +109,7 @@ button:hover {
 }
 .cw-btn:hover,
 select:hover {
-    background-color: #d9d9e8;
+    background-color: #dadade;
 }
 
 .cw-div {
@@ -215,6 +216,12 @@ div#dl-msg {
     border-radius: 4px;
     color: #6364ff;
     cursor: pointer;
+}
+
+.add-img:hover {
+    border-color: #563acc;
+    color: #563acc;
+    background-color: #dadade;
 }
 
 .add-img span {
