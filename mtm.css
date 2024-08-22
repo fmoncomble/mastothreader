@@ -180,12 +180,12 @@ div#dl-msg {
 
 .delete-post-btn,
 .alt-cancel-btn {
-    background-color: #cc0000;
+    background-color: red;
 }
 
 .delete-post-btn:hover,
 .alt-cancel-btn:hover {
-    background-color: red;
+    background-color: #cc0000;
 }
 
 .dropzone {
@@ -278,7 +278,7 @@ div#dl-msg {
 
 .remove-btn:hover {
     background: white;
-    color: rgba(255, 0, 0, 0.5);
+    color: #cc0000;
 }
 
 .alt-btn {
