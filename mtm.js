@@ -87,19 +87,19 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     let clientId;
     let clientSecret;
-    clientId = localStorage.getItem('mastothreadid');
-    clientSecret = localStorage.getItem('mastothreadsecret');
+    checkCredentials();
+    function checkCredentials() {
+        clientId = localStorage.getItem(`${instance}-id`);
+        clientSecret = localStorage.getItem(`${instance}-secret`);
+    }
     let code;
 
     function checkInstance() {
         instance = localStorage.getItem('mastothreadinstance');
         if (instance) {
             instanceInput.value = instance;
-            // instanceBtn.textContent = 'Réinitialiser';
         } else if (!instance) {
             instanceInput.value = null;
-            // instanceBtn.textContent = 'Valider';
-            // instanceInput.disabled = false;
         }
     }
 
@@ -122,10 +122,22 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     }
 
-    function removeToken() {
+    async function removeToken() {
         localStorage.removeItem('mastothreadtoken');
-        localStorage.removeItem('mastothreadid');
-        localStorage.removeItem('mastothreadsecret');
+        const formData = new FormData();
+        formData.append('client_id', clientId);
+        formData.append('client_secret', clientSecret);
+        formData.append('token', token);
+        const response = await fetch(`https://${instance}/oauth/revoke`, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: formData,
+        });
+        if (response.status === 403) {
+            const error = await response.json();
+            console.error('Token could not be revoked: ', error);
+            window.alert('La réinitialisation a échoué : ' + error.error_description);
+        }
     }
 
     instanceInput.addEventListener('keydown', async (event) => {
@@ -136,8 +148,10 @@ document.addEventListener('DOMContentLoaded', async function () {
                 return;
             }
             localStorage.setItem('mastothreadinstance', instance);
-            removeToken();
-            await createApp();
+            checkCredentials();
+            if (!clientId && !clientSecret) {
+                await createApp();
+            }
             redirectToAuthServer();
             checkInstance();
             checkToken();
@@ -161,8 +175,10 @@ document.addEventListener('DOMContentLoaded', async function () {
                 return;
             }
             localStorage.setItem('mastothreadinstance', instance);
-            removeToken();
-            await createApp();
+            checkCredentials();
+            if (!clientId && !clientSecret) {
+                await createApp();
+            }
             redirectToAuthServer();
             checkInstance();
             checkToken();
@@ -186,14 +202,20 @@ document.addEventListener('DOMContentLoaded', async function () {
                 }),
             });
             if (!response.ok) {
+                if (response.status === 429) {
+                    window.alert(
+                        'Serveur occupé : veuillez réessayer plus tard.'
+                    );
+                    return;
+                }
                 console.error('Error creating app: response ', response.status);
                 return;
             }
             const data = await response.json();
             clientId = data.client_id;
             clientSecret = data.client_secret;
-            localStorage.setItem('mastothreadid', clientId);
-            localStorage.setItem('mastothreadsecret', clientSecret);
+            localStorage.setItem(`${instance}-id`, clientId);
+            localStorage.setItem(`${instance}-secret`, clientSecret);
         } catch (error) {
             console.error('Error fetching: ', error);
         }
@@ -267,7 +289,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
 
         vizSelect.addEventListener('change', () => {
-            const newIndex = postItems.indexOf(newPost)
+            const newIndex = postItems.indexOf(newPost);
             if (newIndex === 0) {
                 defaultViz = vizSelect.value;
                 if (defaultViz === 'private') {
@@ -545,6 +567,10 @@ document.addEventListener('DOMContentLoaded', async function () {
                 );
 
                 if (!response.ok) {
+                    if ((response.status = 401)) {
+                        window.alert("Vous n'êtes pas authentifié.e");
+                        return;
+                    }
                     const errorData = await response.json();
                     console.error('Error uploading media: ', errorData);
                     window.alert(
@@ -579,6 +605,10 @@ document.addEventListener('DOMContentLoaded', async function () {
                     }
                 );
                 if (!response.ok) {
+                    if ((response.status = 401)) {
+                        window.alert("Vous n'êtes pas authentifié.e");
+                        return;
+                    }
                     const errorData = await response.json();
                     console.error('Error updating media: ', errorData);
                     window.alert(
@@ -627,13 +657,20 @@ document.addEventListener('DOMContentLoaded', async function () {
     let threadUrl;
     postThreadBtn.addEventListener('click', async () => {
         postThreadBtn.style.display = 'none';
-        contentContainer.remove();
+        contentContainer.style.display = 'none';
         counter.style.display = 'block';
         counter.style.marginTop = '50px';
-        await postThread();
+        let ok = await postThread();
+        if (!ok) {
+            spinner.style.display = 'none';
+            counter.style.display = 'none';
+            postThreadBtn.style.display = 'flex';
+            contentContainer.style.display = 'flex';
+            return;
+        }
         spinner.remove();
         counter.textContent =
-            'Votre fil a été publié. Pensez à cliquer sur « Réinitialiser » pour fermer votre session.';
+            'Votre fil a été publié. Pour fermer votre session (ordinateur partagé), cliquez sur « Réinitialiser ».';
         counter.style.color = '#563acc';
         const restartBtn = document.createElement('button');
         restartBtn.textContent = 'Composer un nouveau fil';
@@ -673,6 +710,17 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             const id = post.id.split('-')[1];
             const postMedia = mediaIds[`mediaIds${id}`];
+            if (!postText && postMedia.length === 0) {
+                if (i === 0) {
+                    if (postItems.length === 1) {
+                        window.alert('Le fil est vide');
+                        return;
+                    }
+                    window.alert('Votre premier pouet ne peut pas être vide');
+                    return;
+                }
+                continue;
+            }
             try {
                 const response = await fetch(
                     `https://${instance}/api/v1/statuses`,
@@ -695,6 +743,10 @@ document.addEventListener('DOMContentLoaded', async function () {
                 );
 
                 if (!response.ok) {
+                    if (response.status === 401) {
+                        window.alert("Vous n'êtes pas authentifié.e");
+                        return;
+                    }
                     const errorData = await response.json();
                     console.error('Error posting status: ', errorData);
                     window.alert(`Le pouet n°${id} n'a pas pu être envoyé.`);
@@ -709,5 +761,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                 console.error('Fetch error: ', error);
             }
         }
+        return threadUrl;
     }
 });
