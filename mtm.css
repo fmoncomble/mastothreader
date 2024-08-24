@@ -56,6 +56,10 @@ div#instructions {
     text-align: center;
 }
 
+#instance-input {
+    vertical-align: middle;
+}
+
 input {
     height: 20px;
     width: 300px;

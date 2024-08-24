@@ -95,11 +95,11 @@ document.addEventListener('DOMContentLoaded', async function () {
         instance = localStorage.getItem('mastothreadinstance');
         if (instance) {
             instanceInput.value = instance;
-            instanceBtn.textContent = 'Réinitialiser';
+            // instanceBtn.textContent = 'Réinitialiser';
         } else if (!instance) {
             instanceInput.value = null;
-            instanceBtn.textContent = 'Valider';
-            instanceInput.disabled = false;
+            // instanceBtn.textContent = 'Valider';
+            // instanceInput.disabled = false;
         }
     }
 
@@ -108,6 +108,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (token) {
             instanceInput.value = instance + ' ✅';
             instanceInput.disabled = true;
+            instanceBtn.textContent = 'Réinitialiser';
             instructionsDiv.style.display = 'none';
             if (postItems.length === 0) {
                 await getMax();
@@ -117,6 +118,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
         } else if (!token) {
             instructionsDiv.style.display = 'block';
+            instanceBtn.textContent = 'Valider';
         }
     }
 
