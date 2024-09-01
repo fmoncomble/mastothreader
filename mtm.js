@@ -10,6 +10,17 @@ document.addEventListener('DOMContentLoaded', async function () {
     const spinner = document.getElementById('spinner');
     const counter = document.getElementById('counter');
 
+    const instructionsBtn = document.getElementById('instructions-btn');
+    instructionsBtn.addEventListener('click', () => {
+        if (instructionsDiv.style.display === 'none') {
+            instructionsDiv.style.display = 'flex';
+            instructionsBtn.textContent = 'Masquer les instructions';
+        } else {
+            instructionsDiv.style.display = 'none';
+            instructionsBtn.textContent = 'Afficher les instructions';
+        }
+    })
+
     async function getData(url) {
         try {
             const res = await fetch(url);
@@ -117,7 +128,8 @@ document.addEventListener('DOMContentLoaded', async function () {
                 postThreadBtn.style.display = 'flex';
             }
         } else if (!token) {
-            instructionsDiv.style.display = 'block';
+            instructionsDiv.style.display = 'flex';
+            instructionsBtn.textContent = 'Masquer les instructions';
             instanceBtn.textContent = 'Valider';
         }
     }
