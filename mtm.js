@@ -136,7 +136,9 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (response.status === 403) {
             const error = await response.json();
             console.error('Token could not be revoked: ', error);
-            window.alert('La réinitialisation a échoué : ' + error.error_description);
+            window.alert(
+                'La réinitialisation a échoué : ' + error.error_description
+            );
         }
     }
 
@@ -263,7 +265,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     let defaultViz = 'public';
     let currentPost;
-    function createNewPost() {
+    function createNewPost(text) {
         const newPost = postItem.cloneNode(true);
         const addPostBtn = newPost.querySelector('.add-post-btn');
         if (postItems.length === 0) {
@@ -321,23 +323,71 @@ document.addEventListener('DOMContentLoaded', async function () {
         });
 
         updatePostCount();
-
-        const textarea = newPost.querySelector('.post-text');
-        textarea.value = null;
-        textarea.focus();
         const charCount = newPost.querySelector('.char-count');
         charCount.textContent = `0/${maxChars}`;
 
-        textarea.addEventListener('input', () => {
-            const postText = textarea.value;
+        const textarea = newPost.querySelector('.post-text');
+        if (text) {
+            // textarea.value = text;
+            splitIntoToots(text);
+        } else {
+            textarea.value = null;
+            textarea.focus();
+        }
+
+        function updateCharCount(postText) {
             charCount.textContent = `${postText.length}/${maxChars}`;
             if (postText.length > maxChars) {
+                postText = postText.trim();
                 charCount.style.color = '#cc0000';
                 charCount.style.fontWeight = 'bold';
             } else {
                 charCount.removeAttribute('style');
             }
+        }
+
+        textarea.addEventListener('input', () => {
+            let postText = textarea.value;
+            updateCharCount(postText);
+            if (postText.length > maxChars) {
+                splitIntoToots(postText);
+            } else {
+                charCount.removeAttribute('style');
+            }
         });
+
+        function splitIntoToots(postText) {
+            textarea.value = null;
+            postText = postText.trim();
+            const regex = /([,.;:!?])/gu;
+            const chunks = postText.split(regex);
+            let remainingChunks;
+            for (let i = 0; i < chunks.length; i += 2) {
+                let chunk1 = chunks[i];
+                let chunk2 = chunks[i + 1] || '';
+                let chunk = chunk1 + chunk2;
+                if (textarea.value.length + chunk.length < maxChars) {
+                    textarea.value += chunk;
+                    updateCharCount(textarea.value);
+                } else {
+                    remainingChunks = chunks.slice(i);
+                    break;
+                }
+            }
+            textarea.focus();
+            let flowText = '';
+            if (remainingChunks && remainingChunks.length > 0) {
+                for (let c of remainingChunks) {
+                    flowText += c;
+                }
+                if (postItems.length > 0) {
+                    currentPost = addPostBtn.parentElement;
+                }
+                if (flowText) {
+                    createNewPost(flowText.trim());
+                }
+            }
+        }
 
         const cwDiv = newPost.querySelector('.cw-div');
         const cwText = newPost.querySelector('.cw-text');
