@@ -1,8 +1,9 @@
 body {
+    position: relative;
     display: flex;
     flex-direction: column;
     font-family: Arial, Helvetica, sans-serif;
-    width: 100%;
+    width: 99%;
     padding-bottom: 30px;
     background-color: #e3e6e8;
 }
@@ -484,4 +485,19 @@ button#view-thread-btn {
 
 button#view-thread-btn:hover {
     background-color: #6364ff;
+}
+
+.footer {
+    position: fixed;
+    bottom: 5px;
+    right: 5px;
+    display: flex;
+    flex-direction: column;
+    text-align: right;
+    font-size: x-small;
+    color: #67757e;
+}
+
+div.footer div a img {
+    height: 30px;
 }

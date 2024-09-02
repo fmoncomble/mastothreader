@@ -10,6 +10,9 @@ document.addEventListener('DOMContentLoaded', async function () {
     const spinner = document.getElementById('spinner');
     const counter = document.getElementById('counter');
 
+    const yearSpan = document.querySelector('span#year');
+    yearSpan.textContent = new Date().toISOString().split('-')[0];
+
     const instructionsBtn = document.getElementById('instructions-btn');
     instructionsBtn.addEventListener('click', () => {
         if (instructionsDiv.style.display === 'none') {
