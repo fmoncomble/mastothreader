@@ -438,7 +438,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             overlay.style.display = 'flex';
         });
 
-        newPost.addEventListener('dragleave', (e) => {
+        overlay.addEventListener('dragleave', (e) => {
             e.preventDefault();
             overlay.style.display = 'none';
         });
