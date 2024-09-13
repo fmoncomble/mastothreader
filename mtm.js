@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             instructionsDiv.style.display = 'none';
             instructionsBtn.textContent = 'Afficher les instructions';
         }
-    })
+    });
 
     async function getData(url) {
         try {
@@ -343,7 +343,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         const textarea = newPost.querySelector('.post-text');
         if (text) {
-            // textarea.value = text;
             splitIntoToots(text);
         } else {
             textarea.value = null;
@@ -448,27 +447,39 @@ document.addEventListener('DOMContentLoaded', async function () {
             dropzone.classList.remove('dz-active');
             overlay.style.display = 'none';
             dzInst.style.display = 'none';
-            const newFiles = e.dataTransfer.files;
+            const newFiles = e.dataTransfer.items;
             if (files.length >= maxMedia) {
                 window.alert("Le nombre maximum d'images est atteint.");
                 return;
             } else {
                 for (let f of newFiles) {
                     if (files.length < maxMedia) {
-                        files.push(f);
-                        const imgSpinnerDiv =
-                            dropzone.querySelector('.img-spinner-div');
-                        imgSpinnerDiv.style.display = 'flex';
-                        let mediaId = await uploadMedia(f);
-                        if (mediaId) {
-                            mediaIds[`mediaIds${i}`].push(mediaId);
-                            imgCount.textContent = `${files.length}/${maxMedia}`;
-                            imgSpinnerDiv.style.display = 'none';
-                        } else {
-                            imgSpinnerDiv.style.display = 'none';
-                            continue;
+                        if (f.kind === 'file') {
+                            f = f.getAsFile();
+                            handleImgUpload(f);
+                        } else if (
+                            f.kind === 'string' &&
+                            f.type === 'text/uri-list'
+                        ) {
+                            f.getAsString((url) => {
+                                fetch(url)
+                                    .then((response) => response.blob())
+                                    .then((blob) => {
+                                        const file = new File(
+                                            [blob],
+                                            'image.jpg',
+                                            { type: blob.type }
+                                        );
+                                        handleImgUpload(file);
+                                    })
+                                    .catch((error) =>
+                                        console.error(
+                                            'Error fetching image:',
+                                            error
+                                        )
+                                    );
+                            });
                         }
-                        displayThumbnail(f, imgPreview, imgCount, dzInst);
                     } else {
                         window.alert("Le nombre maximum d'images est atteint");
                         break;
@@ -491,20 +502,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             } else {
                 for (let f of newFiles) {
                     if (files.length < maxMedia) {
-                        files.push(f);
-                        const imgSpinnerDiv =
-                            dropzone.querySelector('.img-spinner-div');
-                        imgSpinnerDiv.style.display = 'flex';
-                        let mediaId = await uploadMedia(f);
-                        if (mediaId) {
-                            mediaIds[`mediaIds${i}`].push(mediaId);
-                            imgCount.textContent = `${files.length}/${maxMedia}`;
-                            imgSpinnerDiv.style.display = 'none';
-                        } else {
-                            imgSpinnerDiv.style.display = 'none';
-                            continue;
-                        }
-                        displayThumbnail(f, imgPreview, imgCount, dzInst);
+                        handleImgUpload(f);
                     } else {
                         window.alert("Le nombre maximum d'images est atteint");
                         break;
@@ -512,6 +510,40 @@ document.addEventListener('DOMContentLoaded', async function () {
                 }
             }
         });
+
+        textarea.addEventListener('paste', (e) => {
+            dropzone.classList.remove('dz-active');
+            overlay.style.display = 'none';
+            dzInst.style.display = 'none';
+            const items = (e.clipboardData || e.originalEvent.clipboardData)
+                .items;
+            for (let item of items) {
+                if (item.kind === 'file') {
+                    const file = item.getAsFile();
+                    if (files.length < maxMedia) {
+                        handleImgUpload(file);
+                    } else {
+                        window.alert("Le nombre maximum d'images est atteint");
+                        break;
+                    }
+                }
+            }
+        });
+
+        async function handleImgUpload(f) {
+            files.push(f);
+            const imgSpinnerDiv = dropzone.querySelector('.img-spinner-div');
+            imgSpinnerDiv.style.display = 'flex';
+            let mediaId = await uploadMedia(f);
+            if (mediaId) {
+                mediaIds[`mediaIds${i}`].push(mediaId);
+                imgCount.textContent = `${files.length}/${maxMedia}`;
+                imgSpinnerDiv.style.display = 'none';
+            } else {
+                imgSpinnerDiv.style.display = 'none';
+            }
+            displayThumbnail(f, imgPreview, imgCount, dzInst);
+        }
 
         function displayThumbnail(file, imgPreview, imgCount, dzInst) {
             const reader = new FileReader();
@@ -632,7 +664,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 );
 
                 if (!response.ok) {
-                    if ((response.status = 401)) {
+                    if ((response.status === 401)) {
                         window.alert("Vous n'êtes pas authentifié.e");
                         return;
                     }
@@ -670,7 +702,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     }
                 );
                 if (!response.ok) {
-                    if ((response.status = 401)) {
+                    if ((response.status === 401)) {
                         window.alert("Vous n'êtes pas authentifié.e");
                         return;
                     }
