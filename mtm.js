@@ -534,7 +534,9 @@ document.addEventListener('DOMContentLoaded', async function () {
             files.push(f);
             const imgSpinnerDiv = dropzone.querySelector('.img-spinner-div');
             imgSpinnerDiv.style.display = 'flex';
-            let mediaId = await uploadMedia(f);
+            let mediaData = await uploadMedia(f);
+            let mediaId = mediaData[0];
+            let mediaPreviewUrl = mediaData[1];
             if (mediaId) {
                 mediaIds[`mediaIds${i}`].push(mediaId);
                 imgCount.textContent = `${files.length}/${maxMedia}`;
@@ -542,108 +544,110 @@ document.addEventListener('DOMContentLoaded', async function () {
             } else {
                 imgSpinnerDiv.style.display = 'none';
             }
-            displayThumbnail(f, imgPreview, imgCount, dzInst);
+            displayThumbnail(f, mediaPreviewUrl, imgPreview, imgCount, dzInst);
         }
 
-        function displayThumbnail(file, imgPreview, imgCount, dzInst) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const div = document.createElement('div');
-                const img = document.createElement('img');
-                const removeBtn = document.createElement('button');
+        function displayThumbnail(
+            file,
+            mediaPreviewUrl,
+            imgPreview,
+            imgCount,
+            dzInst
+        ) {
+            const div = document.createElement('div');
+            const img = document.createElement('img');
+            const removeBtn = document.createElement('button');
 
-                img.src = e.target.result;
-                removeBtn.textContent = '✖';
-                removeBtn.classList.add('remove-btn');
+            img.src = mediaPreviewUrl;
+            removeBtn.textContent = '✖';
+            removeBtn.classList.add('remove-btn');
 
-                removeBtn.addEventListener('click', async () => {
-                    const index = files.indexOf(file);
-                    if (index > -1) {
-                        files.splice(index, 1);
-                        mediaIds[`mediaIds${i}`].splice(index, 1);
-                    }
-                    div.remove();
-                    imgCount.textContent = `${files.length}/${maxMedia}`;
-                    if (files.length === 0) {
-                        dzInst.style.display = 'block';
-                    }
-                });
+            removeBtn.addEventListener('click', async () => {
+                const index = files.indexOf(file);
+                if (index > -1) {
+                    files.splice(index, 1);
+                    mediaIds[`mediaIds${i}`].splice(index, 1);
+                }
+                div.remove();
+                imgCount.textContent = `${files.length}/${maxMedia}`;
+                if (files.length === 0) {
+                    dzInst.style.display = 'block';
+                }
+            });
 
-                div.appendChild(img);
-                div.appendChild(removeBtn);
-                imgPreview.appendChild(div);
+            div.appendChild(img);
+            div.appendChild(removeBtn);
+            imgPreview.appendChild(div);
 
-                const altBtn = document.createElement('button');
-                altBtn.textContent = 'ALT';
-                altBtn.classList.add('alt-btn');
-                const altDiv = imgPreview.querySelector('.alt-div');
-                const newAltDiv = altDiv.cloneNode(true);
-                const altTextArea = newAltDiv.querySelector('.alt-text');
+            const altBtn = document.createElement('button');
+            altBtn.textContent = 'ALT';
+            altBtn.classList.add('alt-btn');
+            const altDiv = imgPreview.querySelector('.alt-div');
+            const newAltDiv = altDiv.cloneNode(true);
+            const altTextArea = newAltDiv.querySelector('.alt-text');
 
-                const altCounter = newAltDiv.querySelector('.alt-counter');
-                altTextArea.addEventListener('input', () => {
-                    altCounter.textContent = `${altTextArea.value.length}/1500`;
-                    if (altTextArea.value.length > 0) {
-                        altCancelBtn.textContent = 'Effacer';
-                    } else if (altTextArea.value.length === 0) {
-                        altCancelBtn.textContent = 'Annuler';
-                    }
-                    if (altTextArea.value.length > 1500) {
-                        altCounter.style.color = '#cc0000';
-                        altCounter.style.fontWeight = 'bold';
-                    } else {
-                        altCounter.removeAttribute('style');
-                    }
-                });
-                altTextArea.addEventListener('keydown', (e) => {
-                    const altText = altTextArea.value;
-                    if (
-                        (e.key === 'Enter' && e.metaKey) ||
-                        (e.key === 'Enter' && e.ctrlKey)
-                    ) {
-                        updateMedia(file, altText);
-                        altBtn.style.color = '#009900';
-                        newAltDiv.style.display = 'none';
-                    } else if (e.key === 'Escape') {
-                        newAltDiv.style.display = 'none';
-                    }
-                });
-
-                const altSaveBtn = newAltDiv.querySelector('.alt-save-btn');
-                const altCancelBtn = newAltDiv.querySelector('.alt-cancel-btn');
-                altBtn.addEventListener('click', () => {
-                    const altText = altTextArea.value;
-                    if (altText) {
-                        altCancelBtn.textContent = 'Effacer';
-                    } else {
-                        altCancelBtn.textContent = 'Annuler';
-                    }
-                    newAltDiv.style.display = 'flex';
-                    altTextArea.focus();
-                });
-                altSaveBtn.addEventListener('click', async () => {
-                    const altText = altTextArea.value;
-                    await updateMedia(file, altText);
+            const altCounter = newAltDiv.querySelector('.alt-counter');
+            altTextArea.addEventListener('input', () => {
+                altCounter.textContent = `${altTextArea.value.length}/1500`;
+                if (altTextArea.value.length > 0) {
+                    altCancelBtn.textContent = 'Effacer';
+                } else if (altTextArea.value.length === 0) {
+                    altCancelBtn.textContent = 'Annuler';
+                }
+                if (altTextArea.value.length > 1500) {
+                    altCounter.style.color = '#cc0000';
+                    altCounter.style.fontWeight = 'bold';
+                } else {
+                    altCounter.removeAttribute('style');
+                }
+            });
+            altTextArea.addEventListener('keydown', (e) => {
+                const altText = altTextArea.value;
+                if (
+                    (e.key === 'Enter' && e.metaKey) ||
+                    (e.key === 'Enter' && e.ctrlKey)
+                ) {
+                    updateMedia(file, altText);
                     altBtn.style.color = '#009900';
                     newAltDiv.style.display = 'none';
-                });
-                altCancelBtn.addEventListener('click', async () => {
-                    const altText = altTextArea.value;
-                    if (altText.length > 0) {
-                        altTextArea.value = null;
-                        altCounter.textContent = '0/1500';
-                        altCancelBtn.textContent = 'Annuler';
-                    } else if (altText.length === 0) {
-                        await updateMedia(file, altText);
-                        altBtn.removeAttribute('style');
-                        newAltDiv.style.display = 'none';
-                    }
-                });
+                } else if (e.key === 'Escape') {
+                    newAltDiv.style.display = 'none';
+                }
+            });
 
-                div.appendChild(altBtn);
-                div.appendChild(newAltDiv);
-            };
-            reader.readAsDataURL(file);
+            const altSaveBtn = newAltDiv.querySelector('.alt-save-btn');
+            const altCancelBtn = newAltDiv.querySelector('.alt-cancel-btn');
+            altBtn.addEventListener('click', () => {
+                const altText = altTextArea.value;
+                if (altText) {
+                    altCancelBtn.textContent = 'Effacer';
+                } else {
+                    altCancelBtn.textContent = 'Annuler';
+                }
+                newAltDiv.style.display = 'flex';
+                altTextArea.focus();
+            });
+            altSaveBtn.addEventListener('click', async () => {
+                const altText = altTextArea.value;
+                await updateMedia(file, altText);
+                altBtn.style.color = '#009900';
+                newAltDiv.style.display = 'none';
+            });
+            altCancelBtn.addEventListener('click', async () => {
+                const altText = altTextArea.value;
+                if (altText.length > 0) {
+                    altTextArea.value = null;
+                    altCounter.textContent = '0/1500';
+                    altCancelBtn.textContent = 'Annuler';
+                } else if (altText.length === 0) {
+                    await updateMedia(file, altText);
+                    altBtn.removeAttribute('style');
+                    newAltDiv.style.display = 'none';
+                }
+            });
+
+            div.appendChild(altBtn);
+            div.appendChild(newAltDiv);
         }
 
         async function uploadMedia(f) {
@@ -664,7 +668,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 );
 
                 if (!response.ok) {
-                    if ((response.status === 401)) {
+                    if (response.status === 401) {
                         window.alert("Vous n'êtes pas authentifié.e");
                         return;
                     }
@@ -677,7 +681,10 @@ document.addEventListener('DOMContentLoaded', async function () {
                 }
 
                 const data = await response.json();
-                return data.id;
+                const id = data.id;
+                const previewUrl = data.preview_url;
+                return [id, previewUrl];
+                // return data.id;
             } catch (error) {
                 console.error('Fetch error: ', error);
             }
@@ -702,7 +709,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     }
                 );
                 if (!response.ok) {
-                    if ((response.status === 401)) {
+                    if (response.status === 401) {
                         window.alert("Vous n'êtes pas authentifié.e");
                         return;
                     }
