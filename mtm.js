@@ -320,6 +320,9 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         const langSelect = newPost.querySelector('.lang-select');
         langSelect.value = lang;
+        langSelect.addEventListener('change', () => {
+            lang = langSelect.value;
+        });
 
         i++;
         newPost.id = 'post-' + i;
