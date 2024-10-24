@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     const instanceDataList = document.getElementById('inst-list');
     const instanceBtn = document.getElementById('instance-btn');
     const contentContainer = document.getElementById('content-container');
+    const inReplyToDiv = document.getElementById('in-reply-to');
+    const inReplyToInput = document.getElementById('in-reply-input');
     const postItem = document.getElementById('post-item');
     const languageSelect = document.querySelector('.lang-select');
     const postThreadBtn = document.getElementById('post-thread-btn');
@@ -81,6 +83,11 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     let instance;
     checkInstance();
+    if (instance) {
+        localStorage.removeItem(`${instance}-id`);
+        localStorage.removeItem(`${instance}-secret`);
+    }
+    localStorage.removeItem('mastothreadtoken');
     let token;
     checkToken();
 
@@ -91,7 +98,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (code) {
                 token = await exchangeCodeForToken(code);
                 if (token) {
-                    localStorage.setItem('mastothreadtoken', token);
+                    localStorage.setItem('mastothreadtoken-v2', token);
                     checkToken();
                 }
             }
@@ -103,8 +110,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     let clientSecret;
     checkCredentials();
     function checkCredentials() {
-        clientId = localStorage.getItem(`${instance}-id`);
-        clientSecret = localStorage.getItem(`${instance}-secret`);
+        clientId = localStorage.getItem(`${instance}-id-v2`);
+        clientSecret = localStorage.getItem(`${instance}-secret-v2`);
     }
     let code;
 
@@ -118,7 +125,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     async function checkToken() {
-        token = localStorage.getItem('mastothreadtoken');
+        token = localStorage.getItem('mastothreadtoken-v2');
         if (token) {
             instanceInput.value = instance + ' ✅';
             instanceInput.disabled = true;
@@ -127,6 +134,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (postItems.length === 0) {
                 await getMax();
                 await buildLangList();
+                inReplyToDiv.style.display = 'block';
                 createNewPost();
                 postThreadBtn.style.display = 'flex';
             }
@@ -138,7 +146,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     async function removeToken() {
-        localStorage.removeItem('mastothreadtoken');
+        localStorage.removeItem('mastothreadtoken-v2');
         const formData = new FormData();
         formData.append('client_id', clientId);
         formData.append('client_secret', clientSecret);
@@ -214,7 +222,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 body: JSON.stringify({
                     client_name: 'MastoThreader',
                     redirect_uris: redirectUri,
-                    scopes: 'write',
+                    scopes: 'read write',
                     website: redirectUri,
                 }),
             });
@@ -231,15 +239,15 @@ document.addEventListener('DOMContentLoaded', async function () {
             const data = await response.json();
             clientId = data.client_id;
             clientSecret = data.client_secret;
-            localStorage.setItem(`${instance}-id`, clientId);
-            localStorage.setItem(`${instance}-secret`, clientSecret);
+            localStorage.setItem(`${instance}-id-v2`, clientId);
+            localStorage.setItem(`${instance}-secret-v2`, clientSecret);
         } catch (error) {
             console.error('Error fetching: ', error);
         }
     }
 
     function redirectToAuthServer() {
-        const scope = 'write';
+        const scope = 'read write';
         const authUrl = `https://${instance}/oauth/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(
             redirectUri
         )}&scope=${encodeURIComponent(scope)}`;
@@ -277,6 +285,34 @@ document.addEventListener('DOMContentLoaded', async function () {
         maxMedia = Number(data.configuration.statuses.max_media_attachments);
         lang = data.languages[0];
     }
+
+    let originalId;
+    let originalUser;
+    inReplyToInput.addEventListener('change', async () => {
+        try {
+            const inReplyToUrl = inReplyToInput.value.trim();
+            const res = await fetch(
+                `https://${instance}/api/v2/search?q=${inReplyToUrl}&resolve=true`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            if (res.ok) {
+                const data = await res.json();
+                originalId = data.statuses[0].id;
+                originalUser = data.statuses[0].account.acct;
+                const firstPostItem = postItems[0];
+                const textarea = firstPostItem.querySelector('.post-text');
+                const text = textarea.value;
+                textarea.value = `@${originalUser}` + '\n' + text;
+                textarea.focus();
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    });
 
     let defaultViz = 'public';
     let currentPost;
@@ -350,6 +386,9 @@ document.addEventListener('DOMContentLoaded', async function () {
         } else {
             textarea.value = null;
             textarea.focus();
+        }
+        if (originalUser) {
+            textarea.value = originalUser + '\n' + textarea.value;
         }
 
         function updateCharCount(postText) {
@@ -794,6 +833,9 @@ document.addEventListener('DOMContentLoaded', async function () {
         postThreadBtn.textContent = null;
         spinner.style.display = 'inline-flex';
         let replyToId;
+        if (originalId) {
+            replyToId = originalId;
+        }
         for (let post of postItems) {
             const i = postItems.indexOf(post);
             counter.textContent = `Publication du pouet ${i + 1}/${

@@ -15,7 +15,7 @@
                 width="300"
                 fill="currentColor"
             />
-            <div id="version">v0.10.2</div>
+            <div id="version">v0.11</div>
             <div id="plugin-dl">
                 <img
                     src="icons/addon-install.svg"
@@ -88,6 +88,18 @@
             </div>
         </div>
         <div id="content-container">
+            <div id="in-reply-to" class="in-reply-to" style="display: none">
+                <label for="in-reply-input" style="font-size: small">
+                    En réponse à :
+                    <input
+                        type="text"
+                        name="in-reply-input"
+                        id="in-reply-input"
+                        placeholder="URL du pouet original (facultatif)"
+                    />
+                </label>
+            </div>
+            <br />
             <div id="post-item" class="post-item" style="display: none">
                 <div class="overlay" style="display: none">+</div>
                 <span class="post-count"></span>
@@ -172,7 +184,13 @@
         <datalist id="inst-list"> </datalist>
         <div class="footer">
             <div>F. Moncomble <span id="year"></span></div>
-            <div><a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.fr" target="_blank"><img src="icons/by-nc-sa.svg"/></a></div>
+            <div>
+                <a
+                    href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.fr"
+                    target="_blank"
+                    ><img src="icons/by-nc-sa.svg"
+                /></a>
+            </div>
         </div>
     </body>
 </html>
