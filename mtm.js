@@ -66,6 +66,31 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     const dlPic = document.getElementById('dl-pic');
     const dlMsg = document.getElementById('dl-msg');
+    const pluginInstall = document.getElementById('plugin-install');
+    const pluginLink = document.createElement('a');
+    pluginLink.textContent = 'Installer sur votre navigateur';
+    pluginLink.target = '_blank';
+    pluginInstall.appendChild(pluginLink);
+    const userAgent = navigator.userAgent;
+    if (
+        userAgent.indexOf('Chrome') !== -1 ||
+        userAgent.indexOf('Edge') !== -1 ||
+        userAgent.indexOf('OPR') !== -1 ||
+        userAgent.indexOf('Opera') !== -1
+    ) {
+        pluginLink.href =
+            'https://chromewebstore.google.com/detail/mastothreader-plugin/majdplkphamfebljfgebiniknbodhdgi';
+    } else if (userAgent.indexOf('Firefox') !== -1) {
+        pluginLink.href =
+            'https://github.com/fmoncomble/mastothreader/releases/latest/download/mastothreader.xpi';
+    } else if (
+        userAgent.indexOf('Safari') !== -1 &&
+        userAgent.indexOf('Chrome') === -1
+    ) {
+        pluginInstall.textContent = 'Plugin indisponible pour Safari';
+    } else {
+        pluginInstall.textContent = 'Votre navigateur n\'est pas pris en charge';
+    }
     dlPic.onclick = () => {
         if (dlMsg.style.display === 'none') {
             dlMsg.style.display = 'flex';
