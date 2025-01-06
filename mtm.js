@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     ) {
         pluginInstall.textContent = 'Plugin indisponible pour Safari';
     } else {
-        pluginInstall.textContent = 'Votre navigateur n\'est pas pris en charge';
+        pluginInstall.textContent = "Votre navigateur n'est pas pris en charge";
     }
     dlPic.onclick = () => {
         if (dlMsg.style.display === 'none') {
@@ -412,7 +412,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             textarea.value = null;
             textarea.focus();
         }
-        if (originalUser) {
+        if (originalUser && postItems.indexOf(newPost) === 0) {
             textarea.value = originalUser + '\n' + textarea.value;
         }
 
@@ -811,6 +811,11 @@ document.addEventListener('DOMContentLoaded', async function () {
                 }
             }
             const firstPost = postItems[0];
+            if (originalUser) {
+                const textarea = firstPost.querySelector('.post-text');
+                const text = textarea.value;
+                textarea.value = `@${originalUser}\n${text}`;
+            }
             const firstVizSelect = firstPost.querySelector('.viz-select');
             firstVizSelect.value = defaultViz;
         });
