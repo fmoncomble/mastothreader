@@ -332,12 +332,25 @@ document.addEventListener('DOMContentLoaded', async function () {
                 const textarea = firstPostItem.querySelector('.post-text');
                 const text = textarea.value;
                 textarea.value = `@${originalUser}` + '\n' + text;
+                updateCharCount(firstPostItem, textarea.value);
                 textarea.focus();
             }
         } catch (error) {
             console.error(error);
         }
     });
+
+    function updateCharCount(post, postText) {
+        const charCount = post.querySelector('.char-count');
+        charCount.textContent = `${postText.length}/${maxChars}`;
+        if (postText.length > maxChars) {
+            postText = postText.trim();
+            charCount.style.color = '#cc0000';
+            charCount.style.fontWeight = 'bold';
+        } else {
+            charCount.removeAttribute('style');
+        }
+    }
 
     let defaultViz = 'public';
     let currentPost;
@@ -413,23 +426,14 @@ document.addEventListener('DOMContentLoaded', async function () {
             textarea.focus();
         }
         if (originalUser && postItems.indexOf(newPost) === 0) {
-            textarea.value = originalUser + '\n' + textarea.value;
-        }
-
-        function updateCharCount(postText) {
-            charCount.textContent = `${postText.length}/${maxChars}`;
-            if (postText.length > maxChars) {
-                postText = postText.trim();
-                charCount.style.color = '#cc0000';
-                charCount.style.fontWeight = 'bold';
-            } else {
-                charCount.removeAttribute('style');
-            }
+            let text = textarea.value;
+            textarea.value = originalUser + '\n' + text;
+            updateCharCount(newPost, textarea.value);
         }
 
         textarea.addEventListener('input', () => {
             let postText = textarea.value;
-            updateCharCount(postText);
+            updateCharCount(newPost, postText);
             if (postText.length > maxChars) {
                 splitIntoToots(postText);
             } else {
@@ -449,7 +453,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 let chunk = chunk1 + chunk2;
                 if (textarea.value.length + chunk.length < maxChars) {
                     textarea.value += chunk;
-                    updateCharCount(textarea.value);
+                    updateCharCount(newPost, textarea.value);
                 } else {
                     remainingChunks = chunks.slice(i);
                     break;
@@ -815,6 +819,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 const textarea = firstPost.querySelector('.post-text');
                 const text = textarea.value;
                 textarea.value = `@${originalUser}\n${text}`;
+                updateCharCount(firstPost, textarea.value);
             }
             const firstVizSelect = firstPost.querySelector('.viz-select');
             firstVizSelect.value = defaultViz;
