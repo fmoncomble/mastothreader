@@ -313,9 +313,12 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     let originalId;
     let originalUser;
-    inReplyToInput.addEventListener('change', async () => {
+    inReplyToInput.addEventListener('input', async () => {
         try {
             const inReplyToUrl = inReplyToInput.value.trim();
+            if (!inReplyToUrl.startsWith('http')) {
+                return;
+            }
             const res = await fetch(
                 `https://${instance}/api/v2/search?q=${inReplyToUrl}&resolve=true`,
                 {
@@ -327,11 +330,11 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (res.ok) {
                 const data = await res.json();
                 originalId = data.statuses[0].id;
-                originalUser = data.statuses[0].account.acct;
+                originalUser = `@${data.statuses[0].account.acct}`;
                 const firstPostItem = postItems[0];
                 const textarea = firstPostItem.querySelector('.post-text');
                 const text = textarea.value;
-                textarea.value = `@${originalUser}` + '\n' + text;
+                textarea.value = `${originalUser}\n${text}`;
                 updateCharCount(firstPostItem, textarea.value);
                 textarea.focus();
             }
@@ -432,6 +435,16 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
 
         textarea.addEventListener('input', () => {
+            let postText = textarea.value;
+            updateCharCount(newPost, postText);
+            if (postText.length > maxChars) {
+                splitIntoToots(postText);
+            } else {
+                charCount.removeAttribute('style');
+            }
+        });
+
+        textarea.addEventListener('focus', () => {
             let postText = textarea.value;
             updateCharCount(newPost, postText);
             if (postText.length > maxChars) {
@@ -933,7 +946,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     }
                     const errorData = await response.json();
                     console.error('Error posting status: ', errorData);
-                    window.alert(`Le pouet n°${id} n'a pas pu être envoyé.`);
+                    window.alert(`Le pouet n°${id} n'a pas pu être envoyé.\n${errorData.error}`);
                     return;
                 }
                 const data = await response.json();
