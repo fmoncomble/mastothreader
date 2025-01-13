@@ -441,7 +441,6 @@ document.addEventListener('DOMContentLoaded', async function () {
             let postText = textarea.value;
             if (postText.length > 30) {
                 let language = franc(postText);
-                console.log('Language: ', language);
                 if (language === 'und') {
                     language = lang;
                 } else {
