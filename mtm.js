@@ -1,5 +1,5 @@
 import { franc } from 'https://esm.sh/franc@6?bundle';
-import {iso6393} from 'https://esm.sh/iso-639-3@3?bundle';
+import { iso6393 } from 'https://esm.sh/iso-639-3@3?bundle';
 
 document.addEventListener('DOMContentLoaded', async function () {
     const instructionsDiv = document.getElementById('instructions');
@@ -131,8 +131,27 @@ document.addEventListener('DOMContentLoaded', async function () {
                 }
             }
         }
+        if (token) {
+            await checkApp();
+        }
         await buildInstList();
     };
+
+    async function checkApp() {
+        let res = fetch(`https://${instance}/api/v1/apps/verify_credentials`, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        res.then(async (res) => {
+            if (!res.ok) {
+                const error = await res.json();
+                window.alert(
+                    `L'application n'est pas autorisée sur ${instance} : ${error.error}.\nVeuillez vous authentifier à nouveau.`
+                );
+                await removeToken();
+                window.location.reload();
+            }
+        });
+    }
 
     let clientId;
     let clientSecret;
