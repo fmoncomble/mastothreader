@@ -1,3 +1,6 @@
+import { franc } from 'https://esm.sh/franc@6?bundle';
+import {iso6393} from 'https://esm.sh/iso-639-3@3?bundle';
+
 document.addEventListener('DOMContentLoaded', async function () {
     const instructionsDiv = document.getElementById('instructions');
     const instanceInput = document.getElementById('instance-input');
@@ -436,6 +439,16 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         textarea.addEventListener('input', () => {
             let postText = textarea.value;
+            if (postText.length > 30) {
+                let language = franc(postText);
+                console.log('Language: ', language);
+                if (language === 'und') {
+                    language = lang;
+                } else {
+                    lang = iso6393.find((l) => l.iso6393 === language).iso6391;
+                }
+                langSelect.value = lang;
+            }
             updateCharCount(newPost, postText);
             if (postText.length > maxChars) {
                 splitIntoToots(postText);
@@ -732,6 +745,17 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             div.appendChild(altBtn);
             div.appendChild(newAltDiv);
+
+            setTimeout(() => {
+                const altText = altTextArea.value;
+                if (altText) {
+                    altCancelBtn.textContent = 'Effacer';
+                } else {
+                    altCancelBtn.textContent = 'Annuler';
+                }
+                newAltDiv.style.display = 'flex';
+                altTextArea.focus();
+            }, 500);
         }
 
         async function uploadMedia(f) {
@@ -946,7 +970,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                     }
                     const errorData = await response.json();
                     console.error('Error posting status: ', errorData);
-                    window.alert(`Le pouet n°${id} n'a pas pu être envoyé.\n${errorData.error}`);
+                    window.alert(
+                        `Le pouet n°${id} n'a pas pu être envoyé.\n${errorData.error}`
+                    );
                     return;
                 }
                 const data = await response.json();
