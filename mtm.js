@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     const contentContainer = document.getElementById('content-container');
     const inReplyToDiv = document.getElementById('in-reply-to');
     const inReplyToInput = document.getElementById('in-reply-input');
+    const previewDiv = document.getElementById('replied-post-preview');
     const postItem = document.getElementById('post-item');
     const languageSelect = document.querySelector('.lang-select');
     const postThreadBtn = document.getElementById('post-thread-btn');
@@ -338,6 +339,18 @@ document.addEventListener('DOMContentLoaded', async function () {
     inReplyToInput.addEventListener('input', async () => {
         try {
             const inReplyToUrl = inReplyToInput.value.trim();
+            if (inReplyToInput.value.trim() === '') {
+                previewDiv.style.display = 'none';
+                originalId = null;
+                const firstPostItem = postItems[0];
+                const textarea = firstPostItem.querySelector('.post-text');
+                const text = textarea.value;
+                if (originalUser && text.startsWith(originalUser)) {
+                    textarea.value = text.replace(originalUser, '').trim();
+                }
+                originalUser = null;
+                return;
+            }
             if (!inReplyToUrl.startsWith('http')) {
                 return;
             }
@@ -351,19 +364,67 @@ document.addEventListener('DOMContentLoaded', async function () {
             );
             if (res.ok) {
                 const data = await res.json();
+                if (data.statuses.length === 0) {
+                    return;
+                }
                 originalId = data.statuses[0].id;
+                let oldUser = originalUser;
                 originalUser = `@${data.statuses[0].account.acct}`;
                 const firstPostItem = postItems[0];
                 const textarea = firstPostItem.querySelector('.post-text');
                 const text = textarea.value;
-                textarea.value = `${originalUser}\n${text}`;
+                if (oldUser) {
+                    textarea.value = text.replace(oldUser, originalUser);
+                } else if (!text.startsWith(originalUser)) {
+                    textarea.value = `${originalUser}` + '\n' + text;
+                }
                 updateCharCount(firstPostItem, textarea.value);
+                createRepliedPostPreview(data.statuses[0]);
                 textarea.focus();
             }
         } catch (error) {
             console.error(error);
         }
     });
+
+    function createRepliedPostPreview(status) {
+        const previewAvatar = document.getElementById('replied-post-avatar');
+        previewAvatar.innerHTML = null;
+        const previewName = document.getElementById('replied-post-display-name');
+        previewName.innerHTML = null;
+        const previewTime = document.getElementById('replied-post-time');
+        previewTime.innerHTML = null;
+
+        const avatar = document.createElement('img');
+        avatar.src = status.account.avatar;
+        avatar.alt = status.account.display_name;
+        previewAvatar.appendChild(avatar);
+
+        const name = document.createElement('span');
+        name.textContent = status.account.display_name;
+        previewName.appendChild(name);
+
+        const time = document.createElement('time');
+        time.textContent = new Date(status.created_at).toLocaleString();
+        previewTime.appendChild(time);
+
+        const previewTextDiv = document.getElementById('replied-post-text');
+        const previewMediaDiv = document.getElementById('replied-post-media');
+
+        const previewText = status.content;
+        previewTextDiv.innerHTML = previewText;
+
+        previewMediaDiv.innerHTML = null;
+        const media = status.media_attachments;
+        for (let m of media) {
+            const img = document.createElement('img');
+            img.src = m.preview_url;
+            img.alt = m.description;
+            previewMediaDiv.appendChild(img);
+        }
+
+        previewDiv.style.display = 'flex';
+    }
 
     function updateCharCount(post, postText) {
         const charCount = post.querySelector('.char-count');

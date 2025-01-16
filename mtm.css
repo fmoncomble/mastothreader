@@ -37,7 +37,7 @@ div#plugin-install a:visited {
 }
 
 div#plugin-install a:hover {
-    color:#6364ff;
+    color: #6364ff;
 }
 
 img#icon {
@@ -501,4 +501,69 @@ button#view-thread-btn:hover {
 
 div.footer div a img {
     height: 30px;
+}
+
+div#replied-post-preview {
+    flex-direction: column;
+    width: 550px;
+    border: solid 1px #d9d9e8;
+    border-radius: 4px;
+    display: flex;
+    position: relative;
+    background-color: white;
+    padding: 10px;
+    box-sizing: border-box;
+    margin: 10px 0;
+}
+
+div#replied-post-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: left;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+div#replied-post-header img {
+    width: 30px;
+    height: 30px;
+    object-fit: cover;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+div#replied-post-display-name,
+div#replied-post-time {
+    margin-right: 10px;
+    font-size: small;
+}
+
+div#replied-post-display-name {
+    font-weight: bold;
+}
+
+div#replied-post-content {
+    border: solid 1px #d9d9e8;
+    padding: 5px;
+    margin-bottom: 5px;
+    background-color: #eee;
+    border-radius: 4px;
+}
+
+div#replied-post-text {
+    text-align: left;
+    font-size: small;
+}
+
+div#replied-post-media {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+div#replied-post-media img {
+    width: 70px;
+    object-fit: cover;
+    margin-right: 10px;
+    margin: 0 5px;
 }
