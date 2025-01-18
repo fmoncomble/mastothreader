@@ -15,7 +15,7 @@
                 width="300"
                 fill="currentColor"
             />
-            <div id="version">v0.12</div>
+            <div id="version">v0.13</div>
             <div id="plugin-dl">
                 <img
                     src="icons/addon-install.svg"
@@ -77,6 +77,15 @@
             </div>
         </div>
         <div id="content-container">
+            <div id="number-posts-div" style="margin: 10px 0; display: none">
+                <label for="number-posts" class="number-posts">
+                    <input
+                        type="checkbox"
+                        name="number-posts"
+                        id="number-posts"
+                    />Numéroter les pouets</label
+                >
+            </div>
             <div id="in-reply-to" class="in-reply-to" style="display: none">
                 <label for="in-reply-input" style="font-size: small">
                     En réponse à :
@@ -88,7 +97,7 @@
                     />
                 </label>
             </div>
-            <div style="margin-bottom: 10px">
+            <div id="reply-preview" style="margin-bottom: 10px">
                 <div id="replied-post-preview" style="display: none">
                     <div id="replied-post-header">
                         <div id="replied-post-avatar"></div>
@@ -103,16 +112,21 @@
             </div>
             <div id="post-item" class="post-item" style="display: none">
                 <div class="overlay" style="display: none">+</div>
-                <span class="post-count"></span>
-                <select class="viz-select" title="Régler la visibilité">
-                    <option value="public">Public</option>
-                    <option value="unlisted">Non listé</option>
-                    <option value="private">Privé</option>
-                </select>
-                <button class="cw-btn" title="Ajouter un avertissement">
-                    CW
-                </button>
-                <select class="lang-select" title="Choisir la langue"></select>
+                <div class="post-header">
+                    <span class="post-count"></span>
+                    <select class="viz-select" title="Régler la visibilité">
+                        <option value="public">Public</option>
+                        <option value="unlisted">Non listé</option>
+                        <option value="private">Privé</option>
+                    </select>
+                    <button class="cw-btn" title="Ajouter un avertissement">
+                        CW
+                    </button>
+                    <select
+                        class="lang-select"
+                        title="Choisir la langue"
+                    ></select>
+                </div>
                 <div class="cw-div" style="display: none">
                     <textarea
                         class="cw-text"
@@ -182,6 +196,7 @@
                 src="https://www.freevisitorcounters.com/en/home/counter/1224492/t/3"
             ></script>
         </div>
+        <div id="thread-link" class="thread-link" style="display: none"></div>
         <datalist id="inst-list"> </datalist>
         <div class="footer">
             <div>F. Moncomble <span id="year"></span></div>

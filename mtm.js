@@ -7,9 +7,13 @@ document.addEventListener('DOMContentLoaded', async function () {
     const instanceDataList = document.getElementById('inst-list');
     const instanceBtn = document.getElementById('instance-btn');
     const contentContainer = document.getElementById('content-container');
+    const numberPostsDiv = document.getElementById('number-posts-div');
+    const numberPostsCheckbox = document.getElementById('number-posts');
     const inReplyToDiv = document.getElementById('in-reply-to');
     const inReplyToInput = document.getElementById('in-reply-input');
+    const replyPreview = document.getElementById('reply-preview');
     const previewDiv = document.getElementById('replied-post-preview');
+    const threadLink = document.getElementById('thread-link');
     const postItem = document.getElementById('post-item');
     const languageSelect = document.querySelector('.lang-select');
     const postThreadBtn = document.getElementById('post-thread-btn');
@@ -107,6 +111,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     let maxMedia;
     let lang;
     let postItems = [];
+    let oldPosts = [];
     let mediaIds = {};
     let i = 0;
 
@@ -182,6 +187,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (postItems.length === 0) {
                 await getMax();
                 await buildLangList();
+                numberPostsDiv.style.display = 'flex';
                 inReplyToDiv.style.display = 'block';
                 createNewPost();
                 postThreadBtn.style.display = 'flex';
@@ -349,6 +355,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                     textarea.value = text.replace(originalUser, '').trim();
                 }
                 originalUser = null;
+                updateCharCount(firstPostItem, textarea.value);
+                let message = 'Updating post list after clearing in-reply-to';
+                updatePostList(message);
                 return;
             }
             if (!inReplyToUrl.startsWith('http')) {
@@ -368,16 +377,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                     return;
                 }
                 originalId = data.statuses[0].id;
-                let oldUser = originalUser;
                 originalUser = `@${data.statuses[0].account.acct}`;
                 const firstPostItem = postItems[0];
                 const textarea = firstPostItem.querySelector('.post-text');
-                const text = textarea.value;
-                if (oldUser) {
-                    textarea.value = text.replace(oldUser, originalUser);
-                } else if (!text.startsWith(originalUser)) {
-                    textarea.value = `${originalUser}` + '\n' + text;
-                }
                 updateCharCount(firstPostItem, textarea.value);
                 createRepliedPostPreview(data.statuses[0]);
                 textarea.focus();
@@ -390,7 +392,9 @@ document.addEventListener('DOMContentLoaded', async function () {
     function createRepliedPostPreview(status) {
         const previewAvatar = document.getElementById('replied-post-avatar');
         previewAvatar.innerHTML = null;
-        const previewName = document.getElementById('replied-post-display-name');
+        const previewName = document.getElementById(
+            'replied-post-display-name'
+        );
         previewName.innerHTML = null;
         const previewTime = document.getElementById('replied-post-time');
         previewTime.innerHTML = null;
@@ -424,6 +428,8 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
 
         previewDiv.style.display = 'flex';
+        let message = 'Updating post list after setting in-reply-to';
+        updatePostList(message);
     }
 
     function updateCharCount(post, postText) {
@@ -440,7 +446,12 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     let defaultViz = 'public';
     let currentPost;
-    function createNewPost(text) {
+    let splitNb = 0;
+    let isSplitting = false;
+    async function createNewPost(text) {
+        oldPosts = postItems.map(function (p) {
+            return p.getAttribute('counter');
+        });
         const newPost = postItem.cloneNode(true);
         const addPostBtn = newPost.querySelector('.add-post-btn');
         if (postItems.length === 0) {
@@ -452,7 +463,9 @@ document.addEventListener('DOMContentLoaded', async function () {
             const newIndex = currentIndex + 1;
             postItems.splice(newIndex, 0, newPost);
         }
-
+        updatePostCount();
+        oldPosts.splice(postItems.indexOf(newPost), 0, 'skip');
+        let message = 'Updating list of posts after creation';
         const vizSelect = newPost.querySelector('.viz-select');
         const index = postItems.indexOf(newPost);
         if (index === 0) {
@@ -492,6 +505,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 deletePostBtn.style.display = 'inline-block';
             }
         }
+
         newPost.style.display = 'block';
         addPostBtn.addEventListener('click', () => {
             if (postItems.length > 0) {
@@ -500,24 +514,27 @@ document.addEventListener('DOMContentLoaded', async function () {
             createNewPost();
         });
 
-        updatePostCount();
         const charCount = newPost.querySelector('.char-count');
         charCount.textContent = `0/${maxChars}`;
 
         const textarea = newPost.querySelector('.post-text');
         if (text) {
-            splitIntoToots(text);
+            if (text.length > maxChars) {
+                await splitIntoToots(newPost, text, textarea);
+            } else {
+                textarea.value = text;
+                updateCharCount(newPost, text);
+                textarea.focus();
+            }
         } else {
             textarea.value = null;
             textarea.focus();
         }
         if (originalUser && postItems.indexOf(newPost) === 0) {
-            let text = textarea.value;
-            textarea.value = originalUser + '\n' + text;
             updateCharCount(newPost, textarea.value);
         }
 
-        textarea.addEventListener('input', () => {
+        textarea.addEventListener('input', async () => {
             let postText = textarea.value;
             if (postText.length > 30) {
                 let language = franc(postText);
@@ -530,54 +547,21 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
             updateCharCount(newPost, postText);
             if (postText.length > maxChars) {
-                splitIntoToots(postText);
+                await splitIntoToots(newPost, postText, textarea);
             } else {
                 charCount.removeAttribute('style');
             }
         });
 
-        textarea.addEventListener('focus', () => {
+        textarea.addEventListener('focus', async () => {
             let postText = textarea.value;
             updateCharCount(newPost, postText);
             if (postText.length > maxChars) {
-                splitIntoToots(postText);
+                await splitIntoToots(newPost, postText, textarea);
             } else {
                 charCount.removeAttribute('style');
             }
         });
-
-        function splitIntoToots(postText) {
-            textarea.value = null;
-            postText = postText.trim();
-            const regex = /([,.;:!?])/gu;
-            const chunks = postText.split(regex);
-            let remainingChunks;
-            for (let i = 0; i < chunks.length; i += 2) {
-                let chunk1 = chunks[i];
-                let chunk2 = chunks[i + 1] || '';
-                let chunk = chunk1 + chunk2;
-                if (textarea.value.length + chunk.length < maxChars) {
-                    textarea.value += chunk;
-                    updateCharCount(newPost, textarea.value);
-                } else {
-                    remainingChunks = chunks.slice(i);
-                    break;
-                }
-            }
-            textarea.focus();
-            let flowText = '';
-            if (remainingChunks && remainingChunks.length > 0) {
-                for (let c of remainingChunks) {
-                    flowText += c;
-                }
-                if (postItems.length > 0) {
-                    currentPost = addPostBtn.parentElement;
-                }
-                if (flowText) {
-                    createNewPost(flowText.trim());
-                }
-            }
-        }
 
         const cwDiv = newPost.querySelector('.cw-div');
         const cwText = newPost.querySelector('.cw-text');
@@ -871,7 +855,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                 const id = data.id;
                 const previewUrl = data.preview_url;
                 return [id, previewUrl];
-                // return data.id;
             } catch (error) {
                 console.error('Fetch error: ', error);
             }
@@ -920,10 +903,16 @@ document.addEventListener('DOMContentLoaded', async function () {
             const index = postItems.indexOf(newPost);
             if (postItems.length > 1) {
                 const id = newPost.id.split('-')[1];
+                oldPosts = postItems.map(function (p) {
+                    return p.getAttribute('counter');
+                });
                 postItems.splice(index, 1);
+                let nbOfPosts = updatePostCount();
                 newPost.remove();
                 delete files[`files${id}`];
-                updatePostCount();
+                oldPosts.splice(index, 1);
+                let message = 'Updating list of posts after delete';
+                updatePostList(message, oldPosts, nbOfPosts);
                 if (postItems.length === 1) {
                     const post = postItems[0];
                     const delBtn = post.querySelector('.delete-post-btn');
@@ -934,13 +923,72 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (originalUser) {
                 const textarea = firstPost.querySelector('.post-text');
                 const text = textarea.value;
-                textarea.value = `@${originalUser}\n${text}`;
                 updateCharCount(firstPost, textarea.value);
             }
             const firstVizSelect = firstPost.querySelector('.viz-select');
             firstVizSelect.value = defaultViz;
         });
+        updatePostList(message, oldPosts);
+        textarea.focus();
+        return newPost;
     }
+
+    async function splitIntoToots(newPost, postText, textarea) {
+        if (isSplitting) {
+            return;
+        }
+        isSplitting = true;
+        splitNb++;
+        textarea.value = null;
+        postText = postText.trim();
+        const regex = /([,.;:!?])/gu;
+        const chunks = postText.split(regex);
+        let remainingChunks;
+        for (let i = 0; i < chunks.length; i += 2) {
+            let chunk1 = chunks[i];
+            let chunk2 = chunks[i + 1] || '';
+            let chunk = chunk1 + chunk2;
+            if (textarea.value.length + chunk.length < maxChars) {
+                textarea.value += chunk;
+                updateCharCount(newPost, textarea.value);
+            } else {
+                remainingChunks = chunks.slice(i);
+                break;
+            }
+        }
+        textarea.focus();
+        let flowText = '';
+        if (remainingChunks && remainingChunks.length > 0) {
+            for (let c of remainingChunks) {
+                flowText += c;
+            }
+            if (postItems.length > 0) {
+                const addPostBtn = newPost.querySelector('.add-post-btn');
+                currentPost = addPostBtn.parentElement;
+            }
+            if (flowText) {
+                createNewPost(flowText.trim()).then((newPost) => {
+                    splitIntoToots(
+                        newPost,
+                        flowText.trim(),
+                        newPost.querySelector('.post-text')
+                    );
+                });
+            }
+        } else {
+            let postCounters = postItems.map(function (p) {
+                return p.getAttribute('counter');
+            });
+            updatePostList('Updating list of posts after splitting', postCounters);
+            textarea.focus();
+        }
+        isSplitting = false;
+    }
+
+    numberPostsCheckbox.addEventListener('change', async () => {
+        let message = 'Updating post list after ticking/unticking checkbox';
+        await updatePostList(message, oldPosts);
+    });
 
     function updatePostCount() {
         for (let p of postItems) {
@@ -948,7 +996,78 @@ document.addEventListener('DOMContentLoaded', async function () {
             const pNo = i + 1;
             const postCount = p.querySelector('.post-count');
             postCount.textContent = `Pouet ${pNo}/${postItems.length}`;
+            p.setAttribute('counter', `${pNo}/${postItems.length}`);
         }
+        return postItems.length;
+    }
+
+    let updateTime = 1;
+    async function updatePostList(message, oldPosts, nbOfPosts) {
+        if (!nbOfPosts) {
+            nbOfPosts = postItems.length;
+        } else {
+        }
+        let numberPosts = numberPostsCheckbox.checked;
+        replyPreview.style.marginBottom = '10px';
+        let threadLinks = Array.from(
+            document.querySelectorAll('.thread-link')
+        ).filter((t) => t.style.display === 'block');
+        threadLinks.forEach((t) => t.remove());
+        let times = 1;
+        for (let p of postItems) {
+            const i = postItems.indexOf(p);
+            const previousPost = postItems[i - 1];
+            if (previousPost) {
+                let replyLink = threadLink.cloneNode(true);
+                p.before(replyLink);
+                previousPost.style.marginBottom = '0';
+                replyLink.style.display = 'block';
+            } else if (
+                postItems.indexOf(p) === 0 &&
+                previewDiv.style.display === 'flex'
+            ) {
+                let replyLink = threadLink.cloneNode(true);
+                p.before(replyLink);
+                replyPreview.style.marginBottom = '0';
+                replyLink.style.display = 'block';
+            }
+            postItems[postItems.length - 1].style.marginBottom = '20px';
+            const textarea = p.querySelector('textarea.post-text');
+            let text = textarea.value;
+            let oldCount;
+            if (oldPosts && oldPosts.length > 0) {
+                oldCount = oldPosts[i];
+            } else {
+                oldCount = `${i + 1}/${nbOfPosts}`;
+            }
+            times++;
+            const postCount = `${i + 1}/${postItems.length}`;
+            if (numberPosts) {
+                if (oldCount && oldCount !== 'skip') {
+                    if (text.startsWith(oldCount)) {
+                        text = text.replace(oldCount, postCount);
+                    } else {
+                        text = `${postCount}\n${text}`;
+                    }
+                } else if (!oldCount || oldCount === 'skip') {
+                    text = `${postCount}\n${text}`;
+                }
+                textarea.value = text;
+                updateCharCount(p, textarea.value);
+            } else if (!numberPosts) {
+                if (postCount && text.startsWith(postCount)) {
+                    text = text.replace(postCount, '').trim();
+                    textarea.value = text;
+                    updateCharCount(p, textarea.value);
+                }
+            }
+        }
+        updateTime++;
+        postItems.forEach((p) => {
+            const textarea = p.querySelector('textarea.post-text');
+            textarea.focus();
+        });
+        return true;
     }
 
     let threadUrl;
