@@ -3,7 +3,8 @@
     <head>
         <meta http-equiv="content-type" content="text/html; charset=utf-8" />
         <link rel="stylesheet" href="mtm.css" type="text/css" />
-        <script type="module" src="mtm.js" type="text/javascript"></script>
+        <script src="mtm.js" type="module"></script>
+        <script src="https://unpkg.com/mux.js"></script>
         <link href="icons/favicon.ico" rel="icon" type="image/x-icon" />
         <title>MastoThreader</title>
     </head>
@@ -15,7 +16,7 @@
                 width="300"
                 fill="currentColor"
             />
-            <div id="version">v0.13</div>
+            <div id="version">v0.14</div>
             <div id="plugin-dl">
                 <img
                     src="icons/addon-install.svg"
@@ -78,6 +79,10 @@
         </div>
         <div id="content-container">
             <div id="number-posts-div" style="margin: 10px 0; display: none">
+                <label for="fetch-bsky-checkbox" class="number-posts">
+                    <input type="checkbox" id="fetch-bsky-checkbox" />Récupérer
+                    un fil Bluesky</label
+                >
                 <label for="number-posts" class="number-posts">
                     <input
                         type="checkbox"
@@ -103,6 +108,7 @@
                         <div id="replied-post-avatar"></div>
                         <div id="replied-post-display-name"></div>
                         <div id="replied-post-time"></div>
+                        <div id="reply-preview-close">×</div>
                     </div>
                     <div id="replied-post-content">
                         <div id="replied-post-text"></div>
@@ -113,6 +119,7 @@
             <div id="post-item" class="post-item" style="display: none">
                 <div class="overlay" style="display: none">+</div>
                 <div class="post-header">
+                    <img class="avatar" />
                     <span class="post-count"></span>
                     <select class="viz-select" title="Régler la visibilité">
                         <option value="public">Public</option>
@@ -181,7 +188,7 @@
                 Poster le fil
             </button>
             <span id="spinner" class="spinner" style="display: none"></span>
-            <div id="counter" style="display: none"></div>
+            <div id="counter" class="counter" style="display: none"></div>
         </div>
         <div style="display: none">
             <a href="http://www.freevisitorcounters.com"
@@ -208,5 +215,59 @@
                 /></a>
             </div>
         </div>
+        <dialog id="bsky-auth-dialog" class="bsky-dialog">
+            <div style="margin-bottom: 10px">Authentifez-vous sur Bluesky</div>
+            <div class="bsky-input-div">
+                <input
+                    type="text"
+                    id="id-input"
+                    class="bsky-input"
+                    placeholder="Identifiant ou adresse de courriel"
+                    autocomplete="username"
+                    style="margin-bottom: 5px"
+                />
+                <input
+                    type="password"
+                    id="pwd-input"
+                    class="bsky-input"
+                    placeholder="Mot de passe"
+                    autocomplete="current-password"
+                    style="margin-bottom: 5px"
+                />
+            </div>
+            <button id="bsky-login-btn">Valider</button>
+        </dialog>
+        <dialog id="bsky-thread-dialog" class="bsky-dialog">
+            <div>
+                <div style="margin-bottom: 10px">Entrez l'URL du fil Bluesky :</div>
+                <input type="url" id="bsky-thread-input" />
+            </div>
+            <div style="text-align: center">
+                <label
+                    id="convert-handles-label"
+                    for="convert-handles"
+                    style="text-align: center; display: flex; align-items: center; justify-content: center"
+                >
+                    <input
+                        type="checkbox"
+                        name="convert-handles"
+                        id="convert-handles"
+                    />Convertir les pseudos (beta)</label
+                >
+            </div>
+            <div>
+                <button id="bsky-thread-cancel" class="cancel">Annuler</button>
+                <button id="bsky-thread-ok">Valider</button>
+            </div>
+        </dialog>
+        <dialog id="bsky-loading-dialog" class="spinner-dialog">
+            <div class="bsky-loading-div">
+                <div class="bsky-spinner"></div>
+                <div id="bsky-loading-text" class="bsky-loading-text">
+                    Chargement...
+                </div>
+            </div>
+        </dialog>
+        <div id="app" style="display: none"></div>
     </body>
 </html>

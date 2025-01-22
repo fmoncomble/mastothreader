@@ -71,9 +71,7 @@ div#instructions-btn {
 
 #instance-div {
     display: flex;
-    /* align-content: center; */
     flex-direction: column;
-    /* width: fit-content; */
     text-align: center;
 }
 
@@ -309,6 +307,11 @@ div#dl-msg {
     object-fit: cover;
 }
 
+.img-preview video {
+    height: 85px;
+    object-fit: cover;
+}
+
 .char-count,
 .img-count {
     text-align: right;
@@ -429,6 +432,16 @@ div#dl-msg {
     vertical-align: baseline;
 }
 
+.bsky-spinner {
+    border: solid 10px #f2f2f2;
+    border-left: solid 10px #563acc;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+    box-shadow: 0 0 5px gray;
+}
+
 button#post-thread-btn {
     position: absolute;
     margin: auto;
@@ -520,6 +533,7 @@ div#replied-post-header {
     justify-content: left;
     align-items: center;
     margin: 14px;
+    position: relative;
 }
 
 div#replied-post-header img {
@@ -579,9 +593,21 @@ label.number-posts {
     align-items: center;
     font-size: small;
     text-align: left;
+    margin: 0 5px;
 }
 
-input[type="checkbox"]  {
+div.number-posts {
+    display: flex;
+    flex-direction: column;
+    font-size: small;
+    width: fit-content;
+    margin-bottom: 5px;
+    background-color: white;
+    padding: 2px 5px;
+    cursor: pointer;
+}
+
+input[type='checkbox'] {
     width: auto;
     margin-right: 5px;
 }
@@ -600,4 +626,95 @@ img.avatar {
     border-radius: 50%;
     margin-right: 10px;
     align-self: center;
+}
+
+.bsky-dialog {
+    border: none;
+    border-radius: 5px;
+    text-align: center;
+    color: #563acc;
+    font-size: small;
+    font-weight: bold;
+    box-shadow: 0 0 5px gray;
+}
+
+.bsky-input {
+    display: block;
+    margin: 5px auto;
+}
+
+.counter {
+    margin: 5px 0;
+    text-align: center;
+    color: #563acc;
+}
+
+.spinner-dialog {
+    text-align: -webkit-center;
+    border: none;
+    border-radius: 5px;
+    box-shadow: 0 0 5px gray;
+    background-color: rgba(128, 128, 128, 0.7);
+    color: #563acc;
+    text-align: center;
+}
+
+.spinner-visible:focus-visible {
+    outline: none;
+}
+
+.bsky-loading-text {
+    text-align: center;
+    color: white;
+    margin: 10px 0;
+    text-shadow: gray 0 0 5px;
+}
+
+.bsky-loading-div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+button.cancel {
+    background-color: red;
+}
+
+button.cancel:hover {
+    background-color: #cc0000;
+}
+
+.play-icon {
+    position: absolute;
+    top: 32.5px;
+    right: 32.5px;
+    background: rgba(255, 255, 255, 0.5);
+    color: black;
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+    width: 15px;
+    height: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px;
+    margin: 0;
+}
+
+div#reply-preview-close {
+    font-weight: bold;
+    font-size: x-large;
+    position: absolute;
+    right: 0px;
+    top: 0px;
+    cursor: pointer;
+    width: 28px;
+    height: 28px;
+}
+
+div#reply-preview-close:hover {
+    background-color: #eee;
+    border: none;
+    border-radius: 4px;
 }

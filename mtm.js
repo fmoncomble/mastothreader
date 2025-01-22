@@ -7,8 +7,11 @@ document.addEventListener('DOMContentLoaded', async function () {
     const instanceDataList = document.getElementById('inst-list');
     const instanceBtn = document.getElementById('instance-btn');
     const contentContainer = document.getElementById('content-container');
+    const fetchBskyCheckbox = document.getElementById('fetch-bsky-checkbox');
+    fetchBskyCheckbox.checked = false;
     const numberPostsDiv = document.getElementById('number-posts-div');
     const numberPostsCheckbox = document.getElementById('number-posts');
+    numberPostsCheckbox.checked = false;
     const inReplyToDiv = document.getElementById('in-reply-to');
     const inReplyToInput = document.getElementById('in-reply-input');
     const replyPreview = document.getElementById('reply-preview');
@@ -19,6 +22,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     const postThreadBtn = document.getElementById('post-thread-btn');
     const spinner = document.getElementById('spinner');
     const counter = document.getElementById('counter');
+    const bskyLoadingSpinner = document.getElementById('bsky-loading-dialog');
 
     const yearSpan = document.querySelector('span#year');
     yearSpan.textContent = new Date().toISOString().split('-')[0];
@@ -110,9 +114,10 @@ document.addEventListener('DOMContentLoaded', async function () {
     let maxChars;
     let maxMedia;
     let lang;
+    let userAvatarSrc;
     let postItems = [];
+    let mediaFiles = [];
     let oldPosts = [];
-    let mediaIds = {};
     let i = 0;
 
     let instance;
@@ -125,20 +130,96 @@ document.addEventListener('DOMContentLoaded', async function () {
     let token;
     checkToken();
 
+    let mastoText = null;
+    let inReplyUrl = null;
+    let userId = null;
+    let bskyUrl = null;
+
     window.onload = async function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('bsky_url')) {
+            bskyUrl = urlParams.get('bsky_url');
+        }
+        if (urlParams.has('instance')) {
+            let originInstance = urlParams.get('instance');
+            if (instance && originInstance !== instance) {
+                if (
+                    window.confirm(
+                        `Vous venez de ${originInstance} mais êtes connecté·e à ${instance}.\nVoulez-vous changer d'instance ?`
+                    )
+                ) {
+                    instanceInput.value = null;
+                    instanceInput.disabled = false;
+                    instanceBtn.textContent = 'Valider';
+                    localStorage.removeItem('mastothreadinstance');
+                    counter.style.display = 'none';
+                    removeToken();
+                    checkInstance();
+                    checkToken();
+                    window.location.reload();
+                }
+                checkCredentials();
+            }
+        }
+        if (urlParams.has('user_id')) {
+            userId = urlParams.get('user_id');
+        }
+        if (urlParams.has('reply_to')) {
+            inReplyUrl = urlParams.get('reply_to');
+        }
+        if (urlParams.has('text')) {
+            mastoText = urlParams.get('text');
+        }
+        if (!token && !instance) {
+            for (let [key, value] of urlParams) {
+                sessionStorage.setItem(key, value);
+            }
+            window.alert(`Vous n'êtes pas connecté·e à Mastodon.`);
+            instanceInput.focus();
+        }
         if (!token && instance) {
-            const urlParams = new URLSearchParams(window.location.search);
             code = urlParams.get('code');
             if (code) {
                 token = await exchangeCodeForToken(code);
                 if (token) {
                     localStorage.setItem('mastothreadtoken-v2', token);
+                    bskyLink = sessionStorage.getItem('bsky_url') || null;
+                    mastoText = sessionStorage.getItem('text') || null;
+                    inReplyUrl = sessionStorage.getItem('reply_to') || null;
+                    userId = sessionStorage.getItem('user_id') || null;
+                    sessionStorage.clear();
                     checkToken();
+                    if (bskyLink) {
+                        if (
+                            window.confirm(
+                                `Voulez-vous importer le fil Bluesky ?`
+                            )
+                        ) {
+                            fetchBskyCheckbox.checked = true;
+                            await getBskyThread();
+                        }
+                    } else if (inReplyUrl) {
+                        inReplyToInput.value = inReplyUrl;
+                        inReplyToInput.dispatchEvent(new Event('input'));
+                    }
                 }
             }
-        }
-        if (token) {
+        } else if (token) {
             await checkApp();
+            if (bskyUrl) {
+                if (window.confirm(`Voulez-vous importer le fil Bluesky ?`)) {
+                    bskyLink = bskyUrl;
+                    fetchBskyCheckbox.checked = true;
+                    await getBskyThread();
+                }
+            }
+            if (inReplyUrl) {
+                inReplyToInput.value = inReplyUrl;
+                inReplyToInput.dispatchEvent(new Event('input'));
+            }
+            if (userId) {
+                await getUserAvatar();
+            }
         }
         await buildInstList();
     };
@@ -177,6 +258,24 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     }
 
+    async function getUserAvatar() {
+        if (userId) {
+            try {
+                let res = await fetch(
+                    `https://${instance}/api/v1/accounts/${userId}`
+                );
+                let data = await res.json();
+                if (res.ok) {
+                    userAvatarSrc = data.avatar;
+                } else {
+                    console.error('Error fetching user: ', data.error);
+                }
+            } catch (error) {
+                console.error('Error fetching user: ', error);
+            }
+        }
+    }
+
     async function checkToken() {
         token = localStorage.getItem('mastothreadtoken-v2');
         if (token) {
@@ -189,7 +288,8 @@ document.addEventListener('DOMContentLoaded', async function () {
                 await buildLangList();
                 numberPostsDiv.style.display = 'flex';
                 inReplyToDiv.style.display = 'block';
-                createNewPost();
+                await getUserAvatar();
+                createNewPost(mastoText ? mastoText : null);
                 postThreadBtn.style.display = 'flex';
             }
         } else if (!token) {
@@ -229,7 +329,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             localStorage.setItem('mastothreadinstance', instance);
             checkCredentials();
             if (!clientId && !clientSecret) {
-                await createApp();
+                await createMastoApp();
             }
             redirectToAuthServer();
             checkInstance();
@@ -247,6 +347,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             removeToken();
             checkInstance();
             checkToken();
+            window.location.reload();
         } else {
             instance = instanceInput.value;
             if (!instance) {
@@ -256,7 +357,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             localStorage.setItem('mastothreadinstance', instance);
             checkCredentials();
             if (!clientId && !clientSecret) {
-                await createApp();
+                await createMastoApp();
             }
             redirectToAuthServer();
             checkInstance();
@@ -265,7 +366,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     });
 
     const redirectUri = window.location.href.split('?')[0];
-    async function createApp() {
+    async function createMastoApp() {
         const createAppUrl = `https://${instance}/api/v1/apps`;
         try {
             const response = await fetch(createAppUrl, {
@@ -427,6 +528,20 @@ document.addEventListener('DOMContentLoaded', async function () {
             previewMediaDiv.appendChild(img);
         }
 
+        const closeBtn = document.getElementById('reply-preview-close');
+        closeBtn.onclick = () => {
+            inReplyToInput.value = null;
+            previewDiv.style.display = 'none';
+            inReplyUrl = null;
+            originalId = null;
+            originalUser = null;
+            const firstPostItem = postItems[0];
+            const textarea = firstPostItem.querySelector('.post-text');
+            updateCharCount(firstPostItem, textarea.value);
+            let message = 'Updating post list after clearing in-reply-to';
+            updatePostList(message);
+        };
+
         previewDiv.style.display = 'flex';
         let message = 'Updating post list after setting in-reply-to';
         updatePostList(message);
@@ -448,7 +563,351 @@ document.addEventListener('DOMContentLoaded', async function () {
     let currentPost;
     let splitNb = 0;
     let isSplitting = false;
-    async function createNewPost(text) {
+
+    let bskyDid = localStorage.getItem('bsky-did')
+        ? localStorage.getItem('bsky-did')
+        : null;
+    let bskyHandle = localStorage.getItem('bsky-handle')
+        ? localStorage.getItem('bsky-handle')
+        : null;
+    let bskyPosts = [];
+    let fromBsky = false;
+    let convertHandles = false;
+    let bskyLink = null;
+
+    const bskyAuthDialog = document.getElementById('bsky-auth-dialog');
+    const idInput = document.getElementById('id-input');
+    const pwdInput = document.getElementById('pwd-input');
+    const submitBtn = document.getElementById('bsky-login-btn');
+    submitBtn.addEventListener('click', async () => {
+        const form = {};
+        form.identifier = idInput.value;
+        form.password = pwdInput.value;
+        const res = await fetch(
+            `https://bsky.social/xrpc/com.atproto.server.createSession`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(form),
+            }
+        );
+        if (res.ok) {
+            const data = await res.json();
+            bskyAuthDialog.close();
+            bskyDid = data.did;
+            localStorage.setItem('bsky-did', bskyDid);
+            bskyHandle = data.handle;
+            localStorage.setItem('bsky-handle', bskyHandle);
+            await new Promise((resolve) => setTimeout(resolve, 0));
+            if (!bskyLink) {
+                bskyThreadInput.value = null;
+                bskyThreadDialog.showModal();
+            } else {
+                getBskyThread();
+            }
+        } else {
+            const errorData = await res.json();
+            window.alert(`Erreur d'authentification: ${errorData.message}`);
+            fetchBskyCheckbox.checked = false;
+            bskyAuthDialog.close();
+            return;
+        }
+    });
+
+    const bskyThreadDialog = document.getElementById('bsky-thread-dialog');
+    const bskyThreadInput = document.getElementById('bsky-thread-input');
+    bskyThreadInput.value = null;
+    const bskyThreadOk = document.getElementById('bsky-thread-ok');
+    const bskyThreadCancel = document.getElementById('bsky-thread-cancel');
+    const convertHandlesCheckbox = document.getElementById('convert-handles');
+    convertHandlesCheckbox.checked = false;
+    convertHandlesCheckbox.addEventListener('change', () => {
+        if (convertHandlesCheckbox.checked) {
+            convertHandles = true;
+        } else {
+            convertHandles = false;
+        }
+    });
+    bskyThreadOk.addEventListener('click', () => {
+        bskyLink = bskyThreadInput.value;
+        getBskyThread();
+        bskyThreadDialog.close();
+    });
+    bskyThreadCancel.addEventListener('click', () => {
+        bskyLink = null;
+        fetchBskyCheckbox.checked = false;
+        bskyThreadInput.value = null;
+        bskyThreadDialog.close();
+    });
+
+    fetchBskyCheckbox.addEventListener('change', async () => {
+        if (fetchBskyCheckbox.checked) {
+            if (!bskyDid) {
+                bskyAuthDialog.showModal();
+            } else if (bskyDid && bskyHandle) {
+                bskyThreadInput.value = null;
+                bskyThreadDialog.showModal();
+            }
+        } else {
+            for (let p of postItems) {
+                p.remove();
+            }
+            postItems = [];
+            bskyPosts = [];
+            fromBsky = false;
+            const bskyDiv = document.getElementById('bsky-link');
+            if (bskyDiv) {
+                bskyDiv.remove();
+            }
+            createNewPost();
+        }
+    });
+
+    async function getBskyThread() {
+        if (!bskyDid || !bskyHandle) {
+            if (
+                window.confirm(
+                    `MastoThreader n'est pas connecté à Bluesky.\nVoulez-vous vous identifier ?`
+                )
+            ) {
+                bskyDid = null;
+                bskyHandle = null;
+                localStorage.removeItem('bsky-did');
+                localStorage.removeItem('bsky-handle');
+                bskyAuthDialog.showModal();
+                return;
+            } else {
+                bskyLink = null;
+                fetchBskyCheckbox.checked = false;
+                bskyLoadingSpinner.close();
+                return;
+            }
+        }
+        if (bskyLink) {
+            const bskyLoadingText =
+                document.getElementById('bsky-loading-text');
+            bskyLoadingSpinner.showModal();
+            let pathname;
+            try {
+                pathname = new URL(bskyLink).pathname;
+            } catch (error) {
+                bskyThreadInput.value = null;
+                window.alert('Lien Bluesky invalide.');
+                bskyLink = null;
+                fetchBskyCheckbox.checked = false;
+                bskyLoadingSpinner.close();
+                return;
+            }
+            let handle = pathname.split('/')[2];
+            if (
+                (handle.startsWith('did:plc:') && handle !== bskyDid) ||
+                (!handle.startsWith('did:plc:') && handle !== bskyHandle)
+            ) {
+                if (
+                    window.confirm(
+                        `Échec : vous n’êtes pas l’auteur du fil Bluesky.\nVoulez-vous vous connecter avec un autre compte ?`
+                    )
+                ) {
+                    bskyDid = null;
+                    bskyHandle = null;
+                    localStorage.removeItem('bsky-did');
+                    localStorage.removeItem('bsky-handle');
+                    bskyAuthDialog.showModal();
+                    return;
+                } else {
+                    bskyLink = null;
+                    fetchBskyCheckbox.checked = false;
+                    bskyLoadingSpinner.close();
+                    return;
+                }
+            }
+            let rkey = pathname.split('/')[4];
+            if (rkey) {
+                let uri = `at://${bskyDid}/app.bsky.feed.post/${rkey}`;
+                let res = await fetch(
+                    `https://public.api.bsky.app/xrpc/app.bsky.feed.getPostThread?uri=${uri}&depth=1000`
+                );
+                if (res.ok) {
+                    bskyThreadInput.value = null;
+                    let data = await res.json();
+                    let div = document.createElement('div');
+                    div.id = 'bsky-link';
+                    div.classList.add('number-posts');
+                    let a = document.createElement('a');
+                    a.href = bskyLink;
+                    a.target = '_blank';
+                    a.textContent = bskyLink;
+                    div.appendChild(a);
+                    numberPostsDiv.after(div);
+                    let thread = data.thread;
+                    let firstPost = thread.post;
+                    bskyPosts.push(firstPost);
+                    findSelfReplies(thread);
+                    function findSelfReplies(post) {
+                        if (post.replies) {
+                            let selfReply = post.replies.find(
+                                (r) =>
+                                    r.post.author.did === post.post.author.did
+                            );
+                            if (selfReply) {
+                                bskyPosts.push(selfReply.post);
+                                findSelfReplies(selfReply);
+                            } else {
+                                return;
+                            }
+                        } else {
+                            return;
+                        }
+                    }
+                    if (postItems && postItems.length > 0) {
+                        postItems[0].remove();
+                    }
+                    postItems = [];
+                    for (let p of bskyPosts) {
+                        let index = bskyPosts.indexOf(p) + 1;
+                        bskyLoadingText.textContent = `Chargement du post ${index}/${bskyPosts.length}...`;
+                        try {
+                            let text = p.record.text;
+                            if (convertHandles) {
+                                let regex = /@.+?\s/g;
+                                let mentions = text.match(regex);
+                                if (mentions) {
+                                    for (let m of mentions) {
+                                        let handle = m
+                                            .slice(1)
+                                            .toLowerCase()
+                                            .trim();
+                                        handle = handle.split('.')[0];
+                                        let searchUrl = `https://${instance}/api/v2/search?q=${handle}&type=accounts&resolve=true`;
+                                        let res = await fetch(searchUrl, {
+                                            headers: {
+                                                Authorization: `Bearer ${token}`,
+                                            },
+                                        });
+                                        if (res.ok) {
+                                            let data = await res.json();
+                                            if (data.accounts.length > 0) {
+                                                let account = data.accounts[0];
+                                                let acct = account.acct;
+                                                text = text.replaceAll(
+                                                    m,
+                                                    `${acct} `
+                                                );
+                                            } else {
+                                                continue;
+                                            }
+                                        } else {
+                                            continue;
+                                        }
+                                    }
+                                }
+                            }
+                            let imgs = [];
+                            if (p.embed) {
+                                let images = [];
+                                if (
+                                    p.embed.images &&
+                                    p.embed.images.length > 0
+                                ) {
+                                    images.push(...p.embed.images);
+                                }
+                                if (p.embed.media) {
+                                    if (p.embed.media.images) {
+                                        images.push(...p.embed.media.images);
+                                    }
+                                }
+                                if (images && images.length > 0) {
+                                    for (let i of images) {
+                                        let img = {};
+                                        img.type = 'image';
+                                        img.url = i.fullsize;
+                                        img.thumbnail = i.thumb;
+                                        img.alt = i.alt;
+                                        imgs.push(img);
+                                    }
+                                }
+                                if (p.embed.$type.includes('video')) {
+                                    let video = p.embed;
+                                    let vid = {};
+                                    vid.type = 'video';
+                                    vid.thumbnail = video.thumbnail;
+                                    vid.url = video.playlist;
+                                    vid.alt = video.alt;
+                                    imgs.push(vid);
+                                }
+                                if (p.embed.record) {
+                                    let uri =
+                                        p.embed.record.uri ||
+                                        p.embed.record.record.uri;
+                                    let elts = uri.split('/');
+                                    let rDid = elts[2];
+                                    let rKey = elts[4];
+                                    let rUrl = `https://bsky.app/profile/${rDid}/post/${rKey}`;
+                                    text += `\n\n${rUrl}`;
+                                }
+                                let card = p.embed.external;
+                                if (!card && p.embed.media) {
+                                    card = p.embed.media.external;
+                                }
+                                if (card) {
+                                    let cardUrl = card.uri;
+                                    if (cardUrl) {
+                                        if (cardUrl.includes('.gif')) {
+                                            let img = {};
+                                            img.type = 'image';
+                                            img.url = cardUrl;
+                                            img.alt = card.description;
+                                            imgs.push(img);
+                                        } else {
+                                            text += `\n\n${cardUrl}`;
+                                        }
+                                    }
+                                }
+                            }
+                            fromBsky = true;
+                            await createNewPost(text, imgs);
+                            currentPost = postItems[bskyPosts.indexOf(p)];
+                        } catch (error) {
+                            console.error(
+                                `Error creating post ${
+                                    bskyPosts.indexOf(p) + 1
+                                }: `,
+                                error
+                            );
+                        }
+                    }
+                } else {
+                    bskyThreadInput.value = null;
+                    window.alert('Impossible de récupérer le fil Bluesky.');
+                    bskyLink = null;
+                    fetchBskyCheckbox.checked = false;
+                    fromBsky = false;
+                    bskyLoadingSpinner.close();
+                    return;
+                }
+            } else {
+                window.alert('Impossible de récupérer le fil Bluesky.');
+                bskyLink = null;
+                fetchBskyCheckbox.checked = false;
+                fromBsky = false;
+                bskyLoadingSpinner.close();
+                return;
+            }
+            bskyLoadingSpinner.close();
+            postItems[0].querySelector('.post-text').focus();
+            window.scrollTo(0, 0);
+            await new Promise((resolve) => setTimeout(resolve, 0));
+            window.alert(
+                'Le fil est prêt, pensez à le relire avant de publier !'
+            );
+        } else {
+            fetchBskyCheckbox.checked = false;
+        }
+    }
+
+    async function createNewPost(text, imgs) {
         oldPosts = postItems.map(function (p) {
             return p.getAttribute('counter');
         });
@@ -466,6 +925,14 @@ document.addEventListener('DOMContentLoaded', async function () {
         updatePostCount();
         oldPosts.splice(postItems.indexOf(newPost), 0, 'skip');
         let message = 'Updating list of posts after creation';
+
+        const avatar = newPost.querySelector('.avatar');
+        if (userAvatarSrc) {
+            avatar.src = userAvatarSrc;
+        } else {
+            avatar.src = 'icons/generic_avatar.png';
+        }
+
         const vizSelect = newPost.querySelector('.viz-select');
         const index = postItems.indexOf(newPost);
         if (index === 0) {
@@ -581,8 +1048,8 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
         });
 
-        let files = [];
-        mediaIds[`mediaIds${i}`] = [];
+        mediaFiles[`mediaFiles${i}`] = [];
+        let files = mediaFiles[`mediaFiles${i}`];
 
         const imgCount = newPost.querySelector('.img-count');
         imgCount.textContent = `0/${maxMedia}`;
@@ -590,6 +1057,124 @@ document.addEventListener('DOMContentLoaded', async function () {
         const dropzone = newPost.querySelector('.dropzone');
         const dzInst = dropzone.querySelector('.dz-inst');
         const imgPreview = dropzone.querySelector('.img-preview');
+
+        if (fromBsky && imgs && imgs.length > 0) {
+            dzInst.style.display = 'none';
+            const proxyUrl = 'https://corsproxy.io/';
+            for (let img of imgs) {
+                if (img.type === 'video') {
+                    let mediaFile = {};
+                    let baseUrl = img.url.split('playlist.m3u8')[0];
+                    await getVideo(baseUrl, img, mediaFile, i);
+                    async function getVideo(baseUrl, img, mediaFile, i) {
+                        async function getManifest() {
+                            const res = await fetch(img.url);
+                            const data = await res.text();
+                            return data;
+                        }
+                        const manifest = await getManifest();
+                        let maxRes = 0;
+                        function getMaxRes() {
+                            const lines = manifest.split('\n');
+                            for (let l of lines) {
+                                if (l.startsWith('#EXT-X-STREAM-INF')) {
+                                    let res = l
+                                        .split('RESOLUTION=')[1]
+                                        .split('x')[1];
+                                    if (res > maxRes) {
+                                        maxRes = res;
+                                    }
+                                }
+                            }
+                            return lines.find((l) =>
+                                l.startsWith(maxRes.toString())
+                            );
+                        }
+                        const playlistUrl = baseUrl + getMaxRes();
+                        const tsUrls = [];
+                        async function getTsUrls(playlistUrl) {
+                            const res = await fetch(playlistUrl);
+                            const data = await res.text();
+                            const lines = data.split('\n');
+                            for (let l of lines) {
+                                if (l.includes('video') && l.includes('.ts')) {
+                                    tsUrls.push(`${baseUrl}${maxRes}p/${l}`);
+                                }
+                            }
+                        }
+                        await getTsUrls(playlistUrl);
+                        const file = await getVideo(tsUrls);
+                        async function getVideo(tsUrls) {
+                            let mime = 'video/mp4';
+                            async function transmuxSegments(tsUrls) {
+                                let segments = [];
+                                let transmuxer = new muxjs.mp4.Transmuxer();
+                                if (tsUrls.length === 0) {
+                                    return;
+                                }
+                                transmuxer.on('data', function (segment) {
+                                    let data = new Uint8Array(
+                                        segment.initSegment.byteLength +
+                                            segment.data.byteLength
+                                    );
+                                    data.set(segment.initSegment, 0);
+                                    data.set(
+                                        segment.data,
+                                        segment.initSegment.byteLength
+                                    );
+                                    segments.push(data);
+                                });
+                                for (let url of tsUrls) {
+                                    const response = await fetch(url);
+                                    const data = await response.arrayBuffer();
+                                    transmuxer.push(new Uint8Array(data));
+                                }
+                                transmuxer.flush();
+                                return segments;
+                            }
+                            async function createBlob(tsUrls) {
+                                const segments = await transmuxSegments(tsUrls);
+                                const blob = new Blob(segments, { type: mime });
+                                return blob;
+                            }
+                            const blob = await createBlob(tsUrls);
+                            const videoFile = new File([blob], 'video.mp4', {
+                                type: blob.type,
+                            });
+                            return videoFile;
+                        }
+                        mediaFile.file = file;
+                    }
+                    mediaFile.thumbnail = img.thumbnail;
+                    mediaFile.description = img.alt;
+                    files.push(mediaFile);
+                    displayThumbnail(mediaFile, imgPreview, imgCount, dzInst);
+                } else if (img.type === 'image') {
+                    fetch(proxyUrl + encodeURIComponent(img.url))
+                        .then((response) => response.blob())
+                        .then((blob) => {
+                            const file = new File([blob], 'image.jpg', {
+                                type: blob.type,
+                            });
+                            let mediaFile = {};
+                            mediaFile.file = file;
+                            if (img.alt) {
+                                mediaFile.description = img.alt;
+                            }
+                            files.push(mediaFile);
+                            displayThumbnail(
+                                mediaFile,
+                                imgPreview,
+                                imgCount,
+                                dzInst
+                            );
+                        })
+                        .catch((error) =>
+                            console.error('Error fetching image:', error)
+                        );
+                }
+            }
+        }
 
         const overlay = newPost.querySelector('div.overlay');
         newPost.addEventListener('dragover', (e) => {
@@ -614,9 +1199,17 @@ document.addEventListener('DOMContentLoaded', async function () {
             } else {
                 for (let f of newFiles) {
                     if (files.length < maxMedia) {
+                        let mediaFile = {};
                         if (f.kind === 'file') {
                             f = f.getAsFile();
-                            handleImgUpload(f);
+                            mediaFile.file = f;
+                            files.push(mediaFile);
+                            displayThumbnail(
+                                mediaFile,
+                                imgPreview,
+                                imgCount,
+                                dzInst
+                            );
                         } else if (
                             f.kind === 'string' &&
                             f.type === 'text/uri-list'
@@ -630,7 +1223,14 @@ document.addEventListener('DOMContentLoaded', async function () {
                                             'image.jpg',
                                             { type: blob.type }
                                         );
-                                        handleImgUpload(file);
+                                        mediaFile.file = file;
+                                        files.push(mediaFile);
+                                        displayThumbnail(
+                                            mediaFile,
+                                            imgPreview,
+                                            imgCount,
+                                            dzInst
+                                        );
                                     })
                                     .catch((error) =>
                                         console.error(
@@ -662,7 +1262,15 @@ document.addEventListener('DOMContentLoaded', async function () {
             } else {
                 for (let f of newFiles) {
                     if (files.length < maxMedia) {
-                        handleImgUpload(f);
+                        let mediaFile = {};
+                        mediaFile.file = f;
+                        files.push(mediaFile);
+                        displayThumbnail(
+                            mediaFile,
+                            imgPreview,
+                            imgCount,
+                            dzInst
+                        );
                     } else {
                         window.alert("Le nombre maximum d'images est atteint");
                         break;
@@ -679,9 +1287,17 @@ document.addEventListener('DOMContentLoaded', async function () {
                 .items;
             for (let item of items) {
                 if (item.kind === 'file') {
+                    let mediaFile = {};
                     const file = item.getAsFile();
                     if (files.length < maxMedia) {
-                        handleImgUpload(file);
+                        mediaFile.file = file;
+                        files.push(mediaFile);
+                        displayThumbnail(
+                            mediaFile,
+                            imgPreview,
+                            imgCount,
+                            dzInst
+                        );
                     } else {
                         window.alert("Le nombre maximum d'images est atteint");
                         break;
@@ -690,43 +1306,50 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
         });
 
-        async function handleImgUpload(f) {
-            files.push(f);
-            const imgSpinnerDiv = dropzone.querySelector('.img-spinner-div');
-            imgSpinnerDiv.style.display = 'flex';
-            let mediaData = await uploadMedia(f);
-            let mediaId = mediaData[0];
-            let mediaPreviewUrl = mediaData[1];
-            if (mediaId) {
-                mediaIds[`mediaIds${i}`].push(mediaId);
-                imgCount.textContent = `${files.length}/${maxMedia}`;
-                imgSpinnerDiv.style.display = 'none';
-            } else {
-                imgSpinnerDiv.style.display = 'none';
-            }
-            displayThumbnail(f, mediaPreviewUrl, imgPreview, imgCount, dzInst);
-        }
-
-        function displayThumbnail(
-            file,
-            mediaPreviewUrl,
-            imgPreview,
-            imgCount,
-            dzInst
-        ) {
+        function displayThumbnail(mediaFile, imgPreview, imgCount, dzInst) {
+            imgCount.textContent = `${files.length}/${maxMedia}`;
             const div = document.createElement('div');
-            const img = document.createElement('img');
             const removeBtn = document.createElement('button');
 
-            img.src = mediaPreviewUrl;
+            if (mediaFile.file.type.includes('video')) {
+                const video = document.createElement('video');
+                if (!video.canPlayType(mediaFile.file.type)) {
+                    video.poster = 'icons/video_placeholder.webp';
+                    video.controls = false;
+                } else {
+                    video.src = URL.createObjectURL(mediaFile.file);
+                    video.controls = true;
+                    video.muted = true;
+                    video.playsinline = true;
+                    if (mediaFile.thumbnail) {
+                        video.poster = mediaFile.thumbnail;
+                    }
+                }
+                div.appendChild(video);
+            } else if (mediaFile.thumbnail) {
+                const img = document.createElement('img');
+                img.src = mediaFile.thumbnail;
+                div.appendChild(img);
+            } else {
+                const image = mediaFile.file;
+                const imgReader = new FileReader();
+                imgReader.onload = function (e) {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = function () {
+                        div.appendChild(img);
+                    };
+                };
+                imgReader.readAsDataURL(image);
+            }
+
             removeBtn.textContent = '✖';
             removeBtn.classList.add('remove-btn');
 
             removeBtn.addEventListener('click', async () => {
-                const index = files.indexOf(file);
+                const index = files.indexOf(mediaFile);
                 if (index > -1) {
                     files.splice(index, 1);
-                    mediaIds[`mediaIds${i}`].splice(index, 1);
                 }
                 div.remove();
                 imgCount.textContent = `${files.length}/${maxMedia}`;
@@ -735,7 +1358,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                 }
             });
 
-            div.appendChild(img);
             div.appendChild(removeBtn);
             imgPreview.appendChild(div);
 
@@ -745,6 +1367,11 @@ document.addEventListener('DOMContentLoaded', async function () {
             const altDiv = imgPreview.querySelector('.alt-div');
             const newAltDiv = altDiv.cloneNode(true);
             const altTextArea = newAltDiv.querySelector('.alt-text');
+
+            if (mediaFile.description) {
+                altTextArea.value = mediaFile.description;
+                altBtn.style.color = '#009900';
+            }
 
             const altCounter = newAltDiv.querySelector('.alt-counter');
             altTextArea.addEventListener('input', () => {
@@ -767,8 +1394,13 @@ document.addEventListener('DOMContentLoaded', async function () {
                     (e.key === 'Enter' && e.metaKey) ||
                     (e.key === 'Enter' && e.ctrlKey)
                 ) {
-                    updateMedia(file, altText);
-                    altBtn.style.color = '#009900';
+                    if (altText && altText.length > 0) {
+                        mediaFile.description = altText;
+                        altBtn.style.color = '#009900';
+                    } else if (!altText || altText.length === 0) {
+                        delete mediaFile.description;
+                        altBtn.removeAttribute('style');
+                    }
                     newAltDiv.style.display = 'none';
                 } else if (e.key === 'Escape') {
                     newAltDiv.style.display = 'none';
@@ -789,8 +1421,13 @@ document.addEventListener('DOMContentLoaded', async function () {
             });
             altSaveBtn.addEventListener('click', async () => {
                 const altText = altTextArea.value;
-                await updateMedia(file, altText);
-                altBtn.style.color = '#009900';
+                if (altText && altText.length > 0) {
+                    mediaFile.description = altText;
+                    altBtn.style.color = '#009900';
+                } else if (!altText || altText.length === 0) {
+                    delete mediaFile.description;
+                    altBtn.removeAttribute('style');
+                }
                 newAltDiv.style.display = 'none';
             });
             altCancelBtn.addEventListener('click', async () => {
@@ -800,7 +1437,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     altCounter.textContent = '0/1500';
                     altCancelBtn.textContent = 'Annuler';
                 } else if (altText.length === 0) {
-                    await updateMedia(file, altText);
+                    delete mediaFile.description;
                     altBtn.removeAttribute('style');
                     newAltDiv.style.display = 'none';
                 }
@@ -809,92 +1446,17 @@ document.addEventListener('DOMContentLoaded', async function () {
             div.appendChild(altBtn);
             div.appendChild(newAltDiv);
 
-            setTimeout(() => {
-                const altText = altTextArea.value;
-                if (altText) {
-                    altCancelBtn.textContent = 'Effacer';
-                } else {
-                    altCancelBtn.textContent = 'Annuler';
-                }
-                newAltDiv.style.display = 'flex';
-                altTextArea.focus();
-            }, 500);
-        }
-
-        async function uploadMedia(f) {
-            const formData = new FormData();
-            formData.append('file', f);
-
-            try {
-                const response = await fetch(
-                    `https://${instance}/api/v2/media`,
-                    {
-                        method: 'POST',
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                            scope: 'write',
-                        },
-                        body: formData,
+            if (!mediaFile.description) {
+                setTimeout(() => {
+                    const altText = altTextArea.value;
+                    if (altText) {
+                        altCancelBtn.textContent = 'Effacer';
+                    } else {
+                        altCancelBtn.textContent = 'Annuler';
                     }
-                );
-
-                if (!response.ok) {
-                    if (response.status === 401) {
-                        window.alert("Vous n'êtes pas authentifié.e");
-                        return;
-                    }
-                    const errorData = await response.json();
-                    console.error('Error uploading media: ', errorData);
-                    window.alert(
-                        `Un média n'a pas pu être envoyé : ${errorData.error}`
-                    );
-                    return;
-                }
-
-                const data = await response.json();
-                const id = data.id;
-                const previewUrl = data.preview_url;
-                return [id, previewUrl];
-            } catch (error) {
-                console.error('Fetch error: ', error);
-            }
-        }
-
-        async function updateMedia(f, altText) {
-            const formData = new FormData();
-            formData.append('description', altText);
-
-            let mediaIndex = files.indexOf(f);
-            let mediaId = mediaIds[`mediaIds${i}`][mediaIndex];
-
-            try {
-                const response = await fetch(
-                    `https://${instance}/api/v1/media/${mediaId}`,
-                    {
-                        method: 'PUT',
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
-                        body: formData,
-                    }
-                );
-                if (!response.ok) {
-                    if (response.status === 401) {
-                        window.alert("Vous n'êtes pas authentifié.e");
-                        return;
-                    }
-                    const errorData = await response.json();
-                    console.error('Error updating media: ', errorData);
-                    window.alert(
-                        `Erreur en mettant à jour le média ${mediaId}`
-                    );
-                    return;
-                }
-                const data = await response.json();
-                return data.description;
-            } catch (error) {
-                console.error('Error fetching media update: ', error);
-                return;
+                    newAltDiv.style.display = 'flex';
+                    altTextArea.focus();
+                }, 500);
             }
         }
 
@@ -909,7 +1471,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 postItems.splice(index, 1);
                 let nbOfPosts = updatePostCount();
                 newPost.remove();
-                delete files[`files${id}`];
+                delete mediaFiles[`mediaFiles${id}`];
                 oldPosts.splice(index, 1);
                 let message = 'Updating list of posts after delete';
                 updatePostList(message, oldPosts, nbOfPosts);
@@ -922,7 +1484,6 @@ document.addEventListener('DOMContentLoaded', async function () {
             const firstPost = postItems[0];
             if (originalUser) {
                 const textarea = firstPost.querySelector('.post-text');
-                const text = textarea.value;
                 updateCharCount(firstPost, textarea.value);
             }
             const firstVizSelect = firstPost.querySelector('.viz-select');
@@ -979,7 +1540,10 @@ document.addEventListener('DOMContentLoaded', async function () {
             let postCounters = postItems.map(function (p) {
                 return p.getAttribute('counter');
             });
-            updatePostList('Updating list of posts after splitting', postCounters);
+            updatePostList(
+                'Updating list of posts after splitting',
+                postCounters
+            );
             textarea.focus();
         }
         isSplitting = false;
@@ -1099,6 +1663,74 @@ document.addEventListener('DOMContentLoaded', async function () {
         window.open(threadUrl, '_blank');
     });
 
+    async function uploadMedia(f, d) {
+        const formData = new FormData();
+        formData.append('file', f);
+        if (d) {
+            formData.append('description', d);
+        }
+
+        try {
+            const response = await fetch(`https://${instance}/api/v2/media`, {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    scope: 'write',
+                },
+                body: formData,
+            });
+            if (!response.ok) {
+                if (response.status === 401) {
+                    window.alert("Vous n'êtes pas authentifié.e");
+                    return;
+                }
+                const errorData = await response.json();
+                console.error('Error uploading media: ', errorData);
+                window.alert(
+                    `Un média n'a pas pu être envoyé : ${errorData.error}`
+                );
+                return;
+            } else if (response.status === 202) {
+                const data = await response.json();
+                const id = data.id;
+                let status = await getUploadStatus();
+                async function getUploadStatus() {
+                    let res = await fetch(
+                        `https://${instance}/api/v1/media/${id}`,
+                        {
+                            headers: {
+                                Authorization: `Bearer ${token}`,
+                                scope: 'write',
+                            },
+                        }
+                    );
+                    if (res.status === 401) {
+                        const errorData = await res.json();
+                        console.error('Error checking media: ', errorData);
+                        return;
+                    }
+                    return res.status;
+                }
+                while (!status || (status !== 200 && status !== 401)) {
+                    await new Promise((resolve) => setTimeout(resolve, 1000));
+                    status = await getUploadStatus();
+                }
+                if (status === 200) {
+                    return id;
+                } else {
+                    console.error('Media upload status: ', status);
+                    return;
+                }
+            } else if (response.status === 200) {
+                const data = await response.json();
+                const id = data.id;
+                return id;
+            }
+        } catch (error) {
+            console.error('Fetch error: ', error);
+        }
+    }
+
     async function postThread() {
         postThreadBtn.textContent = null;
         spinner.style.display = 'inline-flex';
@@ -1128,7 +1760,28 @@ document.addEventListener('DOMContentLoaded', async function () {
             const postText = textarea.value;
 
             const id = post.id.split('-')[1];
-            const postMedia = mediaIds[`mediaIds${id}`];
+            const postMediaIds = [];
+            const postMedia = mediaFiles[`mediaFiles${id}`];
+            if (postMedia && postMedia.length > 0) {
+                const mediaCounter = document.createElement('div');
+                mediaCounter.classList.add('counter');
+                counter.appendChild(mediaCounter);
+                for (let media of postMedia) {
+                    mediaCounter.textContent = `(Téléversement du média ${
+                        postMedia.indexOf(media) + 1
+                    }/${postMedia.length}...)`;
+                    let mediaId = await uploadMedia(
+                        media.file,
+                        media.description
+                    );
+                    if (!mediaId) {
+                        window.alert(`Un média n'a pas pu être attaché`);
+                        return;
+                    }
+                    postMediaIds.push(mediaId);
+                }
+                mediaCounter.remove();
+            }
             if (!postText && postMedia.length === 0) {
                 if (i === 0) {
                     if (postItems.length === 1) {
@@ -1152,7 +1805,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                         },
                         body: JSON.stringify({
                             status: postText,
-                            media_ids: postMedia,
+                            media_ids: postMediaIds,
                             spoiler_text: cwText,
                             visibility: visibility,
                             in_reply_to_id: replyToId,
