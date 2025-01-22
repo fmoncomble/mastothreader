@@ -429,6 +429,8 @@ document.addEventListener('DOMContentLoaded', async function () {
         return data.access_token;
     }
 
+    let supportedMimeTypes;
+
     async function getMax() {
         const response = await fetch(`https://${instance}/api/v1/instance`);
         if (!response.ok) {
@@ -439,6 +441,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         maxChars = Number(data.configuration.statuses.max_characters);
         maxMedia = Number(data.configuration.statuses.max_media_attachments);
         lang = data.languages[0];
+        supportedMimeTypes= new Set(data.configuration.media_attachments.supported_mime_types);
     }
 
     let originalId;
@@ -1310,43 +1313,11 @@ document.addEventListener('DOMContentLoaded', async function () {
             imgCount.textContent = `${files.length}/${maxMedia}`;
             const div = document.createElement('div');
             const removeBtn = document.createElement('button');
+            let previewElt;
+            let fileType = mediaFile.file.type;
 
-            if (mediaFile.file.type.includes('video')) {
-                const video = document.createElement('video');
-                if (!video.canPlayType(mediaFile.file.type)) {
-                    video.poster = 'icons/video_placeholder.webp';
-                    video.controls = false;
-                } else {
-                    video.src = URL.createObjectURL(mediaFile.file);
-                    video.controls = true;
-                    video.muted = true;
-                    video.playsinline = true;
-                    if (mediaFile.thumbnail) {
-                        video.poster = mediaFile.thumbnail;
-                    }
-                }
-                div.appendChild(video);
-            } else if (mediaFile.thumbnail) {
-                const img = document.createElement('img');
-                img.src = mediaFile.thumbnail;
-                div.appendChild(img);
-            } else {
-                const image = mediaFile.file;
-                const imgReader = new FileReader();
-                imgReader.onload = function (e) {
-                    const img = new Image();
-                    img.src = e.target.result;
-                    img.onload = function () {
-                        div.appendChild(img);
-                    };
-                };
-                imgReader.readAsDataURL(image);
-            }
-
-            removeBtn.textContent = '✖';
-            removeBtn.classList.add('remove-btn');
-
-            removeBtn.addEventListener('click', async () => {
+            if (!supportedMimeTypes.has(fileType)) {
+                window.alert('Type de fichier non pris en charge.');
                 const index = files.indexOf(mediaFile);
                 if (index > -1) {
                     files.splice(index, 1);
@@ -1356,6 +1327,106 @@ document.addEventListener('DOMContentLoaded', async function () {
                 if (files.length === 0) {
                     dzInst.style.display = 'block';
                 }
+                return;
+            }
+
+            if (fileType.includes('video')) {
+                const video = document.createElement('video');
+                if (!video.canPlayType(mediaFile.file.type)) {
+                    video.poster = 'icons/video_placeholder.webp';
+                    video.controls = false;
+                } else {
+                    video.src = URL.createObjectURL(mediaFile.file);
+                    video.controls = false;
+                    video.muted = true;
+                    video.playsinline = true;
+                    if (mediaFile.thumbnail) {
+                        video.poster = mediaFile.thumbnail;
+                    }
+                }
+                previewElt = video;
+                div.appendChild(video);
+            } else if (mediaFile.thumbnail) {
+                const img = document.createElement('img');
+                img.src = mediaFile.thumbnail;
+                img.alt = mediaFile.description;
+                previewElt = img;
+                div.lastElementChild.before(img);
+            } else if (fileType.includes('image')) {
+                const image = mediaFile.file;
+                const imgReader = new FileReader();
+                imgReader.onload = function (e) {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.alt = mediaFile.description;
+                    img.onload = function () {
+                        previewElt = img;
+                        div.lastElementChild.before(img);
+                    };
+                };
+                imgReader.readAsDataURL(image);
+            } else if (fileType.includes('audio')) {
+                const audio = document.createElement('audio');
+                audio.src = URL.createObjectURL(mediaFile.file);
+                audio.controls = false;
+                audio.muted = true;
+                audio.alt = mediaFile.description;
+                audio.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+                previewElt = audio;
+                div.appendChild(audio);
+                const audioImg = document.createElement('img');
+                audioImg.src = 'icons/speaker_icon.png';
+                audioImg.alt = 'Audio';
+                div.appendChild(audioImg);
+            }
+
+            removeBtn.textContent = '✖';
+            removeBtn.classList.add('remove-btn');
+
+            removeBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const index = files.indexOf(mediaFile);
+                if (index > -1) {
+                    files.splice(index, 1);
+                }
+                div.remove();
+                imgCount.textContent = `${files.length}/${maxMedia}`;
+                if (files.length === 0) {
+                    dzInst.style.display = 'block';
+                }
+            });
+
+            div.addEventListener('click', (e) => {
+                e.preventDefault();
+                const zoomed = document.createElement('dialog');
+                zoomed.classList.add('zoomed');
+                const zoomedElt = previewElt.cloneNode(true);
+                zoomedElt.classList.add('zoomed');
+                if (
+                    zoomedElt.tagName === 'VIDEO' ||
+                    zoomedElt.tagName === 'AUDIO'
+                ) {
+                    zoomedElt.controls = true;
+                }
+                zoomed.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    zoomed.remove();
+                });
+                zoomed.addEventListener('keydown', (e) => {
+                    e.preventDefault();
+                    if (e.key === 'Escape') {
+                        zoomed.remove();
+                    }
+                });
+                zoomedElt.addEventListener('play', () => {
+                    zoomed.focus();
+                });
+                zoomed.appendChild(zoomedElt);
+                document.body.appendChild(zoomed);
+                zoomed.showModal();
             });
 
             div.appendChild(removeBtn);
@@ -1371,9 +1442,16 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (mediaFile.description) {
                 altTextArea.value = mediaFile.description;
                 altBtn.style.color = '#009900';
+                if (previewElt) {
+                    previewElt.alt = mediaFile.description;
+                    previewElt.title = mediaFile.description;
+                }
             }
 
             const altCounter = newAltDiv.querySelector('.alt-counter');
+            newAltDiv.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
             altTextArea.addEventListener('input', () => {
                 altCounter.textContent = `${altTextArea.value.length}/1500`;
                 if (altTextArea.value.length > 0) {
@@ -1395,9 +1473,17 @@ document.addEventListener('DOMContentLoaded', async function () {
                     (e.key === 'Enter' && e.ctrlKey)
                 ) {
                     if (altText && altText.length > 0) {
+                        if (previewElt) {
+                            previewElt.alt = altText;
+                            previewElt.title = altText;
+                        }
                         mediaFile.description = altText;
                         altBtn.style.color = '#009900';
                     } else if (!altText || altText.length === 0) {
+                        if (previewElt) {
+                            previewElt.removeAttribute('alt');
+                            previewElt.removeAttribute('title');
+                        }
                         delete mediaFile.description;
                         altBtn.removeAttribute('style');
                     }
@@ -1409,34 +1495,58 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             const altSaveBtn = newAltDiv.querySelector('.alt-save-btn');
             const altCancelBtn = newAltDiv.querySelector('.alt-cancel-btn');
-            altBtn.addEventListener('click', () => {
-                const altText = altTextArea.value;
-                if (altText) {
-                    altCancelBtn.textContent = 'Effacer';
+            altBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (newAltDiv.style.display === 'flex') {
+                    newAltDiv.style.display = 'none';
                 } else {
-                    altCancelBtn.textContent = 'Annuler';
+                    const altText = altTextArea.value;
+                    if (altText) {
+                        altCancelBtn.textContent = 'Effacer';
+                    } else {
+                        altCancelBtn.textContent = 'Annuler';
+                    }
+                    newAltDiv.style.display = 'flex';
+                    newAltDiv.scrollIntoView();
+                    altTextArea.focus();
                 }
-                newAltDiv.style.display = 'flex';
-                altTextArea.focus();
             });
-            altSaveBtn.addEventListener('click', async () => {
+            altSaveBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
                 const altText = altTextArea.value;
                 if (altText && altText.length > 0) {
+                    if (previewElt) {
+                        previewElt.alt = altText;
+                        previewElt.title = altText;
+                    }
                     mediaFile.description = altText;
                     altBtn.style.color = '#009900';
                 } else if (!altText || altText.length === 0) {
+                    if (previewElt) {
+                        previewElt.removeAttribute('alt');
+                        previewElt.removeAttribute('title');
+                    }
                     delete mediaFile.description;
                     altBtn.removeAttribute('style');
                 }
                 newAltDiv.style.display = 'none';
             });
-            altCancelBtn.addEventListener('click', async () => {
+            altCancelBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
                 const altText = altTextArea.value;
                 if (altText.length > 0) {
                     altTextArea.value = null;
+                    if (previewElt) {
+                        previewElt.removeAttribute('alt');
+                        previewElt.removeAttribute('title');
+                    }
                     altCounter.textContent = '0/1500';
                     altCancelBtn.textContent = 'Annuler';
                 } else if (altText.length === 0) {
+                    if (previewElt) {
+                        previewElt.removeAttribute('alt');
+                        previewElt.removeAttribute('title');
+                    }
                     delete mediaFile.description;
                     altBtn.removeAttribute('style');
                     newAltDiv.style.display = 'none';
@@ -1447,16 +1557,17 @@ document.addEventListener('DOMContentLoaded', async function () {
             div.appendChild(newAltDiv);
 
             if (!mediaFile.description) {
-                setTimeout(() => {
-                    const altText = altTextArea.value;
-                    if (altText) {
-                        altCancelBtn.textContent = 'Effacer';
-                    } else {
-                        altCancelBtn.textContent = 'Annuler';
-                    }
-                    newAltDiv.style.display = 'flex';
-                    altTextArea.focus();
-                }, 500);
+                // setTimeout(() => {
+                const altText = altTextArea.value;
+                if (altText) {
+                    altCancelBtn.textContent = 'Effacer';
+                } else {
+                    altCancelBtn.textContent = 'Annuler';
+                }
+                newAltDiv.style.display = 'flex';
+                newAltDiv.scrollIntoView();
+                altTextArea.focus();
+                // }, 500);
             }
         }
 

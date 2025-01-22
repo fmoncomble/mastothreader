@@ -299,18 +299,24 @@ div#dl-msg {
 .img-preview div {
     position: relative;
     margin: 5px;
+    cursor: zoom-in;
 }
 
-.img-preview img {
+.img-preview img,
+.img-preview video {
     width: 85px;
     height: 85px;
     object-fit: cover;
 }
 
-.img-preview video {
+.img-preview audio {
+    width: 85px;
+}
+
+/* .img-preview video {
     height: 85px;
     object-fit: cover;
-}
+} */
 
 .char-count,
 .img-count {
@@ -369,7 +375,6 @@ div#dl-msg {
 
 .alt-div {
     position: absolute !important;
-    top: 0;
     left: 50%;
     transform: translateX(-50%);
     z-index: 1;
@@ -382,6 +387,7 @@ div#dl-msg {
     border-radius: 4px;
     box-shadow: 0 0 5px gray;
     background-color: white;
+    cursor: auto !important;
 }
 
 .alt-btn-div {
@@ -406,6 +412,7 @@ div#dl-msg {
     position: absolute;
     top: 1%;
     border: none;
+    cursor: text;
 }
 
 .img-spinner-div {
@@ -717,4 +724,36 @@ div#reply-preview-close:hover {
     background-color: #eee;
     border: none;
     border-radius: 4px;
+}
+
+dialog.zoomed {
+    border: none;
+    border-radius: 5px;
+    box-shadow: 0 0 5px gray;
+    cursor: zoom-out;
+}
+
+img.zoomed,
+video.zoomed,
+audio.zoomed {
+    width: 20vw;
+    cursor: zoom-out;
+}
+
+div.zoomed-close {
+    font-weight: bold;
+    font-size: x-large;
+    position: absolute;
+    right: 0px;
+    top: 0px;
+    cursor: pointer;
+    width: 28px;
+    height: 28px;
+    color: #cc0000;
+    text-shadow: 0 0 5px white;
+}
+
+dialog:focus-visible,
+.zoomed:focus-visible {
+    outline: none;
 }
