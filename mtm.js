@@ -430,6 +430,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     let supportedMimeTypes;
+    let mediaConfig = {};
 
     async function getMax() {
         const response = await fetch(`https://${instance}/api/v1/instance`);
@@ -441,7 +442,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         maxChars = Number(data.configuration.statuses.max_characters);
         maxMedia = Number(data.configuration.statuses.max_media_attachments);
         lang = data.languages[0];
-        supportedMimeTypes= new Set(data.configuration.media_attachments.supported_mime_types);
+        mediaConfig = data.configuration.media_attachments;
     }
 
     let originalId;
@@ -1315,6 +1316,10 @@ document.addEventListener('DOMContentLoaded', async function () {
             const removeBtn = document.createElement('button');
             let previewElt;
             let fileType = mediaFile.file.type;
+            let supportedMimeTypes = new Set(mediaConfig.supported_mime_types);
+            let altLimit = mediaConfig.description_limit || 1500;
+            let imgSizeLimit = mediaConfig.image_size_limit;
+            let vidSizeLimit = mediaConfig.video_size_limit;
 
             if (!supportedMimeTypes.has(fileType)) {
                 window.alert('Type de fichier non pris en charge.');
@@ -1331,6 +1336,21 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
 
             if (fileType.includes('video')) {
+                if (mediaFile.file.size > vidSizeLimit) {
+                    window.alert(
+                        `La taille de la vidéo dépasse la limite de ${vidSizeLimit / 1000000} Mo.`
+                    );
+                    const index = files.indexOf(mediaFile);
+                    if (index > -1) {
+                        files.splice(index, 1);
+                    }
+                    div.remove();
+                    imgCount.textContent = `${files.length}/${maxMedia}`;
+                    if (files.length === 0) {
+                        dzInst.style.display = 'block';
+                    }
+                    return;
+                }
                 const video = document.createElement('video');
                 if (!video.canPlayType(mediaFile.file.type)) {
                     video.poster = 'icons/video_placeholder.webp';
@@ -1346,13 +1366,22 @@ document.addEventListener('DOMContentLoaded', async function () {
                 }
                 previewElt = video;
                 div.appendChild(video);
-            } else if (mediaFile.thumbnail) {
-                const img = document.createElement('img');
-                img.src = mediaFile.thumbnail;
-                img.alt = mediaFile.description;
-                previewElt = img;
-                div.lastElementChild.before(img);
             } else if (fileType.includes('image')) {
+                if (mediaFile.file.size > imgSizeLimit) {
+                    window.alert(
+                        `La taille de l'image dépasse la limite de ${imgSizeLimit / 1000000} Mo.`
+                    );
+                    const index = files.indexOf(mediaFile);
+                    if (index > -1) {
+                        files.splice(index, 1);
+                    }
+                    div.remove();
+                    imgCount.textContent = `${files.length}/${maxMedia}`;
+                    if (files.length === 0) {
+                        dzInst.style.display = 'block';
+                    }
+                    return;
+                }
                 const image = mediaFile.file;
                 const imgReader = new FileReader();
                 imgReader.onload = function (e) {
@@ -1453,13 +1482,13 @@ document.addEventListener('DOMContentLoaded', async function () {
                 e.stopPropagation();
             });
             altTextArea.addEventListener('input', () => {
-                altCounter.textContent = `${altTextArea.value.length}/1500`;
+                altCounter.textContent = `${altTextArea.value.length}/${altLimit}`;
                 if (altTextArea.value.length > 0) {
                     altCancelBtn.textContent = 'Effacer';
                 } else if (altTextArea.value.length === 0) {
                     altCancelBtn.textContent = 'Annuler';
                 }
-                if (altTextArea.value.length > 1500) {
+                if (altTextArea.value.length > altLimit) {
                     altCounter.style.color = '#cc0000';
                     altCounter.style.fontWeight = 'bold';
                 } else {
@@ -1540,7 +1569,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                         previewElt.removeAttribute('alt');
                         previewElt.removeAttribute('title');
                     }
-                    altCounter.textContent = '0/1500';
+                    altCounter.textContent = `0/${altLimit}`;
                     altCancelBtn.textContent = 'Annuler';
                 } else if (altText.length === 0) {
                     if (previewElt) {
