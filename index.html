@@ -16,7 +16,7 @@
                 width="300"
                 fill="currentColor"
             />
-            <div id="version">v0.14.1</div>
+            <div id="version">v0.14.2</div>
             <div id="plugin-dl">
                 <img
                     src="icons/addon-install.svg"
@@ -83,6 +83,13 @@
                     <input type="checkbox" id="fetch-bsky-checkbox" />Récupérer
                     un fil Bluesky</label
                 >
+                <button
+                    id="bsky-reset"
+                    class="bsky-reset"
+                    style="display: none"
+                >
+                    Déconnecter
+                </button>
                 <label for="number-posts" class="number-posts">
                     <input
                         type="checkbox"
@@ -235,18 +242,26 @@
                     style="margin-bottom: 5px"
                 />
             </div>
+            <button id="bsky-cancel-btn" class="cancel">Annuler</button>
             <button id="bsky-login-btn">Valider</button>
         </dialog>
         <dialog id="bsky-thread-dialog" class="bsky-dialog">
             <div>
-                <div style="margin-bottom: 10px">Entrez l'URL du fil Bluesky :</div>
+                <div style="margin-bottom: 10px">
+                    Entrez l'URL du fil Bluesky :
+                </div>
                 <input type="url" id="bsky-thread-input" />
             </div>
             <div style="text-align: center">
                 <label
                     id="convert-handles-label"
                     for="convert-handles"
-                    style="text-align: center; display: flex; align-items: center; justify-content: center"
+                    style="
+                        text-align: center;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    "
                 >
                     <input
                         type="checkbox"

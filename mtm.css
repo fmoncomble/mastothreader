@@ -757,3 +757,8 @@ dialog:focus-visible,
 .zoomed:focus-visible {
     outline: none;
 }
+
+.bsky-reset {
+    height: 20px;
+    font-size: x-small; 
+}

@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     const contentContainer = document.getElementById('content-container');
     const fetchBskyCheckbox = document.getElementById('fetch-bsky-checkbox');
     fetchBskyCheckbox.checked = false;
+    const bskyResetBtn = document.getElementById('bsky-reset');
     const numberPostsDiv = document.getElementById('number-posts-div');
     const numberPostsCheckbox = document.getElementById('number-posts');
     numberPostsCheckbox.checked = false;
@@ -574,6 +575,24 @@ document.addEventListener('DOMContentLoaded', async function () {
     let bskyHandle = localStorage.getItem('bsky-handle')
         ? localStorage.getItem('bsky-handle')
         : null;
+
+    if (bskyDid && bskyHandle) {
+        bskyResetBtn.style.display = 'inline-block';
+    } else {
+        bskyResetBtn.style.display = 'none';
+    }
+
+    bskyResetBtn.addEventListener('click', () => {
+        bskyDid = null;
+        bskyHandle = null;
+        localStorage.removeItem('bsky-did');
+        localStorage.removeItem('bsky-handle');
+        fetchBskyCheckbox.checked = false;
+        bskyLink = null;
+        bskyThreadInput.value = null;
+        bskyResetBtn.style.display = 'none';
+    });
+
     let bskyPosts = [];
     let fromBsky = false;
     let convertHandles = false;
@@ -583,6 +602,11 @@ document.addEventListener('DOMContentLoaded', async function () {
     const idInput = document.getElementById('id-input');
     const pwdInput = document.getElementById('pwd-input');
     const submitBtn = document.getElementById('bsky-login-btn');
+    const cancelBskyLoginBtn = document.getElementById('bsky-cancel-btn');
+    cancelBskyLoginBtn.addEventListener('click', () => {
+        bskyAuthDialog.close();
+        fetchBskyCheckbox.checked = false;
+    });
     submitBtn.addEventListener('click', async () => {
         const form = {};
         form.identifier = idInput.value;
@@ -604,6 +628,9 @@ document.addEventListener('DOMContentLoaded', async function () {
             localStorage.setItem('bsky-did', bskyDid);
             bskyHandle = data.handle;
             localStorage.setItem('bsky-handle', bskyHandle);
+            bskyResetBtn.style.display = 'inline-block';
+            idInput.value = null;
+            pwdInput.value = null;
             await new Promise((resolve) => setTimeout(resolve, 0));
             if (!bskyLink) {
                 bskyThreadInput.value = null;
@@ -612,7 +639,25 @@ document.addEventListener('DOMContentLoaded', async function () {
                 getBskyThread();
             }
         } else {
+            idInput.value = null;
+            pwdInput.value = null;
             const errorData = await res.json();
+            if (res.status === 429) {
+                const resHeaders = res.headers;
+                const resetTime = resHeaders.get('Ratelimit-Reset');
+                const now = Math.floor(Date.now() / 1000);
+                const waitTime = resetTime - now;
+                const hours = Math.floor(waitTime / 3600);
+                const minutes = Math.floor((waitTime % 3600) / 60);
+                const seconds = waitTime % 60;
+                const timeString = `${hours} heures, ${minutes} minutes et ${seconds} secondes`;
+                window.alert(
+                    `Trop de tentatives de connexion.\nVeuillez réessayer dans ${timeString}.`
+                );
+                bskyAuthDialog.close();
+                fetchBskyCheckbox.checked = false;
+                return;
+            }
             window.alert(`Erreur d'authentification: ${errorData.message}`);
             fetchBskyCheckbox.checked = false;
             bskyAuthDialog.close();
@@ -638,6 +683,18 @@ document.addEventListener('DOMContentLoaded', async function () {
         bskyLink = bskyThreadInput.value;
         getBskyThread();
         bskyThreadDialog.close();
+    });
+    bskyThreadInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            bskyLink = bskyThreadInput.value;
+            getBskyThread();
+            bskyThreadDialog.close();
+        } else if (event.key === 'Escape') {
+            bskyLink = null;
+            fetchBskyCheckbox.checked = false;
+            bskyThreadInput.value = null;
+            bskyThreadDialog.close();
+        }
     });
     bskyThreadCancel.addEventListener('click', () => {
         bskyLink = null;
@@ -1338,7 +1395,9 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (fileType.includes('video')) {
                 if (mediaFile.file.size > vidSizeLimit) {
                     window.alert(
-                        `La taille de la vidéo dépasse la limite de ${vidSizeLimit / 1000000} Mo.`
+                        `La taille de la vidéo dépasse la limite de ${
+                            vidSizeLimit / 1000000
+                        } Mo.`
                     );
                     const index = files.indexOf(mediaFile);
                     if (index > -1) {
@@ -1369,7 +1428,9 @@ document.addEventListener('DOMContentLoaded', async function () {
             } else if (fileType.includes('image')) {
                 if (mediaFile.file.size > imgSizeLimit) {
                     window.alert(
-                        `La taille de l'image dépasse la limite de ${imgSizeLimit / 1000000} Mo.`
+                        `La taille de l'image dépasse la limite de ${
+                            imgSizeLimit / 1000000
+                        } Mo.`
                     );
                     const index = files.indexOf(mediaFile);
                     if (index > -1) {
