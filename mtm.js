@@ -2,6 +2,7 @@ import { franc } from 'https://esm.sh/franc@6?bundle';
 import { iso6393 } from 'https://esm.sh/iso-639-3@3?bundle';
 
 document.addEventListener('DOMContentLoaded', async function () {
+    // Declare page elements
     const instructionsDiv = document.getElementById('instructions');
     const instanceInput = document.getElementById('instance-input');
     const instanceDataList = document.getElementById('inst-list');
@@ -28,6 +29,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     const yearSpan = document.querySelector('span#year');
     yearSpan.textContent = new Date().toISOString().split('-')[0];
 
+    // Handle instructions display
     const instructionsBtn = document.getElementById('instructions-btn');
     instructionsBtn.addEventListener('click', () => {
         if (instructionsDiv.style.display === 'none') {
@@ -39,6 +41,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     });
 
+    // Functions to gather information
     async function getData(url) {
         try {
             const res = await fetch(url);
@@ -77,6 +80,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     }
 
+    // Handle plugin download link
     const dlPic = document.getElementById('dl-pic');
     const dlMsg = document.getElementById('dl-msg');
     const pluginInstall = document.getElementById('plugin-install');
@@ -112,6 +116,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     };
 
+    // Declare Mastodon variables
     let maxChars;
     let maxMedia;
     let lang;
@@ -121,6 +126,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     let oldPosts = [];
     let i = 0;
 
+    // Handle Mastodon instance and authentication
     let instance;
     checkInstance();
     if (instance) {
@@ -135,11 +141,16 @@ document.addEventListener('DOMContentLoaded', async function () {
     let inReplyUrl = null;
     let userId = null;
     let bskyUrl = null;
+    let WPUrl = null;
 
+    // Handle data processing on page load
     window.onload = async function () {
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('bsky_url')) {
             bskyUrl = urlParams.get('bsky_url');
+        }
+        if (urlParams.has('wp_url')) {
+            WPUrl = urlParams.get('wp_url');
         }
         if (urlParams.has('instance')) {
             let originInstance = urlParams.get('instance');
@@ -185,6 +196,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 if (token) {
                     localStorage.setItem('mastothreadtoken-v2', token);
                     bskyLink = sessionStorage.getItem('bsky_url') || null;
+                    WPUrl = sessionStorage.getItem('wp_url') || null;
                     mastoText = sessionStorage.getItem('text') || null;
                     inReplyUrl = sessionStorage.getItem('reply_to') || null;
                     userId = sessionStorage.getItem('user_id') || null;
@@ -212,6 +224,13 @@ document.addEventListener('DOMContentLoaded', async function () {
                     bskyLink = bskyUrl;
                     fetchBskyCheckbox.checked = true;
                     await getBskyThread();
+                }
+            }
+            if (WPUrl) {
+                if (
+                    window.confirm(`Voulez-vous importer le billet WordPress ?`)
+                ) {
+                    await getWPPost(WPUrl);
                 }
             }
             if (inReplyUrl) {
@@ -430,9 +449,8 @@ document.addEventListener('DOMContentLoaded', async function () {
         return data.access_token;
     }
 
-    let supportedMimeTypes;
+    // Collect Mastodon instance info
     let mediaConfig = {};
-
     async function getMax() {
         const response = await fetch(`https://${instance}/api/v1/instance`);
         if (!response.ok) {
@@ -446,6 +464,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         mediaConfig = data.configuration.media_attachments;
     }
 
+    // Handle post creation in reply to another post
     let originalId;
     let originalUser;
     inReplyToInput.addEventListener('input', async () => {
@@ -569,6 +588,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     let splitNb = 0;
     let isSplitting = false;
 
+    // Handle import of Bluesky thread
     let bskyDid = localStorage.getItem('bsky-did')
         ? localStorage.getItem('bsky-did')
         : null;
@@ -968,6 +988,248 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     }
 
+    // Handle import of WordPress blogpost
+    let fromWP = false;
+    let wpChunks = [];
+    async function getWPPost(WPUrl) {
+        fromWP = true;
+        let res = await fetch(WPUrl);
+        let data = await res.json();
+        let content = data.content.rendered;
+        if (!content) {
+            content = data.content;
+        }
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(content, 'text/html').body;
+        const elements = Array.from(
+            doc.querySelectorAll(
+                'h1, h2, h3, h4, h5, h6, p, ul, ol, li, img, video, iframe'
+            )
+        );
+
+        console.log('elements: ', elements);
+
+        let combinedElts = [];
+
+        for (let e of elements) {
+            console.log('Processing element: ', e);
+            if (e.tagName === 'LI') {
+                e.textContent = `• ${e.textContent}`;
+            }
+            if (e.textContent && e.textContent.length > 0) {
+                const links = e.querySelectorAll('a');
+                if (links.length > 0) {
+                    console.log('Found links: ', links);
+                    for (let l of links) {
+                        const img = l.querySelector('img');
+                        const hashtag = l.textContent.match(/#[a-zA-Z0-9]+?/g);
+                        const urlText =
+                            l.textContent.match(/https?:\/\/[^\s]+/g);
+                        if (!img && !hashtag && urlText) {
+                            const url = l.getAttribute('href');
+                            l.textContent = `(${url})`;
+                        }
+                    }
+                }
+                let nextE = elements[elements.indexOf(e) + 1];
+                if (
+                    !nextE.tagName.includes('H') &&
+                    nextE.textContent &&
+                    nextE.textContent.length > 0
+                ) {
+                    console.log('Triggering combination of elements: ', e, nextE);
+                    let combined = await combineText(e, nextE);
+                    if (combined) {
+                        console.log('Successfully combined elements: ', combined);
+                        combinedElts.push(combined);
+                    }
+                } else {
+                    console.log('Next element is a header or a non-text element, not combining elements', e, nextE);
+                    combinedElts.push(e);
+                }
+            } else {
+                console.log('Element has no text, not combining', e);
+                combinedElts.push(e);
+            }
+        }
+
+        async function combineText(e, nextE) {
+            return new Promise(async (resolve) => {
+                let text = e.textContent;
+                let nextText = nextE.textContent;
+                if (text.length + nextText.length < maxChars) {
+                    console.log(`Combining`, e, nextE);
+                    e.textContent += `\n\n${nextText}`;
+                    elements.splice(elements.indexOf(nextE), 1);
+                    let nextElt = elements[elements.indexOf(e) + 1];
+                    if (
+                        !nextElt.tagName.includes('H') &&
+                        nextElt.textContent &&
+                        nextElt.textContent.length > 0
+                    ) {
+                        console.log('Attempting further combining: ', e, nextElt);
+                        await combineText(e, nextElt);
+                    }
+                    resolve(e);
+                } else {
+                    console.log('Text too long, not combining', e);
+                    resolve(e);
+                }
+            });
+        }
+
+        let mutatedElts = [];
+
+        for (let e of combinedElts) {
+            if (e.textContent && e.textContent.length > 0) {
+                const text = e.textContent;
+                if (text.length > maxChars) {
+                    let newElts = await splitText(e);
+                    mutatedElts.push(...newElts);
+                } else {
+                    mutatedElts.push(e);
+                }
+            } else {
+                mutatedElts.push(e);
+            }
+        }
+
+        async function splitText(e, chunks) {
+            return new Promise(async (resolve) => {
+                let newElts = [];
+                if (!chunks || chunks.length === 0) {
+                    const text = e.textContent;
+                    if (text && text.length > maxChars) {
+                        const regex = /([,.;:!?])/gu;
+                        chunks = text.split(regex);
+                    }
+                }
+                let newText = '';
+                for (let i = 0; i < chunks.length; i += 1) {
+                    let chunk = chunks[i];
+                    if (newText.length + chunk.length < maxChars) {
+                        newText += chunk;
+                    } else {
+                        let newElt = e.cloneNode(true);
+                        newElt.textContent = newText;
+                        newElts.push(newElt);
+                        let remainingChunks = chunks.slice(i);
+                        let remainingText = remainingChunks.join('');
+                        if (remainingText && remainingText.length < maxChars) {
+                            let newElt = e.cloneNode(true);
+                            newElt.textContent = remainingText;
+                            newElts.push(newElt);
+                            break;
+                        } else if (remainingText.length > maxChars) {
+                            await splitText(newElt, remainingChunks);
+                        } else {
+                            break;
+                        }
+                    }
+                }
+                resolve(newElts);
+            });
+        }
+
+        console.log('Mutated elements: ', mutatedElts);
+
+        let i = 1;
+        let index = 0;
+        while (mutatedElts && index < mutatedElts.length) {
+            let node = mutatedElts[index];
+            let next = mutatedElts[index + 1];
+            let chunk = { text: '', media: [] };
+            if (node.textContent && node.textContent.length > 0) {
+                chunk.text = node.textContent;
+                index++;
+            } else if (
+                node.tagName === 'IMG' ||
+                node.tagName === 'VIDEO' ||
+                node.tagName === 'IFRAME'
+            ) {
+                if (chunk.media.length < maxMedia) {
+                    let media = {
+                        type: node.tagName.toLowerCase(),
+                        url: node.src,
+                        alt: node.alt || null,
+                    };
+                    chunk.media.push(media);
+                    index++;
+                    if (next.textContent) {
+                        index++;
+                        continue;
+                    }
+                } else {
+                    index++;
+                    continue;
+                }
+            } else {
+                index++;
+                continue;
+            }
+            // while (
+            //     index < elements.length &&
+            //     next &&
+            //     !next.tagName.includes('H')
+            // ) {
+            //     next = mutatedElts[index];
+            //     if (next && next.textContent && chunk.text.length < maxChars) {
+            //         if (next.tagName === 'LI') {
+            //             chunk.text += `• `;
+            //         }
+            //         chunk.text += `${next.textContent}\n`;
+            //         index++;
+            //     } else if (next && next.textContent && chunk.text.length >= maxChars) {
+            //         index++;
+            //         break;
+            //     } else if (next && !next.textContent) {
+            //         if (
+            //             (next.tagName === 'IMG' ||
+            //                 next.tagName === 'VIDEO' ||
+            //                 next.tagName === 'IFRAME') &&
+            //             chunk.media.length < maxMedia
+            //         ) {
+            //             if (chunk.media.length < maxMedia) {
+            //                 let media = {
+            //                     type: next.tagName.toLowerCase(),
+            //                     url: next.src,
+            //                     alt: next.alt || null,
+            //                 };
+            //                 chunk.media.push(media);
+            //                 index++;
+            //             } else {
+            //                 index++;
+            //                 break;
+            //             }
+            //         } else {
+            //             index++;
+            //         }
+            //     } else {
+            //         index++;
+            //     }
+            // }
+            wpChunks.push(chunk);
+            i++;
+        }
+        console.log('WP chunks: ', wpChunks);
+        if (postItems && postItems.length > 0) {
+            postItems[0].remove();
+        }
+        postItems = [];
+        for (let p of wpChunks) {
+            try {
+                await createNewPost(p.text, p.media);
+                currentPost = postItems[wpChunks.indexOf(p)];
+            } catch (error) {
+                console.error(
+                    `Error creating post ${wpChunks.indexOf(p) + 1}: `,
+                    error
+                );
+            }
+        }
+    }
+
+    // Create new post
     async function createNewPost(text, imgs) {
         oldPosts = postItems.map(function (p) {
             return p.getAttribute('counter');
@@ -1109,6 +1371,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
         });
 
+        // Handle media attachments
         mediaFiles[`mediaFiles${i}`] = [];
         let files = mediaFiles[`mediaFiles${i}`];
 
@@ -1119,9 +1382,11 @@ document.addEventListener('DOMContentLoaded', async function () {
         const dzInst = dropzone.querySelector('.dz-inst');
         const imgPreview = dropzone.querySelector('.img-preview');
 
+        const proxyUrl = 'https://corsproxy.io/';
+
+        // Get Bluesky embedded media
         if (fromBsky && imgs && imgs.length > 0) {
             dzInst.style.display = 'none';
-            const proxyUrl = 'https://corsproxy.io/';
             for (let img of imgs) {
                 if (img.type === 'video') {
                     let mediaFile = {};
@@ -1236,6 +1501,35 @@ document.addEventListener('DOMContentLoaded', async function () {
                 }
             }
         }
+
+        // Get WP media
+        // if (fromWP && imgs && imgs.length > 0) {
+        //     dzInst.style.display = 'none';
+        //     for (let img of imgs) {
+        //         fetch(img.url)
+        //             .then((response) => response.blob())
+        //             .then((blob) => {
+        //                 const file = new File([blob], 'image.jpg', {
+        //                     type: blob.type,
+        //                 });
+        //                 let mediaFile = {};
+        //                 mediaFile.file = file;
+        //                 if (img.alt) {
+        //                     mediaFile.description = img.alt;
+        //                 }
+        //                 files.push(mediaFile);
+        //                 displayThumbnail(
+        //                     mediaFile,
+        //                     imgPreview,
+        //                     imgCount,
+        //                     dzInst
+        //                 );
+        //             })
+        //             .catch((error) =>
+        //                 console.error('Error fetching media:', error)
+        //             );
+        //     }
+        // }
 
         const overlay = newPost.querySelector('div.overlay');
         newPost.addEventListener('dragover', (e) => {
@@ -1647,7 +1941,6 @@ document.addEventListener('DOMContentLoaded', async function () {
             div.appendChild(newAltDiv);
 
             if (!mediaFile.description) {
-                // setTimeout(() => {
                 const altText = altTextArea.value;
                 if (altText) {
                     altCancelBtn.textContent = 'Effacer';
@@ -1657,10 +1950,10 @@ document.addEventListener('DOMContentLoaded', async function () {
                 newAltDiv.style.display = 'flex';
                 newAltDiv.scrollIntoView();
                 altTextArea.focus();
-                // }, 500);
             }
         }
 
+        // Handle post deletion
         const deletePostBtn = newPost.querySelector('.delete-post-btn');
         deletePostBtn.addEventListener('click', () => {
             const index = postItems.indexOf(newPost);
@@ -1695,10 +1988,12 @@ document.addEventListener('DOMContentLoaded', async function () {
         return newPost;
     }
 
+    // Function to split long text into separate toots
     async function splitIntoToots(newPost, postText, textarea) {
         if (isSplitting) {
             return;
         }
+        console.log('Splitting text:', postText);
         isSplitting = true;
         splitNb++;
         textarea.value = null;
@@ -1750,6 +2045,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         isSplitting = false;
     }
 
+    // Functions to react to change in number of posts
     numberPostsCheckbox.addEventListener('change', async () => {
         let message = 'Updating post list after ticking/unticking checkbox';
         await updatePostList(message, oldPosts);
@@ -1835,6 +2131,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         return true;
     }
 
+    // Functions to upload thread to Mastodon
     let threadUrl;
     postThreadBtn.addEventListener('click', async () => {
         postThreadBtn.style.display = 'none';
