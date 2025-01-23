@@ -999,7 +999,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (index === 0) {
             vizSelect.value = 'public';
         } else {
-            if (defaultViz === 'private') {
+            if (defaultViz !== 'public') {
                 vizSelect.value = defaultViz;
             } else {
                 vizSelect.value = 'unlisted';
@@ -1010,7 +1010,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             const newIndex = postItems.indexOf(newPost);
             if (newIndex === 0) {
                 defaultViz = vizSelect.value;
-                if (defaultViz === 'private') {
+                if (defaultViz !== 'public') {
                     for (let p of postItems) {
                         const vizS = p.querySelector('.viz-select');
                         vizS.value = defaultViz;
