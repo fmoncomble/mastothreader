@@ -993,9 +993,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     let wpChunks = [];
     async function getWPPost(WPUrl) {
         bskyLoadingSpinner.showModal();
-        const WPloadingText =
-            document.getElementById('bsky-loading-text');
-            WPloadingText.textContent = 'Récupération du billet WordPress...';
+        const WPloadingText = document.getElementById('bsky-loading-text');
+        WPloadingText.textContent = 'Récupération du billet WordPress...';
         fromWP = true;
         let res = await fetch(WPUrl);
         let data = await res.json();
@@ -1016,11 +1015,14 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         for (let e of elements) {
             if (e.textContent && e.textContent.length > 0) {
+                if (e.parentElement.tagName === 'BLOCKQUOTE') {
+                    e.textContent = `“${e.textContent}”`;
+                }
                 const links = e.querySelectorAll('a');
                 if (links.length > 0) {
                     for (let l of links) {
                         const url = l.getAttribute('href');
-                        if (url.startsWith('http')) {
+                        if (url.startsWith('http') && url !== l.textContent) {
                             l.textContent += ` (${url})`;
                         }
                     }
@@ -1158,6 +1160,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                     chunk.media.push(media);
                     index++;
                     if (next.textContent) {
+                        index++;
+                    } else {
+                        index++;
                         continue;
                     }
                 } else {
@@ -1165,7 +1170,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 }
             } else {
                 index++;
-                continue;
+                // continue;
             }
             while (
                 index < elements.length &&
@@ -1193,6 +1198,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                     } else {
                         break;
                     }
+                } else if (combinedElts.indexOf(node) === 0 && !chunk.text && next.textContent) {
+                    chunk.text = next.textContent.trim();
+                    index++;
                 } else {
                     break;
                 }
@@ -1200,13 +1208,16 @@ document.addEventListener('DOMContentLoaded', async function () {
             wpChunks.push(chunk);
             i++;
         }
+
         if (postItems && postItems.length > 0) {
             postItems[0].remove();
         }
         postItems = [];
         for (let p of wpChunks) {
             try {
-                WPloadingText.textContent = `Création du pouet ${wpChunks.indexOf(p) + 1}/${wpChunks.length}...`;
+                WPloadingText.textContent = `Création du pouet ${
+                    wpChunks.indexOf(p) + 1
+                }/${wpChunks.length}...`;
                 await createNewPost(p.text, p.media);
                 currentPost = postItems[wpChunks.indexOf(p)];
             } catch (error) {
@@ -1302,7 +1313,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         charCount.textContent = `0/${maxChars}`;
 
         const textarea = newPost.querySelector('.post-text');
-        textarea.style.minHeight = Number(maxChars / 50 * 16.8) + 'px';
+        textarea.style.minHeight = Number((maxChars / 50) * 16.8) + 'px';
         if (text) {
             if (text.length > maxChars) {
                 await splitIntoToots(newPost, text, textarea);
