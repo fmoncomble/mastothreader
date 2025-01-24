@@ -162,6 +162,12 @@ button:hover {
     max-width: 200px;
     text-overflow: ellipsis;
 }
+
+.viz-select {
+    max-width: 80px;
+    text-overflow: ellipsis;
+}
+
 .cw-btn:hover,
 select:hover {
     background-color: #dadade;
