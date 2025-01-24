@@ -992,6 +992,10 @@ document.addEventListener('DOMContentLoaded', async function () {
     let fromWP = false;
     let wpChunks = [];
     async function getWPPost(WPUrl) {
+        bskyLoadingSpinner.showModal();
+        const WPloadingText =
+            document.getElementById('bsky-loading-text');
+            WPloadingText.textContent = 'Récupération du billet WordPress...';
         fromWP = true;
         let res = await fetch(WPUrl);
         let data = await res.json();
@@ -1000,97 +1004,49 @@ document.addEventListener('DOMContentLoaded', async function () {
             content = data.content;
         }
         const parser = new DOMParser();
-        const doc = parser.parseFromString(content, 'text/html').body;
+        const doc = parser.parseFromString(content, 'text/html');
+        const body = doc.body;
         const elements = Array.from(
-            doc.querySelectorAll(
-                'h1, h2, h3, h4, h5, h6, p, ul, ol, li, img, video, iframe'
+            body.querySelectorAll(
+                'h1, h2, h3, h4, h5, h6, p, li, img, video, iframe'
             )
         );
 
-        console.log('elements: ', elements);
-
-        let combinedElts = [];
+        let splitElts = [];
 
         for (let e of elements) {
-            console.log('Processing element: ', e);
-            if (e.tagName === 'LI') {
-                e.textContent = `• ${e.textContent}`;
-            }
             if (e.textContent && e.textContent.length > 0) {
                 const links = e.querySelectorAll('a');
                 if (links.length > 0) {
-                    console.log('Found links: ', links);
                     for (let l of links) {
-                        const img = l.querySelector('img');
-                        const hashtag = l.textContent.match(/#[a-zA-Z0-9]+?/g);
-                        const urlText =
-                            l.textContent.match(/https?:\/\/[^\s]+/g);
-                        if (!img && !hashtag && urlText) {
-                            const url = l.getAttribute('href');
-                            l.textContent = `(${url})`;
+                        const url = l.getAttribute('href');
+                        if (url.startsWith('http')) {
+                            l.textContent += ` (${url})`;
                         }
                     }
                 }
-                let nextE = elements[elements.indexOf(e) + 1];
-                if (
-                    !nextE.tagName.includes('H') &&
-                    nextE.textContent &&
-                    nextE.textContent.length > 0
-                ) {
-                    console.log('Triggering combination of elements: ', e, nextE);
-                    let combined = await combineText(e, nextE);
-                    if (combined) {
-                        console.log('Successfully combined elements: ', combined);
-                        combinedElts.push(combined);
-                    }
-                } else {
-                    console.log('Next element is a header or a non-text element, not combining elements', e, nextE);
-                    combinedElts.push(e);
-                }
-            } else {
-                console.log('Element has no text, not combining', e);
-                combinedElts.push(e);
-            }
-        }
-
-        async function combineText(e, nextE) {
-            return new Promise(async (resolve) => {
-                let text = e.textContent;
-                let nextText = nextE.textContent;
-                if (text.length + nextText.length < maxChars) {
-                    console.log(`Combining`, e, nextE);
-                    e.textContent += `\n\n${nextText}`;
-                    elements.splice(elements.indexOf(nextE), 1);
-                    let nextElt = elements[elements.indexOf(e) + 1];
-                    if (
-                        !nextElt.tagName.includes('H') &&
-                        nextElt.textContent &&
-                        nextElt.textContent.length > 0
-                    ) {
-                        console.log('Attempting further combining: ', e, nextElt);
-                        await combineText(e, nextElt);
-                    }
-                    resolve(e);
-                } else {
-                    console.log('Text too long, not combining', e);
-                    resolve(e);
-                }
-            });
-        }
-
-        let mutatedElts = [];
-
-        for (let e of combinedElts) {
-            if (e.textContent && e.textContent.length > 0) {
                 const text = e.textContent;
                 if (text.length > maxChars) {
                     let newElts = await splitText(e);
-                    mutatedElts.push(...newElts);
+                    splitElts.push(...newElts);
                 } else {
-                    mutatedElts.push(e);
+                    splitElts.push(e);
+                }
+            } else if (e.tagName === 'IFRAME' && e.src.includes('youtube')) {
+                const ytEmbedElts = e.src.split('/');
+                const embed = ytEmbedElts.find((e) => e === 'embed');
+                if (embed) {
+                    const ytID =
+                        ytEmbedElts[ytEmbedElts.indexOf(embed) + 1].split(
+                            '?'
+                        )[0];
+                    const ytLink = `https://www.youtube.com/watch?v=${ytID}`;
+                    let ytElt = document.createElement('p');
+                    ytElt.textContent = ytLink;
+                    splitElts.push(ytElt);
                 }
             } else {
-                mutatedElts.push(e);
+                splitElts.push(e);
             }
         }
 
@@ -1131,22 +1087,68 @@ document.addEventListener('DOMContentLoaded', async function () {
             });
         }
 
-        console.log('Mutated elements: ', mutatedElts);
+        let combinedElts = [];
+
+        for (let e of splitElts) {
+            if (e.tagName === 'LI') {
+                e.textContent = `• ${e.textContent}`;
+            }
+            if (e.textContent && e.textContent.length > 0) {
+                let nextE = splitElts[splitElts.indexOf(e) + 1];
+                if (
+                    nextE &&
+                    !nextE.tagName.includes('H') &&
+                    nextE.textContent &&
+                    nextE.textContent.length > 0
+                ) {
+                    let combined = await combineText(e, nextE);
+                    if (combined) {
+                        combinedElts.push(combined);
+                    }
+                } else {
+                    combinedElts.push(e);
+                }
+            } else {
+                combinedElts.push(e);
+            }
+        }
+
+        async function combineText(e, nextE) {
+            return new Promise(async (resolve) => {
+                let text = e.textContent;
+                let nextText = nextE.textContent;
+                if (nextE.tagName === 'LI') {
+                    nextText = `• ${nextText}`;
+                }
+                if (text.length + nextText.length < maxChars) {
+                    e.textContent += `\n\n${nextText}`;
+                    splitElts.splice(splitElts.indexOf(nextE), 1);
+                    let nextElt = splitElts[splitElts.indexOf(e) + 1];
+                    if (
+                        nextElt &&
+                        !nextElt.tagName.includes('H') &&
+                        nextElt.textContent &&
+                        nextElt.textContent.length > 0
+                    ) {
+                        await combineText(e, nextElt);
+                    }
+                    resolve(e);
+                } else {
+                    resolve(e);
+                }
+            });
+        }
 
         let i = 1;
         let index = 0;
-        while (mutatedElts && index < mutatedElts.length) {
-            let node = mutatedElts[index];
-            let next = mutatedElts[index + 1];
+        while (combinedElts && index < combinedElts.length) {
+            let node = combinedElts[index];
+            let next = combinedElts[index + 1];
             let chunk = { text: '', media: [] };
             if (node.textContent && node.textContent.length > 0) {
-                chunk.text = node.textContent;
+                chunk.text = node.textContent.trim();
                 index++;
-            } else if (
-                node.tagName === 'IMG' ||
-                node.tagName === 'VIDEO' ||
-                node.tagName === 'IFRAME'
-            ) {
+            } else if (node.tagName === 'IMG' || node.tagName === 'VIDEO') {
                 if (chunk.media.length < maxMedia) {
                     let media = {
                         type: node.tagName.toLowerCase(),
@@ -1156,68 +1158,55 @@ document.addEventListener('DOMContentLoaded', async function () {
                     chunk.media.push(media);
                     index++;
                     if (next.textContent) {
-                        index++;
                         continue;
                     }
                 } else {
                     index++;
-                    continue;
                 }
             } else {
                 index++;
                 continue;
             }
-            // while (
-            //     index < elements.length &&
-            //     next &&
-            //     !next.tagName.includes('H')
-            // ) {
-            //     next = mutatedElts[index];
-            //     if (next && next.textContent && chunk.text.length < maxChars) {
-            //         if (next.tagName === 'LI') {
-            //             chunk.text += `• `;
-            //         }
-            //         chunk.text += `${next.textContent}\n`;
-            //         index++;
-            //     } else if (next && next.textContent && chunk.text.length >= maxChars) {
-            //         index++;
-            //         break;
-            //     } else if (next && !next.textContent) {
-            //         if (
-            //             (next.tagName === 'IMG' ||
-            //                 next.tagName === 'VIDEO' ||
-            //                 next.tagName === 'IFRAME') &&
-            //             chunk.media.length < maxMedia
-            //         ) {
-            //             if (chunk.media.length < maxMedia) {
-            //                 let media = {
-            //                     type: next.tagName.toLowerCase(),
-            //                     url: next.src,
-            //                     alt: next.alt || null,
-            //                 };
-            //                 chunk.media.push(media);
-            //                 index++;
-            //             } else {
-            //                 index++;
-            //                 break;
-            //             }
-            //         } else {
-            //             index++;
-            //         }
-            //     } else {
-            //         index++;
-            //     }
-            // }
+            while (
+                index < elements.length &&
+                next &&
+                !next.tagName.includes('H')
+            ) {
+                next = combinedElts[index];
+                if (next && !next.textContent) {
+                    if (
+                        (next.tagName === 'IMG' || next.tagName === 'VIDEO') &&
+                        chunk.media.length < maxMedia
+                    ) {
+                        if (chunk.media.length < maxMedia) {
+                            let media = {
+                                type: next.tagName.toLowerCase(),
+                                url: next.src,
+                                alt: next.alt || null,
+                            };
+                            chunk.media.push(media);
+                            index++;
+                        } else {
+                            index++;
+                            break;
+                        }
+                    } else {
+                        break;
+                    }
+                } else {
+                    break;
+                }
+            }
             wpChunks.push(chunk);
             i++;
         }
-        console.log('WP chunks: ', wpChunks);
         if (postItems && postItems.length > 0) {
             postItems[0].remove();
         }
         postItems = [];
         for (let p of wpChunks) {
             try {
+                WPloadingText.textContent = `Création du pouet ${wpChunks.indexOf(p) + 1}/${wpChunks.length}...`;
                 await createNewPost(p.text, p.media);
                 currentPost = postItems[wpChunks.indexOf(p)];
             } catch (error) {
@@ -1227,6 +1216,11 @@ document.addEventListener('DOMContentLoaded', async function () {
                 );
             }
         }
+        bskyLoadingSpinner.close();
+        postItems[0].querySelector('.post-text').focus();
+        window.scrollTo(0, 0);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        window.alert('Le fil est prêt, pensez à le relire avant de publier !');
     }
 
     // Create new post
@@ -1308,6 +1302,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         charCount.textContent = `0/${maxChars}`;
 
         const textarea = newPost.querySelector('.post-text');
+        textarea.style.minHeight = Number(maxChars / 50 * 16.8) + 'px';
         if (text) {
             if (text.length > maxChars) {
                 await splitIntoToots(newPost, text, textarea);
@@ -1503,33 +1498,73 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
 
         // Get WP media
-        // if (fromWP && imgs && imgs.length > 0) {
-        //     dzInst.style.display = 'none';
-        //     for (let img of imgs) {
-        //         fetch(img.url)
-        //             .then((response) => response.blob())
-        //             .then((blob) => {
-        //                 const file = new File([blob], 'image.jpg', {
-        //                     type: blob.type,
-        //                 });
-        //                 let mediaFile = {};
-        //                 mediaFile.file = file;
-        //                 if (img.alt) {
-        //                     mediaFile.description = img.alt;
-        //                 }
-        //                 files.push(mediaFile);
-        //                 displayThumbnail(
-        //                     mediaFile,
-        //                     imgPreview,
-        //                     imgCount,
-        //                     dzInst
-        //                 );
-        //             })
-        //             .catch((error) =>
-        //                 console.error('Error fetching media:', error)
-        //             );
-        //     }
-        // }
+        if (fromWP && imgs && imgs.length > 0) {
+            dzInst.style.display = 'none';
+            for (let img of imgs) {
+                if (img.type === 'img') {
+                    let res = await getWPMedia(img);
+                    let blob = await res[0].blob();
+                    const file = new File([blob], 'image.jpg', {
+                        type: blob.type,
+                    });
+                    let mediaFile = {};
+                    mediaFile.file = file;
+                    mediaFile.url = img.url;
+                    if (!img.alt) {
+                        mediaFile.description = res[1];
+                    } else {
+                        mediaFile.description = img.alt;
+                    }
+                    files.push(mediaFile);
+                    displayThumbnail(mediaFile, imgPreview, imgCount, dzInst);
+                } else if (img.type === 'video') {
+                    let mediaFile = {};
+                    mediaFile.url = img.url;
+                    mediaFile.type = img.type;
+                    mediaFile.description = img.alt;
+                    let res = await getWPMedia(img);
+                    let blob = await res[0].blob();
+                    if (!img.alt) {
+                        mediaFile.description = res[1];
+                    }
+                    const file = new File([blob], 'video.mp4', {
+                        type: blob.type,
+                    });
+                    mediaFile.file = file;
+                    files.push(mediaFile);
+                    displayThumbnail(mediaFile, imgPreview, imgCount, dzInst);
+                }
+            }
+        }
+
+        async function getWPMedia(img) {
+            return new Promise(async (resolve) => {
+                let mediaAlt = null;
+                if (!img.alt) {
+                    let urlSegments = WPUrl.split('/').slice(0, -2);
+                    let baseUrl = urlSegments.join('/') + '/media/';
+                    let searchTerm = img.url.split('/').pop().split('?')[0];
+                    let searchUrl = `${baseUrl}?search=${searchTerm}`;
+                    let res = await fetch(searchUrl);
+                    let data = await res.json();
+                    let media = data[0];
+                    if (media) {
+                        mediaAlt =
+                            media.alt_text || media.title.rendered || null;
+                    }
+                }
+                let form = new FormData();
+                form.append('url', img.url);
+                let response = await fetch('proxy.php', {
+                    method: 'POST',
+                    body: form,
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                resolve([response, mediaAlt]);
+            });
+        }
 
         const overlay = newPost.querySelector('div.overlay');
         newPost.addEventListener('dragover', (e) => {
@@ -1719,7 +1754,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 }
                 previewElt = video;
                 div.appendChild(video);
-            } else if (fileType.includes('image')) {
+            } else if (fileType.includes('image') || fileType.includes('img')) {
                 if (mediaFile.file.size > imgSizeLimit) {
                     window.alert(
                         `La taille de l'image dépasse la limite de ${
@@ -1993,7 +2028,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (isSplitting) {
             return;
         }
-        console.log('Splitting text:', postText);
         isSplitting = true;
         splitNb++;
         textarea.value = null;
