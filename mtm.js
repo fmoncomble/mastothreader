@@ -1146,12 +1146,21 @@ document.addEventListener('DOMContentLoaded', async function () {
         while (combinedElts && index < combinedElts.length) {
             let node = combinedElts[index];
             let next = combinedElts[index + 1];
+            if (node && next) {
+                console.log(
+                    'Node & next: ',
+                    node.textContent || node.tagName || null,
+                    next.textContent || next.tagName || null
+                );
+            }
             let chunk = { text: '', media: [] };
             if (node.textContent && node.textContent.length > 0) {
+                console.log('Appending text node');
                 chunk.text = node.textContent.trim();
                 index++;
             } else if (node.tagName === 'IMG' || node.tagName === 'VIDEO') {
                 if (chunk.media.length < maxMedia) {
+                    console.log('Appending media node')
                     let media = {
                         type: node.tagName.toLowerCase(),
                         url: node.src,
@@ -1159,18 +1168,21 @@ document.addEventListener('DOMContentLoaded', async function () {
                     };
                     chunk.media.push(media);
                     index++;
-                    if (next.textContent) {
-                        index++;
-                    } else {
-                        index++;
-                        continue;
-                    }
-                } else {
-                    index++;
+                    // if (next.textContent) {
+                    //     index++;
+                    // } else {
+                    //     // index++;
+                    //     continue;
+                    // }
+                } else if (chunk.media.length >= maxMedia) {
+                    console.log('Chunk full: skipping media node')
+                    // index++;
+                    continue;
                 }
             } else {
+                console.log('Irrelevant node: skipping')
                 index++;
-                // continue;
+                continue;
             }
             while (
                 index < elements.length &&
@@ -1184,6 +1196,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                         chunk.media.length < maxMedia
                     ) {
                         if (chunk.media.length < maxMedia) {
+                            console.log('Adding media node to same chunk');
                             let media = {
                                 type: next.tagName.toLowerCase(),
                                 url: next.src,
@@ -1191,17 +1204,25 @@ document.addEventListener('DOMContentLoaded', async function () {
                             };
                             chunk.media.push(media);
                             index++;
-                        } else {
-                            index++;
+                        } else if (chunk.media.length >= maxMedia) {
+                            console.log('Chunk full: passing media node to next chunk')
                             break;
                         }
                     } else {
+                        console.log('Next node irrelevant: skipping');
+                        index++;
                         break;
                     }
-                } else if (combinedElts.indexOf(node) === 0 && !chunk.text && next.textContent) {
+                } else if (
+                    wpChunks.length === 0 &&
+                    !chunk.text && next &&
+                    next.textContent
+                ) {
+                    console.log('Adding text node to media chunk');
                     chunk.text = next.textContent.trim();
                     index++;
                 } else {
+                    console.log('Irrelevant node: skipping');
                     break;
                 }
             }
