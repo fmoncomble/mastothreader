@@ -167,6 +167,7 @@ button:hover {
     max-width: 80px;
     text-overflow: ellipsis;
 }
+
 .cw-btn:hover,
 select:hover {
     background-color: #dadade;
@@ -181,7 +182,8 @@ textarea {
     background-color: #f9f9fb;
     border-radius: 4px;
     width: 500px;
-    height: 200px;
+    min-height: 200px;
+    height: auto;
     padding: 10px;
     font-family: Arial, Helvetica, sans-serif;
     font-size: small;
@@ -741,7 +743,7 @@ dialog.zoomed {
 img.zoomed,
 video.zoomed,
 audio.zoomed {
-    width: 20vw;
+    max-width: 20vw;
     cursor: zoom-out;
 }
 
