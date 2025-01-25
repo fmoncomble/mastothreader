@@ -2123,7 +2123,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         restartBtn.textContent = 'Composer un nouveau fil';
         restartBtn.style.marginTop = '50px';
         restartBtn.onclick = () => {
-            location.reload(true);
+            window.open(window.location.origin, '_self');
         };
         counter.after(restartBtn);
         postThreadBtn.style.display = 'none';
