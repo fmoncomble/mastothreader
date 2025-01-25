@@ -1145,6 +1145,12 @@ document.addEventListener('DOMContentLoaded', async function () {
                 WPloadingText.textContent = `Création du pouet ${
                     wpChunks.indexOf(p) + 1
                 }/${wpChunks.length}...`;
+                if (p.media.length > 0) {
+                    const mediaCounter = document.createElement('div');
+                    mediaCounter.classList.add('bsky-loading-text');
+                    mediaCounter.textContent = `Récupération de ${p.media.length} média(s)...`;
+                    WPloadingText.appendChild(mediaCounter);
+                }
                 await createNewPost(p.text, p.media);
                 currentPost = postItems[wpChunks.indexOf(p)];
             } catch (error) {
