@@ -141,6 +141,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     let inReplyUrl = null;
     let userId = null;
     let bskyUrl = null;
+    let convertHandles = false;
     let WPUrl = null;
 
     // Handle data processing on page load
@@ -208,6 +209,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                                 `Voulez-vous importer le fil Bluesky ?`
                             )
                         ) {
+                            if (window.confirm(`Voulez-vous tenter de convertir les pseudos ?`)) {
+                                convertHandles = true;
+                            }
                             fetchBskyCheckbox.checked = true;
                             await getBskyThread();
                         }
@@ -221,6 +225,9 @@ document.addEventListener('DOMContentLoaded', async function () {
             await checkApp();
             if (bskyUrl) {
                 if (window.confirm(`Voulez-vous importer le fil Bluesky ?`)) {
+                    if (window.confirm(`Voulez-vous tenter de convertir les pseudos ?`)) {
+                        convertHandles = true;
+                    }
                     bskyLink = bskyUrl;
                     fetchBskyCheckbox.checked = true;
                     await getBskyThread();
@@ -615,7 +622,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     let bskyPosts = [];
     let fromBsky = false;
-    let convertHandles = false;
     let bskyLink = null;
 
     const bskyAuthDialog = document.getElementById('bsky-auth-dialog');
