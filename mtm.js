@@ -1037,7 +1037,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                         }
                     }
                 }
-                if (wpChunks.length !== 0 && chunk.media.length > 0) {
+                if (wpChunks.length === 0 && chunk.text.length === 0) {
+                    chunk.text += e.textContent.trim();
+                } else if (chunk.media.length > 0) {
                     wpChunks.push(chunk);
                     chunk = { text: '', media: [] };
                     chunk.text += e.textContent.trim();
@@ -1090,9 +1092,9 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
         wpChunks.push(chunk);
 
-        async function splitText(p) {
+        async function splitText(chunk) {
             return new Promise(async (resolve) => {
-                let text = p.text;
+                let text = chunk.text;
                 let newChunk = { text: '', media: [] };
                 let segments = [];
                 if (text) {
@@ -1105,18 +1107,20 @@ document.addEventListener('DOMContentLoaded', async function () {
                     if (oldText.length + segment.length < maxChars) {
                         oldText += segment;
                     } else {
-                        p.text = oldText;
+                        chunk.text = oldText;
                         let remainingSegments = segments.slice(i);
                         let remainingText = remainingSegments.join('');
                         if (remainingText) {
                             newChunk.text = remainingText.trim();
-                            newChunk.media = p.media;
+                            if (wpChunks.indexOf(chunk) > 0) {
+                                newChunk.media = chunk.media;
+                                chunk.media = [];
+                            }
                             wpChunks.splice(
-                                wpChunks.indexOf(p) + 1,
+                                wpChunks.indexOf(chunk) + 1,
                                 0,
                                 newChunk
                             );
-                            p.media = [];
                             break;
                         }
                         break;
