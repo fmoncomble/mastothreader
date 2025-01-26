@@ -1013,6 +1013,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (!content) {
             content = data.content;
         }
+        let postLink = data.link || data.URL;
         const parser = new DOMParser();
         const doc = parser.parseFromString(content, 'text/html');
         const body = doc.body;
@@ -1166,6 +1167,8 @@ document.addEventListener('DOMContentLoaded', async function () {
                 );
             }
         }
+        let finalPostText = `Retrouvez ce billet à l'adresse : ${postLink}`;
+        createNewPost(finalPostText);
         bskyLoadingSpinner.close();
         postItems[0].querySelector('.post-text').focus();
         window.scrollTo(0, 0);
