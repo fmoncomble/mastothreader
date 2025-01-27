@@ -121,6 +121,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     let maxMedia;
     let lang;
     let userAvatarSrc;
+    let userFollowing = [];
     let postItems = [];
     let mediaFiles = [];
     let oldPosts = [];
@@ -209,7 +210,11 @@ document.addEventListener('DOMContentLoaded', async function () {
                                 `Voulez-vous importer le fil Bluesky ?`
                             )
                         ) {
-                            if (window.confirm(`Voulez-vous tenter de convertir les pseudos ?`)) {
+                            if (
+                                window.confirm(
+                                    `Voulez-vous tenter de convertir les pseudos ?`
+                                )
+                            ) {
                                 convertHandles = true;
                             }
                             fetchBskyCheckbox.checked = true;
@@ -225,7 +230,11 @@ document.addEventListener('DOMContentLoaded', async function () {
             await checkApp();
             if (bskyUrl) {
                 if (window.confirm(`Voulez-vous importer le fil Bluesky ?`)) {
-                    if (window.confirm(`Voulez-vous tenter de convertir les pseudos ?`)) {
+                    if (
+                        window.confirm(
+                            `Voulez-vous tenter de convertir les pseudos ?`
+                        )
+                    ) {
                         convertHandles = true;
                     }
                     bskyLink = bskyUrl;
@@ -244,9 +253,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                 inReplyToInput.value = inReplyUrl;
                 inReplyToInput.dispatchEvent(new Event('input'));
             }
-            if (userId) {
-                await getUserAvatar();
-            }
+            // if (userId) {
+            //     await getUserAvatar();
+            // }
         }
         await buildInstList();
     };
@@ -288,15 +297,47 @@ document.addEventListener('DOMContentLoaded', async function () {
     async function getUserAvatar() {
         if (userId) {
             try {
+                let followingCount = 0;
                 let res = await fetch(
                     `https://${instance}/api/v1/accounts/${userId}`
                 );
                 let data = await res.json();
                 if (res.ok) {
                     userAvatarSrc = data.avatar;
+                    followingCount = data.following_count;
                 } else {
                     console.error('Error fetching user: ', data.error);
                 }
+                let followingUrl = `https://${instance}/api/v1/accounts/${userId}/following?limit=80`;
+                while (userFollowing.length < followingCount) {
+                    let followingRes = await fetch(followingUrl, {
+                        headers: { Authorization: `Bearer ${token}` },
+                    });
+                    if (followingRes.ok) {
+                        let links = followingRes.headers.get('Link').split(',');
+                        if (links) {
+                            let nextLink = links.find((l) =>
+                                l.includes('rel="next"')
+                            );
+                            if (nextLink) {
+                                followingUrl = nextLink
+                                    .split(';')[0]
+                                    .slice(1, -1);
+                            }
+                        }
+                        let followingData = await followingRes.json();
+                        for (let f of followingData) {
+                            userFollowing.push({
+                                username: f.username,
+                                acct: f.acct,
+                                avatar: f.avatar,
+                            });
+                        }
+                    }
+                }
+                userFollowing.sort((a, b) =>
+                    a.username.localeCompare(b.username)
+                );
             } catch (error) {
                 console.error('Error fetching user: ', error);
             }
@@ -1273,16 +1314,237 @@ document.addEventListener('DOMContentLoaded', async function () {
             updateCharCount(newPost, textarea.value);
         }
 
-        textarea.addEventListener('input', async () => {
+        let mention = '';
+        async function getMention(getInput) {
+            let start = textarea.selectionStart - 1;
+            let suggestions = [];
+            textarea.removeEventListener('input', getInput);
+            textarea.addEventListener('keydown', keyDown);
+            let followingList = document.createElement('div');
+            followingList.id = 'following-list';
+            followingList.classList.add('following-list');
+            let choices;
+            let currentChoice;
+            let i = 0;
+            function keyDown(e) {
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    followingList.remove();
+                }
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (i < choices.length - 1) {
+                        i++;
+                        let oldChoice = choices[i - 1];
+                        currentChoice = choices[i];
+                        if (oldChoice) {
+                            oldChoice.classList.remove('selected');
+                        }
+                        if (currentChoice) {
+                            currentChoice.classList.add('selected');
+                        }
+                    }
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (i > 0) {
+                        i--;
+                        let oldChoice = choices[i + 1];
+                        currentChoice = choices[i];
+                        if (oldChoice) {
+                            oldChoice.classList.remove('selected');
+                        }
+                        if (currentChoice) {
+                            currentChoice.classList.add('selected');
+                        }
+                    }
+                }
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    let acct = currentChoice.querySelector('.acct').textContent;
+                    textarea.value = textarea.value.replace(
+                        `@${mention}`,
+                        `${acct} `
+                    );
+                    followingList.remove();
+                    mention = '';
+                    textarea.removeEventListener('input', buildMention);
+                    textarea.removeEventListener('keydown', keyDown);
+                    textarea.addEventListener('input', getInput);
+                    updateCharCount(newPost, textarea.value);
+                    textarea.focus();
+                }
+            }
+            textarea.addEventListener('input', buildMention);
+            let fetching = false;
+            let index = 1;
+            async function buildMention(e) {
+                e.preventDefault();
+                i = 0;
+                let AtMention = textarea.value.slice(
+                    start,
+                    textarea.selectionStart
+                );
+                if (e.data !== null) {
+                    mention += e.data;
+                } else {
+                    mention = mention.slice(0, -1);
+                    if (AtMention.length === 0 || textarea.value.length === 0) {
+                        mention = '';
+                        followingList.remove();
+                        textarea.removeEventListener('input', buildMention);
+                        textarea.removeEventListener('keydown', keyDown);
+                        textarea.addEventListener('input', getInput);
+                        textarea.focus();
+                    }
+                }
+                let mentionBuffer = '';
+                if (mention.length > 1 && fetching) {
+                    await new Promise((resolve) => setTimeout(resolve, 200));
+                    mentionBuffer = new String(mention);
+                        buildSuggestionsList(mentionBuffer);
+                } else if (mention.length > 1 && !fetching) {
+                    buildSuggestionsList(mention);
+                } else if (mention.length < 2) {
+                    followingList.remove();
+                    fetching = false;
+                }
+                async function buildSuggestionsList(mention) {
+                    if (mention.length < mentionBuffer.length) {
+                        return;
+                    }
+                    fetching = true;
+                    let res = await fetch(
+                        `https://${instance}/api/v1/accounts/search?q=${mention}&type=accounts&limit=4`,
+                        { headers: { Authorization: `Bearer ${token}` } }
+                    );
+                    if (res.ok) {
+                        let accounts = await res.json();
+                        suggestions = [];
+                        if (userFollowing.length > 0) {
+                            let matches = userFollowing.filter((f) =>
+                                f.username
+                                    .toLowerCase()
+                                    .startsWith(mention.toLowerCase())
+                            );
+                            suggestions.push(...matches);
+                        }
+                        followingList.innerHTML = '';
+                        if (accounts.length > 0) {
+                            for (let a of accounts) {
+                                if (
+                                    !suggestions.find((f) => f.acct === a.acct)
+                                ) {
+                                    suggestions.push({
+                                        username: a.username,
+                                        acct: a.acct,
+                                        avatar: a.avatar,
+                                    });
+                                }
+                            }
+                        }
+                        if (suggestions.length > 0) {
+                            for (let a of suggestions) {
+                                let fDiv = document.createElement('div');
+                                fDiv.classList.add('following-item');
+                                let avatar = document.createElement('img');
+                                avatar.src = a.avatar;
+                                fDiv.appendChild(avatar);
+                                let username = document.createElement('span');
+                                username.classList.add('username');
+                                username.textContent = `${a.username}`;
+                                let acct = document.createElement('span');
+                                acct.classList.add('acct');
+                                acct.textContent = `@${a.acct}`;
+                                fDiv.appendChild(username);
+                                fDiv.appendChild(acct);
+                                followingList.appendChild(fDiv);
+                            }
+                            followingList.style.display = 'block';
+                            followingList.style.top =
+                                textarea.offsetTop +
+                                textarea.clientHeight +
+                                'px';
+                            followingList.style.left =
+                                textarea.offsetLeft + 'px';
+                            textarea.after(followingList);
+                            let listDivs = Array.from(
+                                followingList.querySelectorAll('div')
+                            );
+                            for (let d of listDivs) {
+                                d.onclick = () => {
+                                    let acct =
+                                        d.querySelector(
+                                            'span.acct'
+                                        ).textContent;
+                                    textarea.value = textarea.value.replace(
+                                        `@${mention}`,
+                                        `${acct} `
+                                    );
+                                    followingList.remove();
+                                    mention = '';
+                                    textarea.removeEventListener(
+                                        'input',
+                                        buildMention
+                                    );
+                                    textarea.removeEventListener(
+                                        'keydown',
+                                        keyDown
+                                    );
+                                    textarea.addEventListener(
+                                        'input',
+                                        getInput
+                                    );
+                                    updateCharCount(newPost, textarea.value);
+                                    textarea.focus();
+                                };
+                            }
+                            choices =
+                                followingList.querySelectorAll(
+                                    'div.following-item'
+                                );
+                            if (choices.length > 0) {
+                                choices.forEach((c) => {
+                                    c.classList.remove('selected');
+                                });
+                                currentChoice = choices[0];
+                                currentChoice.classList.add('selected');
+                            } else if (choices.length === 0) {
+                                followingList.remove();
+                            }
+                        } else if (suggestions.length === 0) {
+                            followingList.remove();
+                        }
+                        fetching = false;
+                    }
+                }
+                if (e.data === ' ') {
+                    followingList.remove();
+                    mention = '';
+                    textarea.removeEventListener('input', buildMention);
+                    textarea.removeEventListener('keydown', keyDown);
+                    textarea.addEventListener('input', getInput);
+                    textarea.focus();
+                }
+            }
+        }
+        textarea.addEventListener('input', async function getInput(e) {
+            if (e.data === '@') {
+                await getMention(getInput);
+            }
             let postText = textarea.value;
             if (postText.length > 30) {
                 let language = franc(postText);
                 if (language === 'und') {
                     language = lang;
                 } else {
-                    lang = iso6393.find((l) => l.iso6393 === language).iso6391;
+                    let guess = iso6393.find(
+                        (l) => l.iso6393 === language
+                    ).iso6391;
+                    if (guess) {
+                        lang = guess;
+                        langSelect.value = lang;
+                    }
                 }
-                langSelect.value = lang;
             }
             updateCharCount(newPost, postText);
             if (postText.length > maxChars) {

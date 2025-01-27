@@ -768,3 +768,63 @@ dialog:focus-visible,
     height: 20px;
     font-size: x-small; 
 }
+
+.following-list {
+    border: 1px solid #d9d9e8;
+    border-radius: 4px;
+    box-shadow: 0 0 5px gray;
+    background-color: #f9f9fb;
+    color: #563acc;
+    /* padding: 5px; */
+    max-width: 400px;
+    text-overflow: ellipsis;
+    z-index: 100;
+    position: absolute;
+}
+
+.following-item {
+    font-size: small;
+    height: 24px;
+    background-color: white;
+    /* margin-bottom: 2px; */
+    cursor: pointer;
+    text-align: left;
+    padding: 5px;
+    vertical-align: middle;
+}
+
+.following-item img {
+    margin-right: 5px;
+    height: 20px;
+    width: 20px;
+    vertical-align: middle;
+    display: inline-block;
+    border-radius: 50%;
+}
+
+.following-item span {
+    vertical-align: middle;
+    display: inline-block;
+}
+
+.following-item .username {
+    font-weight: bold;
+}
+
+.following-item .acct {
+    margin-left: 5px;
+}
+
+.following-item.selected,
+.following-item:active {
+    background-color: #563acc;
+    color: white;
+}
+
+.following-item:not(.selected):hover {
+    background-color: #eeebfa;
+}
+
+.post-text {
+    position: relative;
+}
