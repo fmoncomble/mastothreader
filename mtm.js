@@ -5,7 +5,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     // Declare page elements
     const instructionsDiv = document.getElementById('instructions');
     const instanceInput = document.getElementById('instance-input');
-    const instanceDataList = document.getElementById('inst-list');
     const instanceBtn = document.getElementById('instance-btn');
     const contentContainer = document.getElementById('content-container');
     const fetchBskyCheckbox = document.getElementById('fetch-bsky-checkbox');
@@ -54,29 +53,153 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     }
 
-    async function buildInstList() {
-        const instanceDataUrl =
-            'https://raw.githubusercontent.com/fmoncomble/mastothreader/main/data/instances.json';
-        const instanceData = await getData(instanceDataUrl);
-        for (let iD of instanceData) {
-            const instName = iD.instance;
-            const option = document.createElement('option');
-            option.value = instName;
-            instanceDataList.appendChild(option);
+    let instanceList = document.createElement('div');
+    instanceList.id = 'instance-list';
+    instanceList.classList.add('instance-list');
+    instanceList.style.top = `${instanceInput.offsetTop + 40}px`;
+    instanceList.style.left = `${instanceInput.offsetLeft}px`;
+    instanceList.style.display = 'none';
+    instanceBtn.after(instanceList);
+    async function buildInstList(input) {
+        if (!input) {
+            instanceList.style.display = 'none';
+            return;
+        }
+        let matches;
+        if (!searching) {
+            matches = await searchInstance(input);
+        }
+        if (matches && matches.length > 0) {
+            instanceList.innerHTML = null;
+            instanceList.style.display = 'block';
+            for (let m of matches) {
+                const instItem = document.createElement('div');
+                instItem.classList.add('instance-item');
+                const instThumbnail = document.createElement('img');
+                instThumbnail.src = m.thumbnail || icons / favicon.ico;
+                instItem.appendChild(instThumbnail);
+                const instName = document.createElement('span');
+                instName.textContent = m.name;
+                instItem.appendChild(instName);
+                instItem.addEventListener('click', () => {
+                    instanceInput.value = m.name;
+                    instanceList.style.display = 'none';
+                });
+                instanceList.appendChild(instItem);
+            }
+            instanceList
+                .querySelector('.instance-item')
+                .classList.add('selected');
+        } else {
+            instanceList.style.display = 'none';
         }
     }
 
+    let searching = false;
+    async function searchInstance(input) {
+        searching = true;
+        let searchUrl = `https://instances.social/api/1.0/instances/search?q=${input}&name=true`;
+        try {
+            let res = await fetch(searchUrl, {
+                headers: {
+                    Authorization:
+                        'Bearer vp37iW8y6OhzkGGSz8klvqUFFnrMAqWyp6Q9wOXB4D1bxPSqeVYjHsE6ae8J0x6EIQyvDbcZlB0BxhcRnEwvCzivdbczrMQrV7SlBAoevayiSaWuuPfNlAZCXbW4qkGn',
+                },
+            });
+            if (res.ok) {
+                let matches = [];
+                let data = await res.json();
+                let instances = data.instances
+                    .filter((i) => i.dead === false)
+                    .sort((a, b) => a.name.localeCompare(b.name));
+                let results = instances.filter((i) => i.name.startsWith(input));
+                for (let r of results) {
+                    let match = {};
+                    match.name = r.name;
+                    match.thumbnail = r.thumbnail;
+                    matches.push(match);
+                }
+                searching = false;
+                return matches;
+            }
+        } catch (error) {
+            console.error('Error fetching instances: ', error);
+        }
+    }
+
+    instanceInput.addEventListener('input', async (e) => {
+        e.preventDefault();
+        let input = e.target.value;
+        buildInstList(input);
+    });
+    let instIndex = 0;
+    instanceInput.addEventListener('keydown', (e) => {
+        let instanceItems = instanceList.querySelectorAll('.instance-item');
+        let currentInst = instanceItems[instIndex];
+        if (instanceItems && instanceItems.length > 0) {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (instIndex < instanceItems.length - 1) {
+                    instIndex++;
+                    let oldInst = instanceItems[instIndex - 1];
+                    currentInst = instanceItems[instIndex];
+                    if (oldInst) {
+                        oldInst.classList.remove('selected');
+                    }
+                    if (currentInst) {
+                        currentInst.classList.add('selected');
+                        instanceInput.value =
+                            currentInst.querySelector('span').textContent;
+                    }
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (instIndex > 0) {
+                    instIndex--;
+                    let oldInst = instanceItems[instIndex + 1];
+                    currentInst = instanceItems[instIndex];
+                    if (oldInst) {
+                        oldInst.classList.remove('selected');
+                    }
+                    if (currentInst) {
+                        currentInst.classList.add('selected');
+                        instanceInput.value =
+                            currentInst.querySelector('span').textContent;
+                    }
+                }
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                instanceList.style.display = 'none';
+            } else if (e.key === 'Tab' || e.key === 'Enter') {
+                e.preventDefault();
+                currentInst = instanceList.querySelector('.selected');
+                if (currentInst) {
+                    instanceInput.value =
+                        currentInst.querySelector('span').textContent;
+                    instanceList.style.display = 'none';
+                }
+            }
+        }
+    });
+
     async function buildLangList() {
-        const langDataUrl =
-            'https://raw.githubusercontent.com/fmoncomble/mastothreader/main/data/languages.json';
-        const langData = await getData(langDataUrl);
-        for (let lD of langData) {
-            const langValue = lD.value;
-            const langName = lD.full_name;
-            const option = document.createElement('option');
-            option.value = langValue;
-            option.textContent = langName;
-            languageSelect.appendChild(option);
+        const langDataUrl = `https://${instance}/api/v1/instance/languages`;
+        try {
+            let res = await fetch(langDataUrl);
+            if (res.ok) {
+                let data = await res.json();
+                data.sort((a, b) => a.name.localeCompare(b.name));
+                for (let lang of data) {
+                    const langValue = lang.code;
+                    const langName = lang.name;
+                    const option = document.createElement('option');
+                    option.value = langValue;
+                    option.textContent = langName;
+                    languageSelect.appendChild(option);
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching languages: ', error);
         }
     }
 
@@ -223,6 +346,14 @@ document.addEventListener('DOMContentLoaded', async function () {
                     } else if (inReplyUrl) {
                         inReplyToInput.value = inReplyUrl;
                         inReplyToInput.dispatchEvent(new Event('input'));
+                    } else if (WPUrl) {
+                        if (
+                            window.confirm(
+                                `Voulez-vous importer le billet WordPress ?`
+                            )
+                        ) {
+                            await getWPPost(WPUrl);
+                        }
                     }
                 }
             }
@@ -257,7 +388,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             //     await getUserAvatar();
             // }
         }
-        await buildInstList();
+        // await buildInstList();
     };
 
     async function checkApp() {
@@ -1358,7 +1489,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                         }
                     }
                 }
-                if (e.key === 'Enter') {
+                if (e.key === 'Enter' || e.key === 'Tab') {
                     e.preventDefault();
                     let acct = currentChoice.querySelector('.acct').textContent;
                     textarea.value = textarea.value.replace(
@@ -1376,7 +1507,6 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
             textarea.addEventListener('input', buildMention);
             let fetching = false;
-            let index = 1;
             async function buildMention(e) {
                 e.preventDefault();
                 i = 0;
@@ -1397,11 +1527,19 @@ document.addEventListener('DOMContentLoaded', async function () {
                         textarea.focus();
                     }
                 }
+                if (e.data === ' ') {
+                    followingList.remove();
+                    mention = '';
+                    textarea.removeEventListener('input', buildMention);
+                    textarea.removeEventListener('keydown', keyDown);
+                    textarea.addEventListener('input', getInput);
+                    textarea.focus();
+                }
                 let mentionBuffer = '';
                 if (mention.length > 1 && fetching) {
                     await new Promise((resolve) => setTimeout(resolve, 200));
                     mentionBuffer = new String(mention);
-                        buildSuggestionsList(mentionBuffer);
+                    buildSuggestionsList(mentionBuffer);
                 } else if (mention.length > 1 && !fetching) {
                     buildSuggestionsList(mention);
                 } else if (mention.length < 2) {
@@ -1516,14 +1654,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                         }
                         fetching = false;
                     }
-                }
-                if (e.data === ' ') {
-                    followingList.remove();
-                    mention = '';
-                    textarea.removeEventListener('input', buildMention);
-                    textarea.removeEventListener('keydown', keyDown);
-                    textarea.addEventListener('input', getInput);
-                    textarea.focus();
                 }
             }
         }

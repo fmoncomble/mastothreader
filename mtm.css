@@ -769,7 +769,8 @@ dialog:focus-visible,
     font-size: x-small; 
 }
 
-.following-list {
+.following-list,
+.instance-list {
     border: 1px solid #d9d9e8;
     border-radius: 4px;
     box-shadow: 0 0 5px gray;
@@ -782,7 +783,8 @@ dialog:focus-visible,
     position: absolute;
 }
 
-.following-item {
+.following-item,
+.instance-item {
     font-size: small;
     height: 24px;
     background-color: white;
@@ -793,7 +795,8 @@ dialog:focus-visible,
     vertical-align: middle;
 }
 
-.following-item img {
+.following-item img,
+.instance-item img {
     margin-right: 5px;
     height: 20px;
     width: 20px;
@@ -802,12 +805,14 @@ dialog:focus-visible,
     border-radius: 50%;
 }
 
-.following-item span {
+.following-item span,
+.instance-item span {
     vertical-align: middle;
     display: inline-block;
 }
 
-.following-item .username {
+.following-item .username,
+.instance-item span {
     font-weight: bold;
 }
 
@@ -816,12 +821,15 @@ dialog:focus-visible,
 }
 
 .following-item.selected,
-.following-item:active {
+.following-item:active,
+.instance-item.selected,
+.instance-item:active {
     background-color: #563acc;
     color: white;
 }
 
-.following-item:not(.selected):hover {
+.following-item:not(.selected):hover,
+.instance-item:not(.selected):hover {
     background-color: #eeebfa;
 }
 

@@ -40,4 +40,4 @@ function fetchMedia()
 
 // Call the function to handle the request
 fetchMedia();
-fetchMedia();
+?>
