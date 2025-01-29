@@ -41,22 +41,9 @@ document.addEventListener('DOMContentLoaded', async function () {
     });
 
     // Functions to gather information
-    async function getData(url) {
-        try {
-            const res = await fetch(url);
-            if (res && res.ok) {
-                const data = await res.json();
-                return data;
-            }
-        } catch (error) {
-            console.error(error);
-        }
-    }
-
     let instanceList = document.createElement('div');
     instanceList.id = 'instance-list';
     instanceList.classList.add('instance-list');
-    instanceList.style.top = `${instanceInput.offsetTop + 40}px`;
     instanceList.style.left = `${instanceInput.offsetLeft}px`;
     instanceList.style.display = 'none';
     instanceBtn.after(instanceList);
@@ -75,15 +62,13 @@ document.addEventListener('DOMContentLoaded', async function () {
             for (let m of matches) {
                 const instItem = document.createElement('div');
                 instItem.classList.add('instance-item');
-                const instThumbnail = document.createElement('img');
-                instThumbnail.src = m.thumbnail || icons / favicon.ico;
-                instItem.appendChild(instThumbnail);
                 const instName = document.createElement('span');
-                instName.textContent = m.name;
+                instName.textContent = m;
                 instItem.appendChild(instName);
                 instItem.addEventListener('click', () => {
-                    instanceInput.value = m.name;
+                    instanceInput.value = m;
                     instanceList.style.display = 'none';
+                    instanceBtn.click();
                 });
                 instanceList.appendChild(instItem);
             }
@@ -91,6 +76,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 .querySelector('.instance-item')
                 .classList.add('selected');
         } else {
+            instanceList.innerHTML = null;
             instanceList.style.display = 'none';
         }
     }
@@ -98,14 +84,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     let searching = false;
     async function searchInstance(input) {
         searching = true;
-        let searchUrl = `https://instances.social/api/1.0/instances/search?q=${input}&name=true`;
         try {
-            let res = await fetch(searchUrl, {
-                headers: {
-                    Authorization:
-                        'Bearer vp37iW8y6OhzkGGSz8klvqUFFnrMAqWyp6Q9wOXB4D1bxPSqeVYjHsE6ae8J0x6EIQyvDbcZlB0BxhcRnEwvCzivdbczrMQrV7SlBAoevayiSaWuuPfNlAZCXbW4qkGn',
-                },
-            });
+            let res = await fetch('inst.php?input=' + input);
             if (res.ok) {
                 let matches = [];
                 let data = await res.json();
@@ -114,10 +94,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     .sort((a, b) => a.name.localeCompare(b.name));
                 let results = instances.filter((i) => i.name.startsWith(input));
                 for (let r of results) {
-                    let match = {};
-                    match.name = r.name;
-                    match.thumbnail = r.thumbnail;
-                    matches.push(match);
+                    matches.push(r.name);
                 }
                 searching = false;
                 return matches;
@@ -130,7 +107,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     instanceInput.addEventListener('input', async (e) => {
         e.preventDefault();
         let input = e.target.value;
-        buildInstList(input);
+        buildInstList(input.toLowerCase());
     });
     let instIndex = 0;
     instanceInput.addEventListener('keydown', (e) => {
@@ -381,14 +358,11 @@ document.addEventListener('DOMContentLoaded', async function () {
                 }
             }
             if (inReplyUrl) {
+                await checkToken();
                 inReplyToInput.value = inReplyUrl;
                 inReplyToInput.dispatchEvent(new Event('input'));
             }
-            // if (userId) {
-            //     await getUserAvatar();
-            // }
         }
-        // await buildInstList();
     };
 
     async function checkApp() {
@@ -1358,7 +1332,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (postItems.length === 0) {
             contentContainer.appendChild(newPost);
             postItems.push(newPost);
-        } else {
+        } else if (currentPost) {
             currentPost.after(newPost);
             const currentIndex = postItems.indexOf(currentPost);
             const newIndex = currentIndex + 1;
@@ -1445,8 +1419,8 @@ document.addEventListener('DOMContentLoaded', async function () {
             updateCharCount(newPost, textarea.value);
         }
 
-        let mention = '';
         async function getMention(getInput) {
+            let mention = '';
             let start = textarea.selectionStart - 1;
             let suggestions = [];
             textarea.removeEventListener('input', getInput);
@@ -1492,10 +1466,11 @@ document.addEventListener('DOMContentLoaded', async function () {
                 if (e.key === 'Enter' || e.key === 'Tab') {
                     e.preventDefault();
                     let acct = currentChoice.querySelector('.acct').textContent;
-                    textarea.value = textarea.value.replace(
-                        `@${mention}`,
-                        `${acct} `
-                    );
+                    textarea.value =
+                        textarea.value.slice(0, start) +
+                        acct +
+                        textarea.value.slice(textarea.selectionEnd) +
+                        ' ';
                     followingList.remove();
                     mention = '';
                     textarea.removeEventListener('input', buildMention);
@@ -1614,10 +1589,13 @@ document.addEventListener('DOMContentLoaded', async function () {
                                         d.querySelector(
                                             'span.acct'
                                         ).textContent;
-                                    textarea.value = textarea.value.replace(
-                                        `@${mention}`,
-                                        `${acct} `
-                                    );
+                                    textarea.value =
+                                        textarea.value.slice(0, start) +
+                                        acct +
+                                        textarea.value.slice(
+                                            textarea.selectionEnd
+                                        ) +
+                                        ' ';
                                     followingList.remove();
                                     mention = '';
                                     textarea.removeEventListener(
@@ -1657,7 +1635,8 @@ document.addEventListener('DOMContentLoaded', async function () {
                 }
             }
         }
-        textarea.addEventListener('input', async function getInput(e) {
+        textarea.addEventListener('input', getInput);
+        async function getInput(e) {
             if (e.data === '@') {
                 await getMention(getInput);
             }
@@ -1682,7 +1661,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             } else {
                 charCount.removeAttribute('style');
             }
-        });
+        }
 
         textarea.addEventListener('focus', async () => {
             let postText = textarea.value;
@@ -2014,6 +1993,150 @@ document.addEventListener('DOMContentLoaded', async function () {
                 }
             }
         });
+
+        const addGif = newPost.querySelector('div.add-gif');
+        const gifDialog = document.getElementById('gif-dialog');
+        const gifResults = document.getElementById('gif-results');
+        const paginationDiv = gifDialog.querySelector('.pagination');
+        const gifCancelBtn = document.getElementById('gif-cancel-btn');
+        const gifSearch = document.getElementById('gif-search');
+        const gifSearchBtn = document.getElementById('gif-search-btn');
+        addGif.onclick = async () => {
+            let pos = await getGifs();
+            gifDialog.showModal();
+            gifCancelBtn.onclick = () => {
+                gifDialog.close();
+            };
+            gifSearch.value = null;
+            gifSearch.focus();
+            gifSearch.onkeydown = (e) => {
+                if (e.key === 'Enter') {
+                    gifSearchBtn.click();
+                }
+            };
+            const prevBtn = paginationDiv.querySelector('button#gif-prev-btn');
+            prevBtn.disabled = true;
+            const nextBtn = paginationDiv.querySelector('button#gif-next-btn');
+            let query = gifSearch.value || null;
+            let paginationIndex = 0;
+            let poses = [];
+            poses[0] = '';
+            let oldPos;
+            nextBtn.onclick = async () => {
+                paginationIndex++;
+                poses[paginationIndex] = pos;
+                pos = await getGifs(query, pos);
+                prevBtn.disabled = false;
+            };
+            prevBtn.onclick = async () => {
+                if (paginationIndex === 1) {
+                    oldPos = null;
+                    prevBtn.disabled = true;
+                }
+                if (paginationIndex === 0) {
+                    prevBtn.disabled = true;
+                }
+                if (paginationIndex > 0) {
+                    paginationIndex--;
+                    oldPos = poses[paginationIndex];
+                }
+                pos = await getGifs(query, oldPos);
+                if (pos === oldPos) {
+                    prevBtn.disabled = true;
+                }
+            };
+            gifSearchBtn.onclick = async (e) => {
+                e.preventDefault();
+                query = gifSearch.value;
+                pos = await getGifs(query || null);
+                if (pos) {
+                    paginationIndex = 0;
+                    poses = [];
+                    poses[0] = '';
+                    prevBtn.disabled = true;
+                } else {
+                    paginationDiv.style.display = 'none';
+                }
+            };
+            function createGifPreviews(results) {
+                let gifPreviews = Array.from(
+                    gifResults.querySelectorAll('.gif-preview')
+                );
+                for (let r of results) {
+                    let gifPreview;
+                    if (gifPreviews.length > 0) {
+                        gifPreview = gifPreviews[results.indexOf(r)];
+                    } else {
+                        gifPreview = document.createElement('img');
+                    }
+                    gifPreview.classList.add('gif-preview');
+                    gifPreview.src = r.media_formats.nanogif.url;
+                    gifPreview.alt = r.content_description;
+                    gifPreview.setAttribute('ref', r.media_formats.gif.url);
+                    gifResults.appendChild(gifPreview);
+                }
+                gifPreviews = Array.from(
+                    gifResults.querySelectorAll('.gif-preview')
+                );
+                if (gifPreviews && gifPreviews.length > 0) {
+                    for (let g of gifPreviews) {
+                        g.onclick = async () => {
+                            let mediaFile = {};
+                            let response = await fetch(g.getAttribute('ref'));
+                            let blob = await response.blob();
+                            const file = new File([blob], 'image.gif', {
+                                type: blob.type,
+                            });
+                            mediaFile.file = file;
+                            mediaFile.description = g.alt;
+                            dzInst.style.display = 'none';
+                            if (files.length < maxMedia) {
+                                files.push(mediaFile);
+                                displayThumbnail(
+                                    mediaFile,
+                                    imgPreview,
+                                    imgCount,
+                                    dzInst
+                                );
+                                gifDialog.close();
+                            } else {
+                                window.alert(
+                                    "Le nombre maximum d'images est atteint"
+                                );
+                                return;
+                            }
+                        };
+                    }
+                }
+            }
+            async function getGifs(query, pos) {
+                try {
+                    let gifUrl = `gifsearch.php?locale=${lang}`;
+                    if (query) {
+                        gifUrl += `&q=${query}`;
+                    }
+                    if (pos) {
+                        gifUrl += `&pos=${pos}`;
+                    }
+                    let res = await fetch(gifUrl);
+                    if (res.ok) {
+                        let data = await res.json();
+                        if (data.results) {
+                            createGifPreviews(data.results);
+                            return data.next;
+                        } else {
+                            window.alert('Aucun résultat.');
+                            return null;
+                        }
+                    } else {
+                        window.alert('Impossible de récupérer les gifs.');
+                        return null;
+                    }
+                } catch (error) {
+                    console.error('Error fetching gifs:', error);
+                }
+            }
+        };
 
         textarea.addEventListener('paste', (e) => {
             dropzone.classList.remove('dz-active');

@@ -23,7 +23,7 @@
                     width="300"
                     fill="currentColor"
             /></a>
-            <div id="version">v0.16</div>
+            <div id="version">v0.17</div>
             <div id="plugin-dl">
                 <img
                     src="icons/addon-install.svg"
@@ -79,7 +79,6 @@
                     id="instance-input"
                     type="text"
                     placeholder="Instance Mastodon"
-                    list="inst-list"
                 />
                 <button id="instance-btn">Valider</button>
             </div>
@@ -189,6 +188,7 @@
                             ></textarea>
                         </div>
                     </div>
+                    <div class="add-gif"><span>GIF</span></div>
                     <div class="add-img"><span>+</span></div>
                 </div>
                 <div class="img-count"></div>
@@ -205,21 +205,7 @@
             <span id="spinner" class="spinner" style="display: none"></span>
             <div id="counter" class="counter" style="display: none"></div>
         </div>
-        <div style="display: none">
-            <a href="http://www.freevisitorcounters.com"
-                >Freevisitorcounters.com</a
-            >
-            <script
-                type="text/javascript"
-                src="https://www.freevisitorcounters.com/auth.php?id=1995bc2bcc62c37fc8fa163e8fe810d706a78989"
-            ></script>
-            <script
-                type="text/javascript"
-                src="https://www.freevisitorcounters.com/en/home/counter/1224492/t/3"
-            ></script>
-        </div>
         <div id="thread-link" class="thread-link" style="display: none"></div>
-        <datalist id="inst-list"> </datalist>
         <div class="footer">
             <div>F. Moncomble <span id="year"></span></div>
             <div>
@@ -289,6 +275,29 @@
                 <div id="bsky-loading-text" class="bsky-loading-text">
                     Chargement...
                 </div>
+            </div>
+        </dialog>
+        <dialog id="gif-dialog">
+            <div id="gif-search-div">
+                <input
+                    type="text"
+                    id="gif-search"
+                    placeholder="Rechercher un GIF"
+                />
+                <button id="gif-search-btn">Rechercher</button>
+            </div>
+            <div id="gif-results"></div>
+            <div id="gif-pagination" class="pagination">
+                <button id="gif-prev-btn" class="pagination-btn">
+                    Précédent
+                </button>
+                <button id="gif-next-btn" class="pagination-btn">
+                    Suivant
+                </button>
+            </div>
+            <div id="gif-spinner" class="spinner" style="display: none"></div>
+            <div class="gif-cancel">
+                <button id="gif-cancel-btn" class="cancel">Annuler</button>
             </div>
         </dialog>
         <div id="app" style="display: none"></div>
