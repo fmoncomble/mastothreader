@@ -1,5 +1,6 @@
 import { franc } from 'https://esm.sh/franc@6?bundle';
 import { iso6393 } from 'https://esm.sh/iso-639-3@3?bundle';
+import { getNativeName } from 'https://esm.sh/iso-639-1@3?bundle';
 
 document.addEventListener('DOMContentLoaded', async function () {
     // Declare page elements
@@ -165,13 +166,27 @@ document.addEventListener('DOMContentLoaded', async function () {
             let res = await fetch(langDataUrl);
             if (res.ok) {
                 let data = await res.json();
+                for (let lang of data) {
+                    let nativeName = getNativeName(lang.code);
+                    if (nativeName) {
+                        lang.native_name = nativeName;
+                    } else {
+                        continue;
+                    }
+                }
                 data.sort((a, b) => a.name.localeCompare(b.name));
                 for (let lang of data) {
                     const langValue = lang.code;
                     const langName = lang.name;
+                    const nativeName = lang.native_name;
                     const option = document.createElement('option');
                     option.value = langValue;
                     option.textContent = langName;
+                    if (nativeName) {
+                        option.textContent = `${nativeName} (${langName})`;
+                    } else {
+                        continue;
+                    }
                     languageSelect.appendChild(option);
                 }
             }
@@ -1997,14 +2012,17 @@ document.addEventListener('DOMContentLoaded', async function () {
         const addGif = newPost.querySelector('div.add-gif');
         const gifDialog = document.getElementById('gif-dialog');
         const gifResults = document.getElementById('gif-results');
-        const paginationDiv = gifDialog.querySelector('.pagination');
         const gifCancelBtn = document.getElementById('gif-cancel-btn');
         const gifSearch = document.getElementById('gif-search');
         const gifSearchBtn = document.getElementById('gif-search-btn');
         addGif.onclick = async () => {
+            let fresh = true;
+            let adding = false;
             let pos = await getGifs();
             gifDialog.showModal();
             gifCancelBtn.onclick = () => {
+                gifResults.scrollTo(0, 0);
+                gifResults.innerHTML = '';
                 gifDialog.close();
             };
             gifSearch.value = null;
@@ -2014,63 +2032,43 @@ document.addEventListener('DOMContentLoaded', async function () {
                     gifSearchBtn.click();
                 }
             };
-            const prevBtn = paginationDiv.querySelector('button#gif-prev-btn');
-            prevBtn.disabled = true;
-            const nextBtn = paginationDiv.querySelector('button#gif-next-btn');
             let query = gifSearch.value || null;
-            let paginationIndex = 0;
-            let poses = [];
-            poses[0] = '';
-            let oldPos;
-            nextBtn.onclick = async () => {
-                paginationIndex++;
-                poses[paginationIndex] = pos;
-                pos = await getGifs(query, pos);
-                prevBtn.disabled = false;
-            };
-            prevBtn.onclick = async () => {
-                if (paginationIndex === 1) {
-                    oldPos = null;
-                    prevBtn.disabled = true;
+            gifResults.addEventListener('scroll', async () => {
+                if (
+                    gifResults.scrollTop >=
+                    (gifResults.scrollHeight - gifResults.clientHeight) * 0.9
+                ) {
+                    fresh = false;
+                    if (!adding) {
+                        pos = await getGifs(query, pos);
+                    }
                 }
-                if (paginationIndex === 0) {
-                    prevBtn.disabled = true;
-                }
-                if (paginationIndex > 0) {
-                    paginationIndex--;
-                    oldPos = poses[paginationIndex];
-                }
-                pos = await getGifs(query, oldPos);
-                if (pos === oldPos) {
-                    prevBtn.disabled = true;
-                }
-            };
+            });
             gifSearchBtn.onclick = async (e) => {
                 e.preventDefault();
+                fresh = true;
                 query = gifSearch.value;
                 pos = await getGifs(query || null);
-                if (pos) {
-                    paginationIndex = 0;
-                    poses = [];
-                    poses[0] = '';
-                    prevBtn.disabled = true;
-                } else {
-                    paginationDiv.style.display = 'none';
-                }
             };
             function createGifPreviews(results) {
+                console.log('Fresh?', fresh);
                 let gifPreviews = Array.from(
                     gifResults.querySelectorAll('.gif-preview')
                 );
+                if (fresh) {
+                    let removed = gifPreviews.splice(9);
+                    removed.forEach((g) => g.remove());
+                    gifResults.scrollTo(0, 0);
+                }
                 for (let r of results) {
                     let gifPreview;
-                    if (gifPreviews.length > 0) {
+                    if (fresh && gifPreviews.length > 0) {
                         gifPreview = gifPreviews[results.indexOf(r)];
                     } else {
                         gifPreview = document.createElement('img');
                     }
                     gifPreview.classList.add('gif-preview');
-                    gifPreview.src = r.media_formats.nanogif.url;
+                    gifPreview.src = r.media_formats.mediumgif.url;
                     gifPreview.alt = r.content_description;
                     gifPreview.setAttribute('ref', r.media_formats.gif.url);
                     gifResults.appendChild(gifPreview);
@@ -2108,8 +2106,10 @@ document.addEventListener('DOMContentLoaded', async function () {
                         };
                     }
                 }
+                adding = false;
             }
             async function getGifs(query, pos) {
+                adding = true;
                 try {
                     let gifUrl = `gifsearch.php?locale=${lang}`;
                     if (query) {
@@ -2122,7 +2122,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     if (res.ok) {
                         let data = await res.json();
                         if (data.results) {
-                            createGifPreviews(data.results);
+                            createGifPreviews(data.results, fresh);
                             return data.next;
                         } else {
                             window.alert('Aucun résultat.');

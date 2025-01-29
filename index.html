@@ -23,7 +23,7 @@
                     width="300"
                     fill="currentColor"
             /></a>
-            <div id="version">v0.17</div>
+            <div id="version">v0.17.1</div>
             <div id="plugin-dl">
                 <img
                     src="icons/addon-install.svg"
@@ -279,26 +279,18 @@
         </dialog>
         <dialog id="gif-dialog">
             <div id="gif-search-div">
-                <input
-                    type="text"
-                    id="gif-search"
-                    placeholder="Rechercher un GIF"
-                />
-                <button id="gif-search-btn">Rechercher</button>
+                <div>
+                    <input
+                        type="text"
+                        id="gif-search"
+                        placeholder="Rechercher un GIF"
+                    />
+                    <button id="gif-search-btn">Rechercher</button>
+                </div>
+                <button id="gif-cancel-btn" class="cancel">✕</button>
             </div>
             <div id="gif-results"></div>
-            <div id="gif-pagination" class="pagination">
-                <button id="gif-prev-btn" class="pagination-btn">
-                    Précédent
-                </button>
-                <button id="gif-next-btn" class="pagination-btn">
-                    Suivant
-                </button>
-            </div>
             <div id="gif-spinner" class="spinner" style="display: none"></div>
-            <div class="gif-cancel">
-                <button id="gif-cancel-btn" class="cancel">Annuler</button>
-            </div>
         </dialog>
         <div id="app" style="display: none"></div>
     </body>
