@@ -2330,8 +2330,6 @@ document.addEventListener('DOMContentLoaded', async function () {
             altBtn.textContent = 'ALT';
             altBtn.classList.add('alt-btn');
 
-            // handleAltText(mediaFile, previewElt, altBtn);
-
             altBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 altDialog.showModal();
@@ -2344,7 +2342,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 setTimeout(function () {
                     handleAltText(mediaFile, previewElt, altBtn);
                     resolve();
-                }, 10)
+                }, 50)
             );
         }
 
