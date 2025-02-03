@@ -1573,14 +1573,17 @@ document.addEventListener('DOMContentLoaded', async function () {
                                 let avatar = document.createElement('img');
                                 avatar.src = a.avatar;
                                 fDiv.appendChild(avatar);
+                                let nameDiv = document.createElement('div');
+                                nameDiv.classList.add('name-div');
                                 let username = document.createElement('span');
                                 username.classList.add('username');
                                 username.textContent = `${a.username}`;
                                 let acct = document.createElement('span');
                                 acct.classList.add('acct');
                                 acct.textContent = `@${a.acct}`;
-                                fDiv.appendChild(username);
-                                fDiv.appendChild(acct);
+                                nameDiv.appendChild(username);
+                                nameDiv.appendChild(acct);
+                                fDiv.appendChild(nameDiv);
                                 followingList.appendChild(fDiv);
                             }
                             followingList.style.display = 'block';

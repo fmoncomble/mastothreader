@@ -398,8 +398,15 @@ div.gif-cancel {
 
 #gif-cancel-btn {
     height: 28px;
-    aspect-ratio: 1/1;
+    aspect-ratio: 1 / 1;
     font-weight: bold;
+    font-size: x-large;
+    background-color: #cc0000;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
 }
 
 button:disabled {
@@ -682,6 +689,13 @@ div#replied-post-header img {
     margin-right: 10px;
 }
 
+div#replied-post-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: left;
+}
+
 div#replied-post-display-name,
 div#replied-post-time {
     margin-right: 10px;
@@ -916,30 +930,37 @@ dialog:focus-visible,
     box-shadow: 0 0 5px gray;
     background-color: #f9f9fb;
     color: #563acc;
-    max-width: 400px;
     text-overflow: ellipsis;
     z-index: 100;
     position: absolute;
+    max-width: 90%;
+    overflow: hidden;
 }
 
 .following-item,
 .instance-item {
-    height: 24px;
+    display: flex;
+    flex-direction: row;
+    height: 2em;
     background-color: white;
     cursor: pointer;
     text-align: left;
     padding: 5px;
     vertical-align: middle;
+    text-overflow: ellipsis;
 }
 
 .following-item img,
 .instance-item img {
     margin-right: 5px;
-    height: 20px;
-    width: 20px;
     vertical-align: middle;
     display: inline-block;
     border-radius: 50%;
+}
+
+.following-item .name-div {
+    display: flex;
+    flex-direction: column;
 }
 
 .following-item span,

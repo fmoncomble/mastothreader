@@ -105,8 +105,10 @@
                 <div id="replied-post-preview" style="display: none">
                     <div id="replied-post-header">
                         <div id="replied-post-avatar"></div>
-                        <div id="replied-post-display-name"></div>
-                        <div id="replied-post-time"></div>
+                        <div id="replied-post-info">
+                            <div id="replied-post-display-name"></div>
+                            <div id="replied-post-time"></div>
+                        </div>
                         <div id="reply-preview-close">×</div>
                     </div>
                     <div id="replied-post-content">
@@ -280,9 +282,7 @@
                 <div id="gif-search-div">
                     <div id="gif-search-input-div">
                         <div>
-                            <button id="gif-cancel-btn" class="cancel">
-                                ✕
-                            </button>
+                            <div id="gif-cancel-btn" class="cancel">×</div>
                         </div>
                         <div id="gif-search-form">
                             <input
@@ -300,14 +300,19 @@
         <dialog id="alt-dialog" class="alt-dialog">
             <div id="alt-container" class="alt-container">
                 <textarea
-                    class="alt-text" id="alt-textarea"
+                    class="alt-text"
+                    id="alt-textarea"
                     placeholder="Ajoutez une description à votre média"
                 ></textarea>
                 <div class="alt-footer">
                     <div id="alt-counter" class="alt-counter">0/1500</div>
                     <div class="alt-btn-div">
-                        <button id="alt-cancel-btn" class="alt-cancel-btn">Annuler</button>
-                        <button id="alt-save-btn" class="alt-save-btn">Valider</button>
+                        <button id="alt-cancel-btn" class="alt-cancel-btn">
+                            Annuler
+                        </button>
+                        <button id="alt-save-btn" class="alt-save-btn">
+                            Valider
+                        </button>
                     </div>
                 </div>
             </div>
