@@ -2,53 +2,32 @@
 <html>
     <head>
         <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-        <link rel="stylesheet" href="mtm.css" type="text/css" />
-        <script src="mtm.js" type="module"></script>
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, maximum-scale=1"
+        />
+        <link rel="apple-touch-icon" href="../icons/apple-icon-150x150.png" />
+        <link rel="stylesheet" href="mtm_mobile.css" type="text/css" />
+        <script src="mtm_mobile.js" type="module"></script>
         <script src="https://unpkg.com/mux.js"></script>
-        <link href="icons/favicon.ico" rel="icon" type="image/x-icon" />
-        <script type="text/javascript">
-            let mobile = window.matchMedia('(max-aspect-ratio: 9/16)');
-            if (mobile.matches) {
-                window.location.href = 'https://mastothreader.prendrelangue.fr/m'
-            }
-        </script>
-        <script type="text/javascript">
+        <link href="../icons/favicon.ico" rel="icon" type="image/x-icon" />
+        <script>
             if (window.location.hostname === 'fmoncomble.github.io') {
-                window.location.href = 'https://mastothreader.prendrelangue.fr';
+                window.location.href =
+                    'https://mastothreader.prendrelangue.fr/m';
             }
         </script>
         <title>MastoThreader</title>
     </head>
 
     <body>
-        <div id="page-title" style="position: sticky">
-            <a href="https://mastothreader.prendrelangue.fr">
+        <div id="page-title">
+            <a href="https://mastothreader.prendrelangue.fr/m">
                 <img
-                    src="icons/mastothreader.svg"
+                    src="../icons/mastothreader.svg"
                     width="300"
                     fill="currentColor"
             /></a>
-            <div id="version">v0.17.1</div>
-            <div id="plugin-dl">
-                <img
-                    src="icons/addon-install.svg"
-                    id="dl-pic"
-                    style="height: 60px"
-                />
-                <div id="dl-msg" style="display: none">
-                    <div id="plugin-info">
-                        Cette extension ajoute un bouton
-                        <img
-                            id="icon"
-                            src="data:image/png;base64,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"
-                        />
-                        sur l'interface web de Mastodon pour lancer cette page.
-                    </div>
-                    <div>Le texte déjà entré est conservé.</div>
-                    <br />
-                    <div id="plugin-install"></div>
-                </div>
-            </div>
         </div>
         <div id="instance-div">
             <div id="instructions-btn">Afficher les instructions</div>
@@ -77,14 +56,16 @@
                 </p>
             </div>
             <div id="instance-input-div">
-                <div style="display: inline-block; vertical-align: middle">
-                    https://
+                <div id="instance-input-div-inner">
+                    <span style="display: inline-block; vertical-align: middle">
+                        https://
+                    </span>
+                    <input
+                        id="instance-input"
+                        type="url"
+                        placeholder="Instance Mastodon"
+                    />
                 </div>
-                <input
-                    id="instance-input"
-                    type="text"
-                    placeholder="Instance Mastodon"
-                />
                 <button id="instance-btn">Valider</button>
             </div>
         </div>
@@ -116,7 +97,7 @@
                         type="text"
                         name="in-reply-input"
                         id="in-reply-input"
-                        placeholder="URL du pouet original (facultatif)"
+                        placeholder="Coller l’URL du pouet original (facultatif)"
                     />
                 </label>
             </div>
@@ -138,20 +119,24 @@
                 <div class="overlay" style="display: none">+</div>
                 <div class="post-header">
                     <img class="avatar" />
-                    <span class="post-count"></span>
-                    <select class="viz-select" title="Régler la visibilité">
-                        <option value="public">Public</option>
-                        <option value="unlisted">Discret</option>
-                        <option value="private">Abonnés</option>
-                        <option value="direct">Personnes mentionnées</option>
-                    </select>
-                    <button class="cw-btn" title="Ajouter un avertissement">
-                        CW
-                    </button>
-                    <select
-                        class="lang-select"
-                        title="Choisir la langue"
-                    ></select>
+                    <div class="post-count"></div>
+                    <div class="post-options">
+                        <select class="viz-select" title="Régler la visibilité">
+                            <option value="public">Public</option>
+                            <option value="unlisted">Discret</option>
+                            <option value="private">Abonnés</option>
+                            <option value="direct">
+                                Personnes mentionnées
+                            </option>
+                        </select>
+                        <button class="cw-btn" title="Ajouter un avertissement">
+                            CW
+                        </button>
+                        <select
+                            class="lang-select"
+                            title="Choisir la langue"
+                        ></select>
+                    </div>
                 </div>
                 <div class="cw-div" style="display: none">
                     <textarea
@@ -178,7 +163,7 @@
                             class="img-upload"
                             multiple
                             accept="image/*, audio/*, video/*"
-                        />Glissez-déposez vos médias ici
+                        />
                     </div>
                     <div class="img-preview">
                         <div class="alt-div" style="display: none">
@@ -193,10 +178,14 @@
                             ></textarea>
                         </div>
                     </div>
-                    <div class="add-gif"><span>GIF</span></div>
-                    <div class="add-img"><span>+</span></div>
                 </div>
-                <div class="img-count"></div>
+                <div class="img-footer">
+                    <div class="add-media">
+                        <div class="add-gif"><div>GIF</div></div>
+                        <div class="add-img"><div>+</div></div>
+                    </div>
+                    <div class="img-count"></div>
+                </div>
                 <button class="add-post-btn">Ajouter un pouet</button>
                 <button class="delete-post-btn" style="display: none">
                     Supprimer le pouet
@@ -217,7 +206,7 @@
                 <a
                     href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.fr"
                     target="_blank"
-                    ><img src="icons/by-nc-sa.svg"
+                    ><img src="../icons/by-nc-sa.svg"
                 /></a>
             </div>
         </div>
@@ -249,7 +238,11 @@
                 <div style="margin-bottom: 10px">
                     Entrez l'URL du fil Bluesky :
                 </div>
-                <input type="url" id="bsky-thread-input" />
+                <input
+                    type="url"
+                    id="bsky-thread-input"
+                    style="margin: 10px 0"
+                />
             </div>
             <div style="text-align: center">
                 <label
@@ -283,19 +276,41 @@
             </div>
         </dialog>
         <dialog id="gif-dialog">
-            <div id="gif-search-div">
-                <div>
-                    <input
-                        type="text"
-                        id="gif-search"
-                        placeholder="Rechercher un GIF"
-                    />
-                    <button id="gif-search-btn">Rechercher</button>
+            <div class="gif-dialog">
+                <div id="gif-search-div">
+                    <div id="gif-search-input-div">
+                        <div>
+                            <button id="gif-cancel-btn" class="cancel">
+                                ✕
+                            </button>
+                        </div>
+                        <div id="gif-search-form">
+                            <input
+                                type="text"
+                                id="gif-search"
+                                placeholder="Rechercher un GIF"
+                            />
+                            <button id="gif-search-btn">Rechercher</button>
+                        </div>
+                    </div>
                 </div>
-                <button id="gif-cancel-btn" class="cancel">✕</button>
+                <div id="gif-results"></div>
             </div>
-            <div id="gif-results"></div>
-            <div id="gif-spinner" class="spinner" style="display: none"></div>
+        </dialog>
+        <dialog id="alt-dialog" class="alt-dialog">
+            <div id="alt-container" class="alt-container">
+                <textarea
+                    class="alt-text" id="alt-textarea"
+                    placeholder="Ajoutez une description à votre média"
+                ></textarea>
+                <div class="alt-footer">
+                    <div id="alt-counter" class="alt-counter">0/1500</div>
+                    <div class="alt-btn-div">
+                        <button id="alt-cancel-btn" class="alt-cancel-btn">Annuler</button>
+                        <button id="alt-save-btn" class="alt-save-btn">Valider</button>
+                    </div>
+                </div>
+            </div>
         </dialog>
         <div id="app" style="display: none"></div>
     </body>

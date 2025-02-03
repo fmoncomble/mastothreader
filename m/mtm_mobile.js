@@ -20,6 +20,11 @@ document.addEventListener('DOMContentLoaded', async function () {
     const previewDiv = document.getElementById('replied-post-preview');
     const threadLink = document.getElementById('thread-link');
     const postItem = document.getElementById('post-item');
+    const altDialog = document.getElementById('alt-dialog');
+    const altTextArea = document.getElementById('alt-textarea');
+    const altCounter = document.getElementById('alt-counter');
+    const altSaveBtn = document.getElementById('alt-save-btn');
+    const altCancelBtn = document.getElementById('alt-cancel-btn');
     const languageSelect = document.querySelector('.lang-select');
     const postThreadBtn = document.getElementById('post-thread-btn');
     const spinner = document.getElementById('spinner');
@@ -29,27 +34,23 @@ document.addEventListener('DOMContentLoaded', async function () {
     const yearSpan = document.querySelector('span#year');
     yearSpan.textContent = new Date().toISOString().split('-')[0];
 
-    // Handle instructions display
-    const instructionsBtn = document.getElementById('instructions-btn');
-    instructionsBtn.addEventListener('click', () => {
-        if (instructionsDiv.style.display === 'none') {
-            instructionsDiv.style.display = 'flex';
-            instructionsBtn.textContent = 'Masquer les instructions';
-        } else {
-            instructionsDiv.style.display = 'none';
-            instructionsBtn.textContent = 'Afficher les instructions';
-        }
-    });
-
     // Functions to gather information
     let instanceList = document.createElement('div');
     instanceList.id = 'instance-list';
     instanceList.classList.add('instance-list');
     instanceList.style.left = `${instanceInput.offsetLeft}px`;
+    instanceList.style.top =
+        instanceInput.offsetTop + instanceInput.scrollHeight + 'px';
     instanceList.style.display = 'none';
+    document.onclick = (e) => {
+        if (e.target !== instanceList) {
+            instanceList.style.display = 'none';
+        }
+    };
     instanceBtn.after(instanceList);
     async function buildInstList(input) {
-        if (!input) {
+        if (!input || input.length === 0) {
+            instanceList.innerHTML = '';
             instanceList.style.display = 'none';
             return;
         }
@@ -86,7 +87,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     async function searchInstance(input) {
         searching = true;
         try {
-            let res = await fetch('inst.php?input=' + input);
+            let res = await fetch('../inst.php?input=' + input);
             if (res.ok) {
                 let matches = [];
                 let data = await res.json();
@@ -195,41 +196,21 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     }
 
-    // Handle plugin download link
-    const dlPic = document.getElementById('dl-pic');
-    const dlMsg = document.getElementById('dl-msg');
-    const pluginInstall = document.getElementById('plugin-install');
-    const pluginLink = document.createElement('a');
-    pluginLink.textContent = 'Installer sur votre navigateur';
-    pluginLink.target = '_blank';
-    pluginInstall.appendChild(pluginLink);
-    const userAgent = navigator.userAgent;
-    if (
-        userAgent.indexOf('Chrome') !== -1 ||
-        userAgent.indexOf('Edge') !== -1 ||
-        userAgent.indexOf('OPR') !== -1 ||
-        userAgent.indexOf('Opera') !== -1
-    ) {
-        pluginLink.href =
-            'https://chromewebstore.google.com/detail/mastothreader-plugin/majdplkphamfebljfgebiniknbodhdgi';
-    } else if (userAgent.indexOf('Firefox') !== -1) {
-        pluginLink.href =
-            'https://github.com/fmoncomble/mastothreader/releases/latest/download/mastothreader.xpi';
-    } else if (
-        userAgent.indexOf('Safari') !== -1 &&
-        userAgent.indexOf('Chrome') === -1
-    ) {
-        pluginInstall.textContent = 'Plugin indisponible pour Safari';
-    } else {
-        pluginInstall.textContent = "Votre navigateur n'est pas pris en charge";
-    }
-    dlPic.onclick = () => {
-        if (dlMsg.style.display === 'none') {
-            dlMsg.style.display = 'flex';
+    // Handle instructions display
+    const instructionsBtn = document.getElementById('instructions-btn');
+    instructionsBtn.addEventListener('click', () => {
+        if (instructionsDiv.style.display === 'none') {
+            instructionsDiv.style.display = 'flex';
+            instanceList.style.top =
+                instanceInput.offsetTop + instanceInput.scrollHeight + 'px';
+            instructionsBtn.textContent = 'Masquer les instructions';
         } else {
-            dlMsg.style.display = 'none';
+            instructionsDiv.style.display = 'none';
+            instanceList.style.top =
+                instanceInput.offsetTop + instanceInput.scrollHeight + 'px';
+            instructionsBtn.textContent = 'Afficher les instructions';
         }
-    };
+    });
 
     // Declare Mastodon variables
     let maxChars;
@@ -311,7 +292,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (code) {
                 token = await exchangeCodeForToken(code);
                 if (token) {
-                    localStorage.setItem('mastothreadtoken-v2', token);
+                    localStorage.setItem('mastothreadtoken-m', token);
                     bskyLink = sessionStorage.getItem('bsky_url') || null;
                     WPUrl = sessionStorage.getItem('wp_url') || null;
                     mastoText = sessionStorage.getItem('text') || null;
@@ -400,13 +381,13 @@ document.addEventListener('DOMContentLoaded', async function () {
     let clientSecret;
     checkCredentials();
     function checkCredentials() {
-        clientId = localStorage.getItem(`${instance}-id-v2`);
-        clientSecret = localStorage.getItem(`${instance}-secret-v2`);
+        clientId = localStorage.getItem(`${instance}-id-m`);
+        clientSecret = localStorage.getItem(`${instance}-secret-m`);
     }
     let code;
 
     function checkInstance() {
-        instance = localStorage.getItem('mastothreadinstance');
+        instance = localStorage.getItem('mastothreadinstance-m');
         if (instance) {
             instanceInput.value = instance;
         } else if (!instance) {
@@ -465,7 +446,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     async function checkToken() {
-        token = localStorage.getItem('mastothreadtoken-v2');
+        token = localStorage.getItem('mastothreadtoken-m');
         if (token) {
             instanceInput.value = instance + ' ✅';
             instanceInput.disabled = true;
@@ -488,7 +469,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     async function removeToken() {
-        localStorage.removeItem('mastothreadtoken-v2');
+        localStorage.removeItem('mastothreadtoken-m');
         const formData = new FormData();
         formData.append('client_id', clientId);
         formData.append('client_secret', clientSecret);
@@ -514,7 +495,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 window.alert('Veuillez indiquer votre instance Mastodon');
                 return;
             }
-            localStorage.setItem('mastothreadinstance', instance);
+            localStorage.setItem('mastothreadinstance-m', instance);
             checkCredentials();
             if (!clientId && !clientSecret) {
                 await createMastoApp();
@@ -542,7 +523,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 window.alert('Veuillez indiquer votre instance Mastodon');
                 return;
             }
-            localStorage.setItem('mastothreadinstance', instance);
+            localStorage.setItem('mastothreadinstance-m', instance);
             checkCredentials();
             if (!clientId && !clientSecret) {
                 await createMastoApp();
@@ -563,7 +544,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    client_name: 'MastoThreader',
+                    client_name: 'MastoThreader Mobile',
                     redirect_uris: redirectUri,
                     scopes: 'read write',
                     website: redirectUri,
@@ -582,14 +563,14 @@ document.addEventListener('DOMContentLoaded', async function () {
             const data = await response.json();
             clientId = data.client_id;
             clientSecret = data.client_secret;
-            localStorage.setItem(`${instance}-id-v2`, clientId);
-            localStorage.setItem(`${instance}-secret-v2`, clientSecret);
+            localStorage.setItem(`${instance}-id-m`, clientId);
+            localStorage.setItem(`${instance}-secret-m`, clientSecret);
         } catch (error) {
             console.error('Error fetching: ', error);
         }
     }
 
-    function redirectToAuthServer() {
+    async function redirectToAuthServer() {
         const scope = 'read write';
         const authUrl = `https://${instance}/oauth/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(
             redirectUri
@@ -631,6 +612,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         lang = data.languages[0];
         mediaConfig = data.configuration.media_attachments;
     }
+    let altLimit = mediaConfig.description_limit || 1500;
 
     // Handle post creation in reply to another post
     let originalId;
@@ -1361,7 +1343,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (userAvatarSrc) {
             avatar.src = userAvatarSrc;
         } else {
-            avatar.src = 'icons/generic_avatar.png';
+            avatar.src = '../icons/generic_avatar.png';
         }
 
         const vizSelect = newPost.querySelector('.viz-select');
@@ -1909,7 +1891,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 }
                 let form = new FormData();
                 form.append('url', img.url);
-                let response = await fetch('proxy.php', {
+                let response = await fetch('../proxy.php', {
                     method: 'POST',
                     body: form,
                 });
@@ -2041,7 +2023,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                 gifDialog.close();
             };
             gifSearch.value = null;
-            gifSearch.focus();
             gifSearch.onkeydown = (e) => {
                 if (e.key === 'Enter') {
                     gifSearchBtn.click();
@@ -2068,7 +2049,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                     gifSearch.value = null;
                     fresh = true;
                     adding = false;
-                    gifSearch.focus();
                     pos = await getGifs();
                 }
             };
@@ -2132,7 +2112,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             async function getGifs(query, pos) {
                 adding = true;
                 try {
-                    let gifUrl = `gifsearch.php?locale=${lang}`;
+                    let gifUrl = `../gifsearch.php?locale=${lang}`;
                     if (query) {
                         gifUrl += `&q=${query}`;
                     }
@@ -2187,14 +2167,18 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
         });
 
-        function displayThumbnail(mediaFile, imgPreview, imgCount, dzInst) {
+        async function displayThumbnail(
+            mediaFile,
+            imgPreview,
+            imgCount,
+            dzInst
+        ) {
             imgCount.textContent = `${files.length}/${maxMedia}`;
             const div = document.createElement('div');
             const removeBtn = document.createElement('button');
             let previewElt;
             let fileType = mediaFile.file.type;
             let supportedMimeTypes = new Set(mediaConfig.supported_mime_types);
-            let altLimit = mediaConfig.description_limit || 1500;
             let imgSizeLimit = mediaConfig.image_size_limit;
             let vidSizeLimit = mediaConfig.video_size_limit;
 
@@ -2232,7 +2216,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 }
                 const video = document.createElement('video');
                 if (!video.canPlayType(mediaFile.file.type)) {
-                    video.poster = 'icons/video_placeholder.webp';
+                    video.poster = '../icons/video_placeholder.webp';
                     video.controls = false;
                 } else {
                     video.src = URL.createObjectURL(mediaFile.file);
@@ -2288,7 +2272,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 previewElt = audio;
                 div.appendChild(audio);
                 const audioImg = document.createElement('img');
-                audioImg.src = 'icons/speaker_icon.png';
+                audioImg.src = '../icons/speaker_icon.png';
                 audioImg.alt = 'Audio';
                 div.appendChild(audioImg);
             }
@@ -2345,138 +2329,23 @@ document.addEventListener('DOMContentLoaded', async function () {
             const altBtn = document.createElement('button');
             altBtn.textContent = 'ALT';
             altBtn.classList.add('alt-btn');
-            const altDiv = imgPreview.querySelector('.alt-div');
-            const newAltDiv = altDiv.cloneNode(true);
-            const altTextArea = newAltDiv.querySelector('.alt-text');
 
-            if (mediaFile.description) {
-                altTextArea.value = mediaFile.description;
-                altBtn.style.color = '#009900';
-                if (previewElt) {
-                    previewElt.alt = mediaFile.description;
-                    previewElt.title = mediaFile.description;
-                }
-            }
+            // handleAltText(mediaFile, previewElt, altBtn);
 
-            const altCounter = newAltDiv.querySelector('.alt-counter');
-            newAltDiv.addEventListener('click', (e) => {
-                e.stopPropagation();
-            });
-            altTextArea.addEventListener('input', () => {
-                altCounter.textContent = `${altTextArea.value.length}/${altLimit}`;
-                if (altTextArea.value.length > 0) {
-                    altCancelBtn.textContent = 'Effacer';
-                } else if (altTextArea.value.length === 0) {
-                    altCancelBtn.textContent = 'Annuler';
-                }
-                if (altTextArea.value.length > altLimit) {
-                    altCounter.style.color = '#cc0000';
-                    altCounter.style.fontWeight = 'bold';
-                } else {
-                    altCounter.removeAttribute('style');
-                }
-            });
-            altTextArea.addEventListener('keydown', (e) => {
-                const altText = altTextArea.value;
-                if (
-                    (e.key === 'Enter' && e.metaKey) ||
-                    (e.key === 'Enter' && e.ctrlKey)
-                ) {
-                    if (altText && altText.length > 0) {
-                        if (previewElt) {
-                            previewElt.alt = altText;
-                            previewElt.title = altText;
-                        }
-                        mediaFile.description = altText;
-                        altBtn.style.color = '#009900';
-                    } else if (!altText || altText.length === 0) {
-                        if (previewElt) {
-                            previewElt.removeAttribute('alt');
-                            previewElt.removeAttribute('title');
-                        }
-                        delete mediaFile.description;
-                        altBtn.removeAttribute('style');
-                    }
-                    newAltDiv.style.display = 'none';
-                } else if (e.key === 'Escape') {
-                    newAltDiv.style.display = 'none';
-                }
-            });
-
-            const altSaveBtn = newAltDiv.querySelector('.alt-save-btn');
-            const altCancelBtn = newAltDiv.querySelector('.alt-cancel-btn');
             altBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                if (newAltDiv.style.display === 'flex') {
-                    newAltDiv.style.display = 'none';
-                } else {
-                    const altText = altTextArea.value;
-                    if (altText) {
-                        altCancelBtn.textContent = 'Effacer';
-                    } else {
-                        altCancelBtn.textContent = 'Annuler';
-                    }
-                    newAltDiv.style.display = 'flex';
-                    newAltDiv.scrollIntoView();
-                    altTextArea.focus();
-                }
-            });
-            altSaveBtn.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                const altText = altTextArea.value;
-                if (altText && altText.length > 0) {
-                    if (previewElt) {
-                        previewElt.alt = altText;
-                        previewElt.title = altText;
-                    }
-                    mediaFile.description = altText;
-                    altBtn.style.color = '#009900';
-                } else if (!altText || altText.length === 0) {
-                    if (previewElt) {
-                        previewElt.removeAttribute('alt');
-                        previewElt.removeAttribute('title');
-                    }
-                    delete mediaFile.description;
-                    altBtn.removeAttribute('style');
-                }
-                newAltDiv.style.display = 'none';
-            });
-            altCancelBtn.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                const altText = altTextArea.value;
-                if (altText.length > 0) {
-                    altTextArea.value = null;
-                    if (previewElt) {
-                        previewElt.removeAttribute('alt');
-                        previewElt.removeAttribute('title');
-                    }
-                    altCounter.textContent = `0/${altLimit}`;
-                    altCancelBtn.textContent = 'Annuler';
-                } else if (altText.length === 0) {
-                    if (previewElt) {
-                        previewElt.removeAttribute('alt');
-                        previewElt.removeAttribute('title');
-                    }
-                    delete mediaFile.description;
-                    altBtn.removeAttribute('style');
-                    newAltDiv.style.display = 'none';
-                }
+                altDialog.showModal();
+                handleAltText(mediaFile, previewElt, altBtn);
             });
 
             div.appendChild(altBtn);
-            div.appendChild(newAltDiv);
 
-            if (!mediaFile.description) {
-                const altText = altTextArea.value;
-                if (altText) {
-                    altCancelBtn.textContent = 'Effacer';
-                } else {
-                    altCancelBtn.textContent = 'Annuler';
-                }
-                newAltDiv.style.display = 'flex';
-                newAltDiv.scrollIntoView();
-                altTextArea.focus();
-            }
+            await new Promise((resolve) =>
+                setTimeout(function () {
+                    handleAltText(mediaFile, previewElt, altBtn);
+                    resolve();
+                }, 10)
+            );
         }
 
         // Handle post deletion
@@ -2570,6 +2439,44 @@ document.addEventListener('DOMContentLoaded', async function () {
         isSplitting = false;
     }
 
+    // Function to handle alt-text
+    altTextArea.addEventListener('input', () => {
+        altCounter.textContent = `${altTextArea.value.length}/${altLimit}`;
+    });
+
+    function handleAltText(mediaFile, previewElt, altBtn) {
+        if (mediaFile.description) {
+            altTextArea.value = mediaFile.description;
+            altBtn.style.color = '#009900';
+        } else {
+            altTextArea.value = null;
+            altBtn.removeAttribute('style');
+            altDialog.showModal();
+        }
+        altCounter.textContent = `${altTextArea.value.length}/${altLimit}`;
+        altSaveBtn.onclick = () => {
+            const altText = altTextArea.value;
+            if (altText && altText.length > 0) {
+                previewElt.alt = altText;
+                previewElt.title = altText;
+                mediaFile.description = altText;
+                altBtn.style.color = '#009900';
+                altTextArea.value = null;
+                altDialog.close();
+            } else if (!altText || altText.length === 0) {
+                previewElt.removeAttribute('alt');
+                previewElt.removeAttribute('title');
+                delete mediaFile.description;
+                altBtn.removeAttribute('style');
+                altTextArea.value = null;
+                altDialog.close();
+            }
+        };
+        altCancelBtn.onclick = () => {
+            altDialog.close();
+        };
+    }
+
     // Functions to react to change in number of posts
     numberPostsCheckbox.addEventListener('change', async () => {
         let message = 'Updating post list after ticking/unticking checkbox';
@@ -2581,7 +2488,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             const i = postItems.indexOf(p);
             const pNo = i + 1;
             const postCount = p.querySelector('.post-count');
-            postCount.textContent = `Pouet ${pNo}/${postItems.length}`;
+            postCount.textContent = `${pNo}/${postItems.length}`;
             p.setAttribute('counter', `${pNo}/${postItems.length}`);
         }
         return postItems.length;
@@ -2683,7 +2590,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         };
         counter.after(restartBtn);
         postThreadBtn.style.display = 'none';
-        window.open(threadUrl, '_blank');
+        window.location.href = threadUrl;
     });
 
     async function uploadMedia(f, d) {
