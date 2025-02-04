@@ -757,7 +757,7 @@ img.avatar {
 
 .bsky-loading-text {
     text-align: center;
-    color: light-dark(white, black);
+    color: white;
     margin: 10px 0;
     text-shadow: gray 0 0 5px;
 }

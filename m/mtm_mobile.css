@@ -1,3 +1,7 @@
+:root {
+    color-scheme: light dark;
+}
+
 body {
     position: relative;
     display: flex;
@@ -5,7 +9,7 @@ body {
     font-family: Arial, Helvetica, sans-serif;
     width: 99%;
     padding-bottom: 30px;
-    background-color: #e3e6e8;
+    background-color: light-dark(#e3e6e8, #181821);
     margin: 0;
 }
 
@@ -13,8 +17,9 @@ input {
     height: 30px;
     width: 300px;
     padding: 5px;
-    background-color: #f9f9fb;
-    border: solid 1px #d9d9e8;
+    background-color: light-dark(#f9f9fb, #292938);
+    color: light-dark(black, #9c9cc9);
+    border: solid 1px light-dark(#d9d9e8, #313144);
     border-radius: 4px;
     margin-left: 4px;
     font-size: 100%;
@@ -23,7 +28,7 @@ input {
 button {
     height: 50px;
     padding: 5px;
-    color: white;
+    color: #d9d9e8;
     background-color: #6364ff;
     border: none;
     border-radius: 4px;
@@ -60,7 +65,8 @@ div#instructions {
     flex-direction: column;
     align-self: center;
     text-align: center;
-    background-color: white;
+    background-color: light-dark(white, black);
+    color: light-dark(black, #ddd9e8);
     border-radius: 10px;
     width: 90%;
     padding: 10px;
@@ -71,13 +77,14 @@ div#instructions-btn {
     font-weight: bold;
     text-decoration: underline;
     cursor: pointer;
-    color: #563acc;
+    color: light-dark(#563acc, #6364ff);
 }
 
 #instance-div {
     display: flex;
     flex-direction: column;
     text-align: center;
+    color: light-dark(black, #9c9cc9);
 }
 
 #instance-input-div {
@@ -118,7 +125,7 @@ button#instance-btn {
 
 .post-item {
     width: 100%;
-    border: solid 1px #aaaaaa;
+    border: solid 1px light-dark(#d9d9e8, black);
     border-radius: 4px;
     display: flex;
     position: relative;
@@ -131,7 +138,7 @@ button#instance-btn {
     border-radius: 4px;
     position: absolute;
     background-color: rgba(86, 58, 204, 0.2);
-    color: white;
+    color: #d9d9e8;
     align-items: center;
     justify-content: center;
     text-align: center;
@@ -143,7 +150,7 @@ button#instance-btn {
 .post-count {
     display: inline-flex;
     height: 10%;
-    color: gray;
+    color: light-dark(gray, #d9d9e8);
     font-size: 100%;
 }
 
@@ -151,12 +158,12 @@ button#instance-btn {
 .viz-select,
 .lang-select {
     height: auto;
-    color: black;
+    color: light-dark(black, #9c9cc9);
     display: inline-flex;
     float: right;
-    border: solid 1px #d9d9e8;
+    border: solid 1px light-dark(#d9d9e8, #313144);
     border-radius: 4px;
-    background-color: #f9f9fb;
+    background-color: light-dark(#f9f9fb, #292938);
     display: inline;
     font-size: 100%;
 }
@@ -178,7 +185,7 @@ button#instance-btn {
 
 .cw-btn:hover,
 select:hover {
-    background-color: #dadade;
+    background-color: light-dark(#dadade, #292938);
 }
 
 .cw-div {
@@ -187,8 +194,9 @@ select:hover {
 }
 
 textarea {
-    border: solid 1px #d9d9e8;
-    background-color: #f9f9fb;
+    border: solid 1px light-dark(#d9d9e8, #292938);
+    background-color: light-dark(#f9f9fb, #292938);
+    color: light-dark(black, #d9d9e8);
     border-radius: 4px;
     width: 100%;
     margin: 0 14px;
@@ -237,7 +245,7 @@ div#dl-msg {
 
 .post-item {
     margin-bottom: 20px;
-    background-color: white;
+    background-color: light-dark(white, black);
 }
 
 .add-post-btn,
@@ -258,9 +266,10 @@ div#dl-msg {
 .dropzone {
     position: relative;
     height: 100px;
-    border: 2px dashed #d9d9e8;
+    border: 2px dashed light-dark(#d9d9e8, #9c9cc9);
     border-radius: 4px;
-    background-color: #f9f9fb;
+    background-color: light-dark(#f9f9fb, #292938);
+    color: light-dark(gray, #9c9cc9);
     color: gray;
     display: flex;
     align-items: center;
@@ -449,7 +458,7 @@ button:disabled {
 .char-count,
 .img-count {
     text-align: right;
-    color: gray;
+    color: light-dark(gray, #d9d9e8);
     margin-right: 20px;
     margin-top: 10px;
 }
@@ -518,7 +527,7 @@ button:disabled {
     height: 200px;
     border-radius: 4px;
     box-shadow: 0 0 5px gray;
-    background-color: white;
+    background-color: light-dark(white, black);
     cursor: auto !important;
 }
 
@@ -526,7 +535,7 @@ button:disabled {
     width: 100%;
     border-radius: 4px;
     box-shadow: 0 0 5px gray;
-    background-color: white;
+    background-color: light-dark(white, black);
     border: none;
     cursor: auto !important;
 }
@@ -639,8 +648,8 @@ button#view-thread-btn {
     text-align: center;
     justify-content: center;
     align-items: center;
-    background-color: #563acc;
-    color: white;
+    background-color: light-dark(#563acc, #6364ff);
+    color: #d9d9e8;
     cursor: pointer;
 }
 
@@ -663,11 +672,12 @@ div.footer div a img {
 div#replied-post-preview {
     flex-direction: column;
     width: 100%;
-    border: solid 1px #aaaaaa;
+    border: solid 1px light-dark(#d9d9e8, black);
     border-radius: 4px;
     display: flex;
     position: relative;
-    background-color: white;
+    background-color: light-dark(white, black);
+    color: light-dark(black, #d9d9e8);
     box-sizing: border-box;
     margin-top: 10px;
 }
@@ -708,10 +718,11 @@ div#replied-post-display-name {
 div#replied-post-content {
     display: flex;
     flex-direction: column;
-    border: solid 1px #d9d9e8;
+    border: solid 1px light-dark(#d9d9e8, #292938);
     padding: 10px;
     margin: 0 14px 14px 14px;
-    background-color: #f9f9fb;
+    background-color: light-dark(#f9f9fb, #292938);
+    color: light-dark(black, #d9d9e8);
     border-radius: 4px;
 }
 
@@ -735,7 +746,7 @@ div#replied-post-media img {
 
 div.thread-link {
     border: none;
-    border-left: solid 3px #aaaaaa;
+    border-left: solid 3px light-dark(#d9d9e8, #9c9cc9);
     width: 80%;
     height: 20px;
 }
@@ -755,7 +766,7 @@ div.number-posts {
     font-size: 90%;
     width: fit-content;
     margin-bottom: 5px;
-    background-color: white;
+    background-color: light-dark(white, black);
     padding: 2px 5px;
     cursor: pointer;
 }
@@ -763,6 +774,7 @@ div.number-posts {
 input[type='checkbox'] {
     width: 50px;
     margin-right: 5px;
+    border: solid 1px light-dark(#d9d9e8, #313144);
 }
 
 div.post-header {
@@ -797,7 +809,8 @@ img.avatar {
     border: none;
     border-radius: 5px;
     text-align: center;
-    color: #563acc;
+    background-color: light-dark(white, black);
+    color: light-dark(#563acc, #6364ff);
     font-weight: bold;
     box-shadow: 0 0 5px gray;
 }
@@ -810,7 +823,7 @@ img.avatar {
 .counter {
     margin: 5px 0;
     text-align: center;
-    color: #563acc;
+    color: light-dark(#563acc, #6364ff);
 }
 
 .spinner-dialog {
@@ -819,7 +832,7 @@ img.avatar {
     border-radius: 5px;
     box-shadow: 0 0 5px gray;
     background-color: rgba(128, 128, 128, 0.7);
-    color: #563acc;
+    color: light-dark(#563acc, #6364ff);
     text-align: center;
 }
 
@@ -925,11 +938,11 @@ dialog:focus-visible,
 
 .following-list,
 .instance-list {
-    border: 1px solid #d9d9e8;
+    border: 1px solid light-dark(#d9d9e8, #9c9cc9);
     border-radius: 4px;
     box-shadow: 0 0 5px gray;
-    background-color: #f9f9fb;
-    color: #563acc;
+    background-color: light-dark(#f9f9fb, #292938);
+    color: light-dark(#563acc, #6364ff);
     text-overflow: ellipsis;
     z-index: 100;
     position: absolute;
@@ -942,7 +955,8 @@ dialog:focus-visible,
     display: flex;
     flex-direction: row;
     height: 2em;
-    background-color: white;
+    background-color: light-dark(white, black);
+    color: light-dark(black, #d9d9e8);
     cursor: pointer;
     text-align: left;
     padding: 5px;
