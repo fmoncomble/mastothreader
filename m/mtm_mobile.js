@@ -975,7 +975,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     let a = document.createElement('a');
                     a.href = bskyLink;
                     a.target = '_blank';
-                    a.textContent = bskyLink;
+                    a.textContent = '🔗 Fil Bluesky';
                     div.appendChild(a);
                     numberPostsDiv.after(div);
                     let thread = data.thread;
