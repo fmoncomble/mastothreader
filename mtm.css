@@ -30,11 +30,6 @@ svg {
     outline: 2px solid #6364ff;
 }
 
-div#version {
-    font-size: x-small;
-    color: light-dark(#563acc, #6364ff);
-}
-
 div#plugin-info {
     display: flex;
     flex-direction: row;

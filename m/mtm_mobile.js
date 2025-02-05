@@ -34,13 +34,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     const yearSpan = document.querySelector('span#year');
     yearSpan.textContent = new Date().toISOString().split('-')[0];
 
-    // Handle dark theme logo
-    const logo = document.querySelector('img.masto-logo');
-    const dark = window.matchMedia('(prefers-color-scheme: dark)');
-    if (dark.matches) {
-        logo.src = '../icons/mastothreader_dark.svg';
-    }
-
     // Functions to gather information
     let instanceList = document.createElement('div');
     instanceList.id = 'instance-list';
