@@ -19,7 +19,7 @@ Le site ne collecte aucune de vos données. Les identifiants sont stockés local
 - [x] Ajout d'un avertissement (content warning).
 - [x] Ajout d'un texte alternatif pour les images.
 - [x] Ajout de GIFs
-- [] Banque d'émojis
-- [] Localisation
+- [ ] Banque d'émojis
+- [ ] Localisation
 
 ### Projet sous licence CC BY-NC-SA 4.0
