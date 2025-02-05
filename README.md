@@ -13,13 +13,13 @@ Le site ne collecte aucune de vos données. Les identifiants sont stockés local
 <img width="657" alt="Screenshot 2024-08-19 at 20 41 29" src="https://github.com/user-attachments/assets/40da17c4-8eaa-457c-add5-6da94b547e0b">
 
 ### Fonctionnalités
-[x] Choix de la langue. Par défaut, la langue de l'instance.
-    [x] Détection automatique de la langue du texte.
-[x] Visibilité : par défaut, le premier pouet est public, les suivants sont non listés. Si le premier pouet est réglé sur "privé", les suivants le seront aussi.
-[x] Ajout d'un avertissement (content warning).
-[x] Ajout d'un texte alternatif pour les images.
-[x] Ajout de GIFs
-[] Banque d'émojis
-[] Localisation
+- [x] Choix de la langue. Par défaut, la langue de l'instance.
+    - [x] Détection automatique de la langue du texte.
+- [x] Visibilité : par défaut, le premier pouet est public, les suivants sont non listés. Si le premier pouet est réglé sur "privé", les suivants le seront aussi.
+- [x] Ajout d'un avertissement (content warning).
+- [x] Ajout d'un texte alternatif pour les images.
+- [x] Ajout de GIFs
+- [] Banque d'émojis
+- [] Localisation
 
 ### Projet sous licence CC BY-NC-SA 4.0
