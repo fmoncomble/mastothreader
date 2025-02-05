@@ -269,6 +269,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     instanceInput.disabled = false;
                     instanceBtn.textContent = 'Valider';
                     localStorage.removeItem('mastothreadinstance');
+                    instanceInput.value = null;
                     counter.style.display = 'none';
                     removeToken();
                     checkInstance();
@@ -286,13 +287,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
         if (urlParams.has('text')) {
             mastoText = urlParams.get('text');
-        }
-        if (!token && !instance) {
-            for (let [key, value] of urlParams) {
-                sessionStorage.setItem(key, value);
-            }
-            window.alert(`Vous n'êtes pas connecté·e à Mastodon.`);
-            instanceInput.focus();
         }
         if (!token && instance) {
             code = urlParams.get('code');
@@ -337,6 +331,12 @@ document.addEventListener('DOMContentLoaded', async function () {
                     }
                 }
             }
+        } else if (!token) {
+            for (let [key, value] of urlParams) {
+                sessionStorage.setItem(key, value);
+            }
+            window.alert(`Vous n'êtes pas connecté·e à Mastodon.`);
+            instanceInput.focus();
         } else if (token) {
             await checkApp();
             if (bskyUrl) {
@@ -519,6 +519,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             instanceInput.disabled = false;
             instanceBtn.textContent = 'Valider';
             localStorage.removeItem('mastothreadinstance');
+            instanceInput.value = null;
             counter.style.display = 'none';
             removeToken();
             checkInstance();

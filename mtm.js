@@ -30,11 +30,11 @@ document.addEventListener('DOMContentLoaded', async function () {
     yearSpan.textContent = new Date().toISOString().split('-')[0];
 
     // Handle dark theme logo
-    const logo = document.querySelector('img.masto-logo');
-    const dark = window.matchMedia('(prefers-color-scheme: dark)');
-    if (dark.matches) {
-        logo.src = 'icons/mastothreader_dark.svg';
-    }
+    // const logo = document.querySelector('img.masto-logo');
+    // const dark = window.matchMedia('(prefers-color-scheme: dark)');
+    // if (dark.matches) {
+    //     logo.src = 'icons/mastothreader_dark.svg';
+    // }
 
     // Handle instructions display
     const instructionsBtn = document.getElementById('instructions-btn');
@@ -288,6 +288,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     instanceInput.disabled = false;
                     instanceBtn.textContent = 'Valider';
                     localStorage.removeItem('mastothreadinstance');
+                    instanceInput.value = null;
                     counter.style.display = 'none';
                     removeToken();
                     checkInstance();
@@ -305,13 +306,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
         if (urlParams.has('text')) {
             mastoText = urlParams.get('text');
-        }
-        if (!token && !instance) {
-            for (let [key, value] of urlParams) {
-                sessionStorage.setItem(key, value);
-            }
-            window.alert(`Vous n'êtes pas connecté·e à Mastodon.`);
-            instanceInput.focus();
         }
         if (!token && instance) {
             code = urlParams.get('code');
@@ -356,6 +350,12 @@ document.addEventListener('DOMContentLoaded', async function () {
                     }
                 }
             }
+        } else if (!token) {
+            for (let [key, value] of urlParams) {
+                sessionStorage.setItem(key, value);
+            }
+            window.alert(`Vous n'êtes pas connecté·e à Mastodon.`);
+            instanceInput.focus();
         } else if (token) {
             await checkApp();
             if (bskyUrl) {
@@ -538,6 +538,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             instanceInput.disabled = false;
             instanceBtn.textContent = 'Valider';
             localStorage.removeItem('mastothreadinstance');
+            instanceInput.value = null;
             counter.style.display = 'none';
             removeToken();
             checkInstance();
@@ -570,7 +571,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    client_name: 'MastoThreader',
+                    client_name: 'MastoThreader Test',
                     redirect_uris: redirectUri,
                     scopes: 'read write',
                     website: redirectUri,
