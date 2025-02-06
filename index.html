@@ -212,16 +212,17 @@
         </div>
         <div id="content-container">
             <div id="number-posts-div" style="margin: 10px 0; display: none">
-                <label for="fetch-bsky-checkbox" class="number-posts">
-                    <input type="checkbox" id="fetch-bsky-checkbox" />Récupérer
-                    un fil Bluesky</label
-                >
+                <select id="import" class="import">
+                    <option value="0" disabled selected>Importer du contenu</option>
+                    <option value="bsky">Importer un fil Bluesky</option>
+                    <option value="wp">Importer un billet Wordpress</option>
+                </select>
                 <button
                     id="bsky-reset"
-                    class="bsky-reset"
+                    class="bsky-reset cancel"
                     style="display: none"
                 >
-                    Déconnecter
+                    ⛓️‍💥 Bluesky
                 </button>
                 <label for="number-posts" class="number-posts">
                     <input
@@ -394,6 +395,18 @@
             <div>
                 <button id="bsky-thread-cancel" class="cancel">Annuler</button>
                 <button id="bsky-thread-ok">Valider</button>
+            </div>
+        </dialog>
+        <dialog id="wp-import-dialog" class="bsky-dialog">
+            <div>
+                <div style="margin-bottom: 10px">
+                    Entrez l'URL du billet Wordpress :
+                </div>
+                <input type="url" id="wp-url-input" />
+            </div>
+            <div>
+                <button id="wp-import-cancel" class="cancel">Annuler</button>
+                <button id="wp-import-ok">Valider</button>
             </div>
         </dialog>
         <dialog id="bsky-loading-dialog" class="spinner-dialog">

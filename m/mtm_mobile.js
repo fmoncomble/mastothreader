@@ -8,8 +8,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     const instanceInput = document.getElementById('instance-input');
     const instanceBtn = document.getElementById('instance-btn');
     const contentContainer = document.getElementById('content-container');
-    const fetchBskyCheckbox = document.getElementById('fetch-bsky-checkbox');
-    fetchBskyCheckbox.checked = false;
+    const importSelect = document.querySelector('select.import');
     const bskyResetBtn = document.getElementById('bsky-reset');
     const numberPostsDiv = document.getElementById('number-posts-div');
     const numberPostsCheckbox = document.getElementById('number-posts');
@@ -264,7 +263,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     localStorage.removeItem('mastothreadinstance');
                     instanceInput.value = null;
                     counter.style.display = 'none';
-                    removeToken();
+                    await removeToken();
                     checkInstance();
                     checkToken();
                     window.location.reload();
@@ -307,7 +306,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                             ) {
                                 convertHandles = true;
                             }
-                            fetchBskyCheckbox.checked = true;
                             await getBskyThread();
                         }
                     } else if (inReplyUrl) {
@@ -342,7 +340,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                         convertHandles = true;
                     }
                     bskyLink = bskyUrl;
-                    fetchBskyCheckbox.checked = true;
                     await getBskyThread();
                 }
             }
@@ -514,7 +511,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             localStorage.removeItem('mastothreadinstance');
             instanceInput.value = null;
             counter.style.display = 'none';
-            removeToken();
+            await removeToken();
             checkInstance();
             checkToken();
             window.location.reload();
@@ -758,7 +755,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         bskyHandle = null;
         localStorage.removeItem('bsky-did');
         localStorage.removeItem('bsky-handle');
-        fetchBskyCheckbox.checked = false;
+        importSelect.value = '0';
         bskyLink = null;
         bskyThreadInput.value = null;
         bskyResetBtn.style.display = 'none';
@@ -774,8 +771,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     const submitBtn = document.getElementById('bsky-login-btn');
     const cancelBskyLoginBtn = document.getElementById('bsky-cancel-btn');
     cancelBskyLoginBtn.addEventListener('click', () => {
+        importSelect.value = '0';
         bskyAuthDialog.close();
-        fetchBskyCheckbox.checked = false;
     });
     submitBtn.addEventListener('click', async () => {
         const form = {};
@@ -825,15 +822,17 @@ document.addEventListener('DOMContentLoaded', async function () {
                     `Trop de tentatives de connexion.\nVeuillez réessayer dans ${timeString}.`
                 );
                 bskyAuthDialog.close();
-                fetchBskyCheckbox.checked = false;
+                importSelect.value = '0';
                 return;
             }
             window.alert(`Erreur d'authentification: ${errorData.message}`);
-            fetchBskyCheckbox.checked = false;
+            importSelect.value = '0';
             bskyAuthDialog.close();
             return;
         }
     });
+
+    importSelect.value = '0';
 
     const bskyThreadDialog = document.getElementById('bsky-thread-dialog');
     const bskyThreadInput = document.getElementById('bsky-thread-input');
@@ -861,26 +860,108 @@ document.addEventListener('DOMContentLoaded', async function () {
             bskyThreadDialog.close();
         } else if (event.key === 'Escape') {
             bskyLink = null;
-            fetchBskyCheckbox.checked = false;
+            importSelect.value = '0';
             bskyThreadInput.value = null;
             bskyThreadDialog.close();
         }
     });
     bskyThreadCancel.addEventListener('click', () => {
+        importSelect.value = '0';
         bskyLink = null;
-        fetchBskyCheckbox.checked = false;
         bskyThreadInput.value = null;
         bskyThreadDialog.close();
     });
 
-    fetchBskyCheckbox.addEventListener('change', async () => {
-        if (fetchBskyCheckbox.checked) {
+    const wpImportDialog = document.getElementById('wp-import-dialog');
+    const wpUrlInput = document.getElementById('wp-url-input');
+    wpUrlInput.value = null;
+    const wpImportOk = document.getElementById('wp-import-ok');
+    const wpImportCancel = document.getElementById('wp-import-cancel');
+    wpImportOk.addEventListener('click', async () => {
+        let url = wpUrlInput.value;
+        WPUrl = await resolveWPUrl(url);
+        if (WPUrl) {
+            getWPPost(WPUrl);
+            wpImportDialog.close();
+        } else {
+            window.alert('Lien WordPress invalide.');
+            wpUrlInput.value = null;
+            importSelect.value = '0';
+            wpImportDialog.close();
+        }
+    });
+    wpUrlInput.addEventListener('keydown', async (event) => {
+        if (event.key === 'Enter') {
+            let url = wpUrlInput.value;
+            WPUrl = await resolveWPUrl(url);
+            if (WPUrl) {
+                getWPPost(WPUrl);
+                wpImportDialog.close();
+            } else {
+                window.alert('Lien WordPress invalide.');
+                wpImportDialog.close();
+            }
+        } else if (event.key === 'Escape') {
+            importSelect.value = '0';
+            WPUrl = null;
+            wpUrlInput.value = null;
+            wpImportDialog.close();
+        }
+    });
+    wpImportCancel.addEventListener('click', () => {
+        importSelect.value = '0';
+        WPUrl = null;
+        wpUrlInput.value = null;
+        wpImportDialog.close();
+    });
+
+    async function resolveWPUrl(WPUrl) {
+        if (!WPUrl.startsWith('http')) {
+            return;
+        }
+        let form = new FormData();
+        form.append('url', WPUrl);
+        let response = await fetch('../proxy.php', {
+            method: 'POST',
+            body: form,
+        });
+        if (response.ok) {
+            const html = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const head = doc.head;
+            const apiLink = head.querySelector(
+                'link[rel="alternate"][type="application/json"]'
+            );
+            if (apiLink) {
+                return apiLink.href;
+            } else {
+                const url = new URL(WPUrl);
+                const domain = url.hostname;
+                const path = url.pathname.replace(/\/$/, '');
+                const pathSegments = path.split('/');
+                const slug = pathSegments.pop();
+                const apiLink = `https://public-api.wordpress.com/rest/v1.1/sites/${domain}/posts/slug:${slug}`;
+                const res = await fetch(apiLink);
+                if (res.ok) {
+                    return apiLink;
+                } else {
+                    return null;
+                }
+            }
+        }
+    }
+
+    importSelect.addEventListener('change', async () => {
+        if (importSelect.value === 'bsky') {
             if (!bskyDid) {
                 bskyAuthDialog.showModal();
             } else if (bskyDid && bskyHandle) {
                 bskyThreadInput.value = null;
                 bskyThreadDialog.showModal();
             }
+        } else if (importSelect.value === 'wp') {
+            wpImportDialog.showModal();
         } else {
             for (let p of postItems) {
                 p.remove();
@@ -910,8 +991,8 @@ document.addEventListener('DOMContentLoaded', async function () {
                 bskyAuthDialog.showModal();
                 return;
             } else {
+                importSelect.value = '0';
                 bskyLink = null;
-                fetchBskyCheckbox.checked = false;
                 bskyLoadingSpinner.close();
                 return;
             }
@@ -926,8 +1007,8 @@ document.addEventListener('DOMContentLoaded', async function () {
             } catch (error) {
                 bskyThreadInput.value = null;
                 window.alert('Lien Bluesky invalide.');
+                importSelect.value = '0';
                 bskyLink = null;
-                fetchBskyCheckbox.checked = false;
                 bskyLoadingSpinner.close();
                 return;
             }
@@ -948,8 +1029,8 @@ document.addEventListener('DOMContentLoaded', async function () {
                     bskyAuthDialog.showModal();
                     return;
                 } else {
+                    importSelect.value = '0';
                     bskyLink = null;
-                    fetchBskyCheckbox.checked = false;
                     bskyLoadingSpinner.close();
                     return;
                 }
@@ -1112,16 +1193,16 @@ document.addEventListener('DOMContentLoaded', async function () {
                 } else {
                     bskyThreadInput.value = null;
                     window.alert('Impossible de récupérer le fil Bluesky.');
+                    importSelect.value = '0';
                     bskyLink = null;
-                    fetchBskyCheckbox.checked = false;
                     fromBsky = false;
                     bskyLoadingSpinner.close();
                     return;
                 }
             } else {
                 window.alert('Impossible de récupérer le fil Bluesky.');
+                importSelect.value = '0';
                 bskyLink = null;
-                fetchBskyCheckbox.checked = false;
                 fromBsky = false;
                 bskyLoadingSpinner.close();
                 return;
@@ -1134,7 +1215,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 'Le fil est prêt, pensez à le relire avant de publier !'
             );
         } else {
-            fetchBskyCheckbox.checked = false;
+            importSelect.value = '0';
         }
     }
 

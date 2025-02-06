@@ -120,13 +120,30 @@ button:hover {
     background-color: #563acc;
 }
 
+#number-posts-div {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin: 10px 0;
+}
+
+select.import {
+    width: auto;
+    height: 28px;
+    color: light-dark(black, #9c9cc9);
+    border: solid 1px light-dark(#d9d9e8, #313144);
+    border-radius: 4px;
+    background-color: light-dark(#f9f9fb, #292938);
+    display: inline;
+}
+
 .content-container {
     width: 600px;
 }
 
 .post-item {
     width: 550px;
-    border: solid 1px light-dark(#d9d9e8, black);
+    border: solid 1px light-dark(#d9d9e8, #313144);
     border-radius: 4px;
     display: flex;
     position: relative;
@@ -194,7 +211,7 @@ select:hover {
 }
 
 textarea {
-    border: solid 1px light-dark(#d9d9e8, #292938);
+    border: solid 1px light-dark(#d9d9e8, #313144);
     background-color: light-dark(#f9f9fb, #292938);
     color: light-dark(black, #d9d9e8);
     border-radius: 4px;
@@ -203,7 +220,7 @@ textarea {
     padding: 10px;
     font-family: Arial, Helvetica, sans-serif;
     font-size: small;
-    resize: vertical;
+    resize: none;
 }
 
 .cw-text {
@@ -223,6 +240,7 @@ textarea {
 
 .textarea {
     margin: 10px auto 0 auto;
+    width: 500px;
 }
 
 #page-title {
@@ -249,7 +267,7 @@ div#dl-msg {
 
 .post-item {
     margin-bottom: 20px;
-    background-color: light-dark(white, black);
+    background-color: light-dark(white, #181821);
 }
 
 .add-post-btn,

@@ -79,7 +79,8 @@ div#instructions {
     flex-direction: column;
     align-self: center;
     text-align: center;
-    background-color: light-dark(white, black);
+    background-color: light-dark(white, #181821);
+    border: solid 1px light-dark(white, #313144);
     color: light-dark(black, #ddd9e8);
     border-radius: 10px;
     width: 90%;
@@ -137,9 +138,27 @@ button#instance-btn {
     width: 95%;
 }
 
+#number-posts-div {
+    flex-direction: column;
+    width: 100%;
+    align-items: center;
+}
+
+#import-div {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-around;
+    margin-bottom: 5px;
+}
+
+.bsky-reset {
+    height: 32px;
+}
+
 .post-item {
     width: 100%;
-    border: solid 1px light-dark(#d9d9e8, black);
+    border: solid 1px light-dark(#d9d9e8, #313144);
     border-radius: 4px;
     display: flex;
     position: relative;
@@ -182,6 +201,17 @@ button#instance-btn {
     font-size: 100%;
 }
 
+select.import {
+    /* width: 95%; */
+    font-size: 100%;
+    height: 32px;
+    color: light-dark(black, #9c9cc9);
+    border: solid 1px light-dark(#d9d9e8, #313144);
+    border-radius: 4px;
+    background-color: light-dark(#f9f9fb, #292938);
+    /* display: inline; */
+}
+
 .viz-select,
 .lang-select {
     height: 32px;
@@ -208,7 +238,7 @@ select:hover {
 }
 
 textarea {
-    border: solid 1px light-dark(#d9d9e8, #292938);
+    border: solid 1px light-dark(#d9d9e8, #313144);
     background-color: light-dark(#f9f9fb, #292938);
     color: light-dark(black, #d9d9e8);
     border-radius: 4px;
@@ -218,7 +248,7 @@ textarea {
     padding: 10px;
     font-family: Arial, Helvetica, sans-serif;
     font-size: 100%;
-    resize: vertical;
+    resize: none;
 }
 
 .cw-text {
@@ -259,7 +289,7 @@ div#dl-msg {
 
 .post-item {
     margin-bottom: 20px;
-    background-color: light-dark(white, black);
+    background-color: light-dark(white, #181821);
 }
 
 .add-post-btn,
@@ -549,7 +579,7 @@ button:disabled {
     width: 100%;
     border-radius: 4px;
     box-shadow: 0 0 5px gray;
-    background-color: light-dark(white, black);
+    background-color: light-dark(white, #181821);
     border: none;
     cursor: auto !important;
 }
@@ -823,7 +853,7 @@ img.avatar {
     border: none;
     border-radius: 5px;
     text-align: center;
-    background-color: light-dark(white, black);
+    background-color: light-dark(white, #181821);
     color: light-dark(#563acc, #6364ff);
     font-weight: bold;
     box-shadow: 0 0 5px gray;
