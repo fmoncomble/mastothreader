@@ -1116,6 +1116,44 @@ document.addEventListener('DOMContentLoaded', async function () {
                                     }
                                 }
                             }
+                            const facets = p.record.facets;
+                            if (facets && facets.length > 0) {
+                                const links = facets.filter(
+                                    (f) =>
+                                        f.features[0].$type ===
+                                        'app.bsky.richtext.facet#link'
+                                );
+                                for (let l of links) {
+                                    const uri = l.features[0].uri;
+                                    const startIndex = l.index.byteStart;
+                                    const endIndex = l.index.byteEnd;
+                                    const encoder = new TextEncoder();
+                                    const textBytes = encoder.encode(text);
+                                    const link = textBytes.slice(
+                                        startIndex,
+                                        endIndex
+                                    );
+                                    const uriBytes = encoder.encode(uri);
+                                    const newTextBytes = new Uint8Array(
+                                        textBytes.length -
+                                            link.length +
+                                            uriBytes.length
+                                    );
+                                    newTextBytes.set(
+                                        textBytes.slice(0, startIndex)
+                                    );
+                                    newTextBytes.set(uriBytes, startIndex);
+                                    newTextBytes.set(
+                                        textBytes.slice(endIndex),
+                                        startIndex + uriBytes.length
+                                    );
+                                    const newText = new TextDecoder().decode(
+                                        newTextBytes
+                                    );
+                                    console.log(newText);
+                                    text = newText;
+                                }
+                            }
                             let imgs = [];
                             if (p.embed) {
                                 let images = [];
@@ -1172,7 +1210,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                                             img.url = cardUrl;
                                             img.alt = card.description;
                                             imgs.push(img);
-                                        } else {
+                                        } else if (!text.includes(cardUrl)) {
                                             text += `\n\n${cardUrl}`;
                                         }
                                     }

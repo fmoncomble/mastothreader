@@ -1007,7 +1007,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 return;
             } else {
                 bskyLink = null;
-                fetchBskyCheckbox.checked = false;
+                importSelect.value = '0';
                 bskyLoadingSpinner.close();
                 return;
             }
@@ -1023,7 +1023,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 bskyThreadInput.value = null;
                 window.alert('Lien Bluesky invalide.');
                 bskyLink = null;
-                fetchBskyCheckbox.checked = false;
+                importSelect.value = '0';
                 bskyLoadingSpinner.close();
                 return;
             }
@@ -1045,7 +1045,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     return;
                 } else {
                     bskyLink = null;
-                    fetchBskyCheckbox.checked = false;
+                    importSelect.value = '0';
                     bskyLoadingSpinner.close();
                     return;
                 }
@@ -1131,6 +1131,44 @@ document.addEventListener('DOMContentLoaded', async function () {
                                     }
                                 }
                             }
+                            const facets = p.record.facets;
+                            if (facets && facets.length > 0) {
+                                const links = facets.filter(
+                                    (f) =>
+                                        f.features[0].$type ===
+                                        'app.bsky.richtext.facet#link'
+                                );
+                                for (let l of links) {
+                                    const uri = l.features[0].uri;
+                                    const startIndex = l.index.byteStart;
+                                    const endIndex = l.index.byteEnd;
+                                    const encoder = new TextEncoder();
+                                    const textBytes = encoder.encode(text);
+                                    const link = textBytes.slice(
+                                        startIndex,
+                                        endIndex
+                                    );
+                                    const uriBytes = encoder.encode(uri);
+                                    const newTextBytes = new Uint8Array(
+                                        textBytes.length -
+                                            link.length +
+                                            uriBytes.length
+                                    );
+                                    newTextBytes.set(
+                                        textBytes.slice(0, startIndex)
+                                    );
+                                    newTextBytes.set(uriBytes, startIndex);
+                                    newTextBytes.set(
+                                        textBytes.slice(endIndex),
+                                        startIndex + uriBytes.length
+                                    );
+                                    const newText = new TextDecoder().decode(
+                                        newTextBytes
+                                    );
+                                    console.log(newText);
+                                    text = newText;
+                                }
+                            }
                             let imgs = [];
                             if (p.embed) {
                                 let images = [];
@@ -1187,7 +1225,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                                             img.url = cardUrl;
                                             img.alt = card.description;
                                             imgs.push(img);
-                                        } else {
+                                        } else if (!text.includes(cardUrl)) {
                                             text += `\n\n${cardUrl}`;
                                         }
                                     }
@@ -1209,7 +1247,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     bskyThreadInput.value = null;
                     window.alert('Impossible de récupérer le fil Bluesky.');
                     bskyLink = null;
-                    fetchBskyCheckbox.checked = false;
+                    importSelect.value = '0';
                     fromBsky = false;
                     bskyLoadingSpinner.close();
                     return;
@@ -1217,7 +1255,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             } else {
                 window.alert('Impossible de récupérer le fil Bluesky.');
                 bskyLink = null;
-                fetchBskyCheckbox.checked = false;
+                importSelect.value = '0';
                 fromBsky = false;
                 bskyLoadingSpinner.close();
                 return;
@@ -1230,7 +1268,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 'Le fil est prêt, pensez à le relire avant de publier !'
             );
         } else {
-            fetchBskyCheckbox.checked = false;
+            importSelect.value = '0';
         }
     }
 
@@ -1526,6 +1564,36 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (originalUser && postItems.indexOf(newPost) === 0) {
             updateCharCount(newPost, textarea.value);
         }
+
+        const emojiBtn = newPost.querySelector('.emoji-btn');
+        emojiBtn.addEventListener('click', async () => {
+            const options = {
+                onEmojiSelect: function (emoji) {
+                    let curPos = textarea.selectionStart;
+                    let text = textarea.value;
+                    textarea.value =
+                        text.slice(0, curPos) +
+                        emoji.native +
+                        text.slice(curPos);
+                    textarea.focus();
+                    updateCharCount(newPost, textarea.value);
+                    picker.remove();
+                },
+            };
+            const picker = new EmojiMart.Picker(options);
+            picker.classList.add('emoji-picker');
+            window.onkeydown = (e) => {
+                if (e.key === 'Escape') {
+                    picker.remove();
+                }
+            };
+            window.onclick = (e) => {
+                if (e.target != picker && e.target != emojiBtn.querySelector('svg')) {
+                    picker.remove();
+                }
+            };
+            newPost.appendChild(picker);
+        });
 
         async function getMention(getInput) {
             let mention = '';

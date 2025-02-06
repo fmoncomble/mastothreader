@@ -241,6 +241,34 @@ textarea {
 .textarea {
     margin: 10px auto 0 auto;
     width: 500px;
+    position: relative;
+}
+
+.emoji-btn {
+    height: 20px;
+    width: 20px;
+    position: absolute;
+    right: 5px;
+    bottom: 5px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+}
+
+.emoji-btn svg path,
+.add-img svg path {
+    fill: #6364ff;
+}
+
+.emoji-picker {
+    position: absolute;
+    bottom: 0px;
+    right: 5px;
+    width: 300px;
 }
 
 #page-title {
@@ -309,10 +337,11 @@ div#dl-msg {
     bottom: 5px;
     width: 20px;
     height: 20px;
-    border: dashed 2px #6364ff;
+    /* border: dashed 2px #6364ff; */
     border-radius: 4px;
     color: #6364ff;
     cursor: pointer;
+    padding: 2px;
 }
 
 .add-gif {
@@ -323,23 +352,30 @@ div#dl-msg {
     bottom: 5px;
     width: 20px;
     height: 20px;
-    border: dashed 2px #6364ff;
+    /* border: solid 2px #6364ff; */
     border-radius: 4px;
     color: #6364ff;
     cursor: pointer;
+    padding: 2px;
 }
 
 .add-gif span {
     font-weight: bold;
     width: 100%;
-    font-size: x-small;
+    font-size: xx-small;
     text-align: center;
 }
 
-.add-img:hover,
+/* .add-img:hover,
 .add-gif:hover {
     border-color: light-dark(#563acc, #6364ff);
     color: light-dark(#563acc, #6364ff);
+} */
+
+.add-img:hover,
+.add-gif:hover,
+.emoji-btn:hover {
+    background-color: light-dark(#dadade, rgba(96,96,133,.15));
 }
 
 .add-img span {

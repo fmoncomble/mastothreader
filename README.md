@@ -24,7 +24,7 @@ Le site ne collecte aucune de vos données. Les identifiants sont stockés local
 - [x] Ajout de GIFs.
 - [x] Version mobile.
 - [x] Détection du mode d'affichage clair / sombre
-- [ ] Banque d'émojis.
+- [x] Banque d'émojis.
 - [ ] Localisation.
 
 ### Projet sous licence CC BY-NC-SA 4.0
