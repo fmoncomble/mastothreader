@@ -16,7 +16,7 @@ Le site ne collecte aucune de vos données. Les identifiants sont stockés local
 - [x] Segmentation automatique des pouets.
 - [x] Importation de fils Bluesky :
     - par copié-collé du lien Bluesky ;
-    - depuis le menu contextuel du post Bluesky avec l'extension MastoThreader Plugin.
+    - depuis le menu contextuel du post Bluesky avec [l'extension MastoThreader Plugin](https://github.com/fmoncomble/mastothreader?tab=readme-ov-file#extension-pour-navigateur).
 - [x] Importation de billets de blog Wordpress :
     - par copié-collé du lien du billet ;
     - depuis l'extension [WP to Social](https://github.com/fmoncomble/wp-to-social).
