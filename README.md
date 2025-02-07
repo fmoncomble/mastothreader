@@ -29,7 +29,7 @@ Le site ne collecte aucune de vos données. Les identifiants sont stockés local
 
 ### Extension pour navigateur
 - Ajoute un bouton "fil" à l'interface web de Mastodon, qui renvoie vers l'interface. Le texte déjà saisi est conservé, ainsi le cas échéant que le lien vers le pouet auquel le fil répond.  
-  ![Screenshot 2024-08-20 at 19 50 48](https://github.com/user-attachments/assets/025d8c20-3bd3-4a54-9094-663c45134e2b)![Screenshot 2024-08-20 at 19 51 01](https://github.com/user-attachments/assets/32f9ebb1-e01d-40bc-99ce-6543073447fe)
+  ![Screenshot 2024-08-20 at 19 51 01](https://github.com/user-attachments/assets/32f9ebb1-e01d-40bc-99ce-6543073447fe)
 - Installer [pour Firefox](https://github.com/fmoncomble/mastothreader/releases/latest/download/mastothreader.xpi) / [pour Chrome/Edge/Opera...](https://chromewebstore.google.com/detail/mastothreader-plugin/majdplkphamfebljfgebiniknbodhdgi)
 
 ### Projet sous licence CC BY-NC-SA 4.0
