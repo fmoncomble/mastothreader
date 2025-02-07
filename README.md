@@ -10,7 +10,7 @@ Le site ne collecte aucune de vos données. Les identifiants sont stockés local
 ### Fonctionnalités
 - [x] Choix de la langue. Par défaut, la langue de l'instance.
     - [x] Détection automatique de la langue du texte.
-- [x] Visibilité : par défaut, le premier pouet est public, les suivants sont non listés. Si le premier pouet est réglé sur "privé", les suivants le seront aussi.
+- [x] Visibilité : par défaut, le premier pouet est `Public`, les suivants sont `Discrets`. Si le premier pouet est réglé sur `Abonnés` ou `Personnes mentionnées`, les suivants le seront aussi.
 - [x] Ajout d'un avertissement (content warning).
 - [x] Ajout d'un texte alternatif pour les images.
 - [x] Segmentation automatique des pouets.
