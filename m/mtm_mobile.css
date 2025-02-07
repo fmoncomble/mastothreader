@@ -13,7 +13,7 @@ body {
     margin: 0;
 }
 
-svg {
+#page-title svg {
     width: 300px;
 }
 
@@ -268,6 +268,33 @@ textarea {
 
 .textarea {
     margin: 10px auto 0 auto;
+    position: relative;
+}
+
+.emoji-btn {
+    height: 20px;
+    width: 20px;
+    position: absolute;
+    right: 19px;
+    bottom: 5px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+}
+
+.emoji-btn svg path,
+.add-img svg path {
+    fill: #6364ff;
+}
+
+.emoji-picker {
+    position: absolute;
+    top: 0px;
+    right: 5px;
 }
 
 #page-title {
@@ -309,7 +336,7 @@ div#dl-msg {
 
 .dropzone {
     position: relative;
-    height: 100px;
+    height: 120px;
     border: 2px dashed light-dark(#d9d9e8, #9c9cc9);
     border-radius: 4px;
     background-color: light-dark(#f9f9fb, #292938);
@@ -317,7 +344,7 @@ div#dl-msg {
     color: gray;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: start;
     text-align: center;
     margin: 10px 14px 0 14px;
     flex-direction: column;
@@ -326,42 +353,38 @@ div#dl-msg {
 .img-footer {
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
+    justify-content: end;
     align-items: center;
     margin: 5px 14px;
 }
 
-.add-media {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-}
-
 .add-img {
+    position: absolute;
+    right: 5px;
+    bottom: 5px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
-    border: dashed 2px #6364ff;
+    width: 20px;
+    height: 20px;
     border-radius: 4px;
-    color: #6364ff;
     cursor: pointer;
     margin: 0 2px;
 }
 
 .add-gif {
+    position: absolute;
+    right: 35px;
+    bottom: 5px;
     display: flex;
     align-items: center;
-    width: 40px;
-    height: 40px;
-    border: dashed 2px #6364ff;
+    width: 20px;
+    height: 20px;
     border-radius: 4px;
     color: #6364ff;
     cursor: pointer;
-    margin: 0 2px;
+    font-size: small;
 }
 
 .add-gif div {
@@ -374,12 +397,6 @@ div#dl-msg {
 .add-gif:hover {
     border-color: #563acc;
     color: #563acc;
-}
-
-.add-img div {
-    align-self: baseline;
-    font-weight: bold;
-    width: 100%;
 }
 
 #gif-dialog {
@@ -478,6 +495,7 @@ button:disabled {
     align-items: center;
     justify-content: center;
     width: 100%;
+    margin-top: 5px;
 }
 
 .img-preview div {

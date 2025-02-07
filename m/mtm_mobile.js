@@ -233,11 +233,15 @@ document.addEventListener('DOMContentLoaded', async function () {
     let token;
     checkToken();
 
+    let originalId;
+    let originalUser;
     let mastoText = null;
     let inReplyUrl = null;
     let userId = null;
+    let fromBsky = false;
     let bskyUrl = null;
     let convertHandles = false;
+    let fromWP = false;
     let WPUrl = null;
 
     // Handle data processing on page load
@@ -611,10 +615,46 @@ document.addEventListener('DOMContentLoaded', async function () {
         mediaConfig = data.configuration.media_attachments;
     }
     let altLimit = mediaConfig.description_limit || 1500;
+    let customEmoji = await getCustomEmoji(instance);
+    async function getCustomEmoji(instance) {
+        const response = await fetch(
+            `https://${instance}/api/v1/custom_emojis`
+        );
+        if (!response.ok) {
+            console.error('Could not fetch custom emojis');
+            return;
+        }
+        const data = await response.json();
+        const emojiArray = [];
+        for (let d of data) {
+            let dCat;
+            if (d.category) {
+                dCat = `${instance} ${d.category.toLowerCase()}`;
+            } else {
+                dCat = 'Custom';
+            }
+            if (!emojiArray.find((c) => c.id === dCat.toLowerCase())) {
+                let category = {};
+                category.id = dCat.toLowerCase();
+                category.name = d.category ? d.category : 'Custom';
+                category.emojis = [];
+                emojiArray.push(category);
+            }
+            let emoji = {};
+            emoji.id = d.shortcode;
+            emoji.name = d.shortcode;
+            emoji.keywords = [dCat.toLowerCase()];
+            emoji.skins = [{ src: d.static_url }];
+            emoji.native = `:${d.shortcode}:`;
+            emojiArray
+                .find((c) => c.id === dCat.toLowerCase())
+                .emojis.push(emoji);
+        }
+        emojiArray.sort((a, b) => a.id.localeCompare(b.id));
+        return emojiArray;
+    }
 
     // Handle post creation in reply to another post
-    let originalId;
-    let originalUser;
     inReplyToInput.addEventListener('input', async () => {
         try {
             const inReplyToUrl = inReplyToInput.value.trim();
@@ -762,7 +802,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     });
 
     let bskyPosts = [];
-    let fromBsky = false;
     let bskyLink = null;
 
     const bskyAuthDialog = document.getElementById('bsky-auth-dialog');
@@ -1150,7 +1189,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                                     const newText = new TextDecoder().decode(
                                         newTextBytes
                                     );
-                                    console.log(newText);
                                     text = newText;
                                 }
                             }
@@ -1258,7 +1296,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     // Handle import of WordPress blogpost
-    let fromWP = false;
     let wpChunks = [];
     async function getWPPost(WPUrl) {
         bskyLoadingSpinner.showModal();
@@ -1549,6 +1586,51 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (originalUser && postItems.indexOf(newPost) === 0) {
             updateCharCount(newPost, textarea.value);
         }
+
+        const emojiBtn = newPost.querySelector('.emoji-btn');
+        emojiBtn.addEventListener('click', async () => {
+            const customCategories = customEmoji.map((c) => c.id);
+            const categories = [
+                'frequent',
+                ...customCategories,
+                'people',
+                'nature',
+                'foods',
+                'activity',
+                'places',
+                'objects',
+                'symbols',
+                'flags',
+            ];
+            let options = {
+                custom: customEmoji,
+                categories: categories,
+                onEmojiSelect: function (emoji) {
+                    let e = emoji.native ? emoji.native : emoji.shortcodes;
+                    let curPos = textarea.selectionStart;
+                    let text = textarea.value;
+                    textarea.value =
+                        text.slice(0, curPos) + e + text.slice(curPos);
+                    textarea.focus();
+                    updateCharCount(newPost, textarea.value);
+                    picker.remove();
+                },
+                onClickOutside: function (e) {
+                    if (!emojiBtn.contains(e.target)) {
+                        picker.remove();
+                    }
+                },
+                previewPosition: 'none',
+            };
+            const picker = new EmojiMart.Picker(options);
+            picker.classList.add('emoji-picker');
+            window.onkeydown = (e) => {
+                if (e.key === 'Escape') {
+                    picker.remove();
+                }
+            };
+            newPost.appendChild(picker);
+        });
 
         async function getMention(getInput) {
             let mention = '';

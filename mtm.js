@@ -629,6 +629,44 @@ document.addEventListener('DOMContentLoaded', async function () {
         lang = data.languages[0];
         mediaConfig = data.configuration.media_attachments;
     }
+    let customEmoji = await getCustomEmoji(instance);
+    async function getCustomEmoji(instance) {
+        const response = await fetch(
+            `https://${instance}/api/v1/custom_emojis`
+        );
+        if (!response.ok) {
+            console.error('Could not fetch custom emojis');
+            return;
+        }
+        const data = await response.json();
+        const emojiArray = [];
+        for (let d of data) {
+            let dCat;
+            if (d.category) {
+                dCat = `${instance} ${d.category.toLowerCase()}`;
+            } else {
+                dCat = 'Custom';
+            }
+            if (!emojiArray.find((c) => c.id === dCat.toLowerCase())) {
+                let category = {};
+                category.id = dCat.toLowerCase();
+                category.name = d.category ? d.category : 'Custom';
+                category.emojis = [];
+                emojiArray.push(category);
+            }
+            let emoji = {};
+            emoji.id = d.shortcode;
+            emoji.name = d.shortcode;
+            emoji.keywords = [dCat.toLowerCase()];
+            emoji.skins = [{ src: d.url }];
+            emoji.native = `:${d.shortcode}:`;
+            emojiArray
+                .find((c) => c.id === dCat.toLowerCase())
+                .emojis.push(emoji);
+        }
+        emojiArray.sort((a, b) => a.id.localeCompare(b.id));
+        return emojiArray;
+    }
 
     // Handle post creation in reply to another post
     let originalId;
@@ -1165,7 +1203,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                                     const newText = new TextDecoder().decode(
                                         newTextBytes
                                     );
-                                    console.log(newText);
                                     text = newText;
                                 }
                             }
@@ -1567,28 +1604,43 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         const emojiBtn = newPost.querySelector('.emoji-btn');
         emojiBtn.addEventListener('click', async () => {
-            const options = {
+            const customCategories = customEmoji.map((c) => c.id);
+            const categories = [
+                'frequent',
+                ...customCategories,
+                'people',
+                'nature',
+                'foods',
+                'activity',
+                'places',
+                'objects',
+                'symbols',
+                'flags',
+            ];
+            let options = {
+                custom: customEmoji,
+                categories: categories,
                 onEmojiSelect: function (emoji) {
+                    let e = emoji.native ? emoji.native : emoji.shortcodes;
                     let curPos = textarea.selectionStart;
                     let text = textarea.value;
                     textarea.value =
-                        text.slice(0, curPos) +
-                        emoji.native +
-                        text.slice(curPos);
+                        text.slice(0, curPos) + e + text.slice(curPos);
                     textarea.focus();
                     updateCharCount(newPost, textarea.value);
                     picker.remove();
                 },
+                onClickOutside: function (e) {
+                    if (!emojiBtn.contains(e.target)) {
+                        picker.remove();
+                    }
+                },
+                previewPosition: 'none',
             };
             const picker = new EmojiMart.Picker(options);
             picker.classList.add('emoji-picker');
             window.onkeydown = (e) => {
                 if (e.key === 'Escape') {
-                    picker.remove();
-                }
-            };
-            window.onclick = (e) => {
-                if (e.target != picker && e.target != emojiBtn.querySelector('svg')) {
                     picker.remove();
                 }
             };
