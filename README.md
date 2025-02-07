@@ -30,6 +30,9 @@ Le site ne collecte aucune de vos données. Les identifiants sont stockés local
 ### Extension pour navigateur
 - Ajoute un bouton "fil" à l'interface web de Mastodon, qui renvoie vers l'interface. Le texte déjà saisi est conservé, ainsi le cas échéant que le lien vers le pouet auquel le fil répond.  
   ![Screenshot 2024-08-20 at 19 51 01](https://github.com/user-attachments/assets/32f9ebb1-e01d-40bc-99ce-6543073447fe)
+- Ajoute un item au menu contextuel des posts Bluesky pour envoyer le contenu vers MastoThreader.
+  ![Screenshot 2025-02-07 at 10 14 58](https://github.com/user-attachments/assets/7b8dfe3d-c8ce-4ca9-95e0-c221e812e16f)
+
 - Installer [pour Firefox](https://github.com/fmoncomble/mastothreader/releases/latest/download/mastothreader.xpi) / [pour Chrome/Edge/Opera...](https://chromewebstore.google.com/detail/mastothreader-plugin/majdplkphamfebljfgebiniknbodhdgi)
 
 ### Projet sous licence CC BY-NC-SA 4.0
