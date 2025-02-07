@@ -1,11 +1,12 @@
-![mastothreader](https://github.com/user-attachments/assets/3a98632a-ac59-4751-bc29-74b917f4d2d2)  
+[![mastothreaderlogo](https://github.com/user-attachments/assets/62ced5f6-402b-4cc4-b998-7e6897fe9244)](https://mastothreader.prendrelangue.fr/)
 
-## Une interface web pour créer des fils sur Mastodon.
+## Une [interface web](https://mastothreader.prendrelangue.fr/) pour créer des fils sur Mastodon.
 
 ### Mode d'emploi
 Entrez votre instance Mastodon, authentifiez-vous, autorisez l'appli et c'est parti !
 Le site ne collecte aucune de vos données. Les identifiants sont stockés localement dans votre navigateur.  
-<img width="657" alt="Screenshot 2024-08-19 at 20 41 29" src="https://github.com/user-attachments/assets/40da17c4-8eaa-457c-add5-6da94b547e0b">
+  
+![Screenshot 2025-02-07 at 09 52 50](https://github.com/user-attachments/assets/155e37c6-81ce-45ff-8f11-921ffd39521f)
 
 ### Fonctionnalités
 - [x] Choix de la langue. Par défaut, la langue de l'instance.
@@ -29,7 +30,6 @@ Le site ne collecte aucune de vos données. Les identifiants sont stockés local
 ### Extension pour navigateur
 - Ajoute un bouton "fil" à l'interface web de Mastodon, qui renvoie vers l'interface. Le texte déjà saisi est conservé, ainsi le cas échéant que le lien vers le pouet auquel le fil répond.  
   ![Screenshot 2024-08-20 at 19 50 48](https://github.com/user-attachments/assets/025d8c20-3bd3-4a54-9094-663c45134e2b)![Screenshot 2024-08-20 at 19 51 01](https://github.com/user-attachments/assets/32f9ebb1-e01d-40bc-99ce-6543073447fe)
-- [Installer pour Firefox](https://github.com/fmoncomble/mastothreader/releases/latest/download/mastothreader.xpi)
-- [Installer pour Chrome/Edge/Opera...](https://chromewebstore.google.com/detail/mastothreader-plugin/majdplkphamfebljfgebiniknbodhdgi)
+- Installer [pour Firefox](https://github.com/fmoncomble/mastothreader/releases/latest/download/mastothreader.xpi) / [pour Chrome/Edge/Opera...](https://chromewebstore.google.com/detail/mastothreader-plugin/majdplkphamfebljfgebiniknbodhdgi)
 
 ### Projet sous licence CC BY-NC-SA 4.0
