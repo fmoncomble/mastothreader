@@ -272,6 +272,7 @@ textarea {
 
 #page-title {
     flex-direction: column;
+    margin: auto;
 }
 
 #plugin-dl {
@@ -868,7 +869,7 @@ div#reply-preview-close {
 }
 
 div#reply-preview-close:hover {
-    background-color: #eee;
+    background-color: light-dark(#dadade, rgba(96,96,133,.15));
     border: none;
     border-radius: 4px;
 }
@@ -976,9 +977,10 @@ dialog:focus-visible,
 
 .following-item:not(.selected):hover,
 .instance-item:not(.selected):hover {
-    background-color: #eeebfa;
+    background-color: light-dark(#dadade, rgba(96,96,133,.15));
 }
 
 .post-text {
     position: relative;
+    padding-bottom: 30px;
 }

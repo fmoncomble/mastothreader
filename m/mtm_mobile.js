@@ -215,10 +215,11 @@ document.addEventListener('DOMContentLoaded', async function () {
     let maxChars;
     let maxMedia;
     let lang;
+    let customEmoji;
     let userAvatarSrc;
     let userFollowing = [];
     let postItems = [];
-    let mediaFiles = [];
+    let mediaFiles = {};
     let oldPosts = [];
     let i = 0;
 
@@ -297,6 +298,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     userId = sessionStorage.getItem('user_id') || null;
                     sessionStorage.clear();
                     checkToken();
+                    customEmoji = await getCustomEmoji(instance);
                     if (bskyLink) {
                         if (
                             window.confirm(
@@ -334,6 +336,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             instanceInput.focus();
         } else if (token) {
             await checkApp();
+            customEmoji = await getCustomEmoji(instance);
             if (bskyUrl) {
                 if (window.confirm(`Voulez-vous importer le fil Bluesky ?`)) {
                     if (
@@ -453,6 +456,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             instanceInput.disabled = true;
             instanceBtn.textContent = 'Réinitialiser';
             instructionsDiv.style.display = 'none';
+            instructionsBtn.textContent = 'Afficher les instructions';
             if (postItems.length === 0) {
                 await getMax();
                 await buildLangList();
@@ -615,7 +619,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         mediaConfig = data.configuration.media_attachments;
     }
     let altLimit = mediaConfig.description_limit || 1500;
-    let customEmoji = await getCustomEmoji(instance);
     async function getCustomEmoji(instance) {
         const response = await fetch(
             `https://${instance}/api/v1/custom_emojis`
@@ -2535,6 +2538,15 @@ document.addEventListener('DOMContentLoaded', async function () {
             altBtn.textContent = 'ALT';
             altBtn.classList.add('alt-btn');
 
+            if (mediaFile.description) {
+                altTextArea.value = mediaFile.description;
+                altBtn.style.color = '#009900';
+                if (previewElt) {
+                    previewElt.alt = mediaFile.description;
+                    previewElt.title = mediaFile.description;
+                }
+            }
+
             altBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 altDialog.showModal();
@@ -2542,13 +2554,6 @@ document.addEventListener('DOMContentLoaded', async function () {
             });
 
             div.appendChild(altBtn);
-
-            await new Promise((resolve) =>
-                setTimeout(function () {
-                    handleAltText(mediaFile, previewElt, altBtn);
-                    resolve();
-                }, 50)
-            );
         }
 
         // Handle post deletion
@@ -2654,8 +2659,9 @@ document.addEventListener('DOMContentLoaded', async function () {
         } else {
             altTextArea.value = null;
             altBtn.removeAttribute('style');
-            altDialog.showModal();
         }
+        const altImgPreview = altDialog.querySelector('img.alt-img');
+        altImgPreview.src = previewElt.src;
         altCounter.textContent = `${altTextArea.value.length}/${altLimit}`;
         altSaveBtn.onclick = () => {
             const altText = altTextArea.value;
@@ -2769,6 +2775,27 @@ document.addEventListener('DOMContentLoaded', async function () {
     // Functions to upload thread to Mastodon
     let threadUrl;
     postThreadBtn.addEventListener('click', async () => {
+        for (let key in mediaFiles) {
+            console.log(key);
+            if (mediaFiles[key].length > 0) {
+                for (let media of mediaFiles[key]) {
+                    if (!media.description) {
+                        if (
+                            !window.confirm(
+                                "Certains médias n'ont pas de description. Poster quand même ?"
+                            )
+                        ) {
+                            const number = key.split('mediaFiles')[1];
+                            const post = document.getElementById(
+                                `post-${number}`
+                            );
+                            post.scrollIntoView();
+                            return;
+                        }
+                    }
+                }
+            }
+        }
         postThreadBtn.style.display = 'none';
         contentContainer.style.display = 'none';
         counter.style.display = 'block';

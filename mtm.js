@@ -234,10 +234,11 @@ document.addEventListener('DOMContentLoaded', async function () {
     let maxChars;
     let maxMedia;
     let lang;
+    let customEmoji;
     let userAvatarSrc;
     let userFollowing = [];
     let postItems = [];
-    let mediaFiles = [];
+    let mediaFiles = {};
     let oldPosts = [];
     let i = 0;
 
@@ -252,12 +253,28 @@ document.addEventListener('DOMContentLoaded', async function () {
     let token;
     checkToken();
 
+    // Initialize import variables
     let mastoText = null;
     let inReplyUrl = null;
     let userId = null;
+    let bskyDid = localStorage.getItem('bsky-did')
+        ? localStorage.getItem('bsky-did')
+        : null;
+    let bskyHandle = localStorage.getItem('bsky-handle')
+        ? localStorage.getItem('bsky-handle')
+        : null;
+
+    if (bskyDid && bskyHandle) {
+        bskyResetBtn.style.display = 'inline-block';
+    } else {
+        bskyResetBtn.style.display = 'none';
+    }
     let bskyUrl = null;
     let convertHandles = false;
     let WPUrl = null;
+    let fromBsky = false;
+    let bskyLink = null;
+    let fromWP = false;
 
     // Handle data processing on page load
     window.onload = async function () {
@@ -312,6 +329,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     userId = sessionStorage.getItem('user_id') || null;
                     sessionStorage.clear();
                     checkToken();
+                    customEmoji = await getCustomEmoji(instance);
                     if (bskyLink) {
                         if (
                             window.confirm(
@@ -349,6 +367,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             instanceInput.focus();
         } else if (token) {
             await checkApp();
+            customEmoji = await getCustomEmoji(instance);
             if (bskyUrl) {
                 if (window.confirm(`Voulez-vous importer le fil Bluesky ?`)) {
                     if (
@@ -468,6 +487,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             instanceInput.disabled = true;
             instanceBtn.textContent = 'Réinitialiser';
             instructionsDiv.style.display = 'none';
+            instructionsBtn.textContent = 'Afficher les instructions';
             if (postItems.length === 0) {
                 await getMax();
                 await buildLangList();
@@ -539,6 +559,9 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (!instance) {
                 window.alert('Veuillez indiquer votre instance Mastodon');
                 return;
+            }
+            if (instance.includes('@')) {
+                instance = instance.split('@')[1];
             }
             localStorage.setItem('mastothreadinstance', instance);
             checkCredentials();
@@ -629,7 +652,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         lang = data.languages[0];
         mediaConfig = data.configuration.media_attachments;
     }
-    let customEmoji = await getCustomEmoji(instance);
     async function getCustomEmoji(instance) {
         const response = await fetch(
             `https://${instance}/api/v1/custom_emojis`
@@ -792,20 +814,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     let splitNb = 0;
     let isSplitting = false;
 
-    // Handle import of Bluesky thread
-    let bskyDid = localStorage.getItem('bsky-did')
-        ? localStorage.getItem('bsky-did')
-        : null;
-    let bskyHandle = localStorage.getItem('bsky-handle')
-        ? localStorage.getItem('bsky-handle')
-        : null;
-
-    if (bskyDid && bskyHandle) {
-        bskyResetBtn.style.display = 'inline-block';
-    } else {
-        bskyResetBtn.style.display = 'none';
-    }
-
     bskyResetBtn.addEventListener('click', () => {
         bskyDid = null;
         bskyHandle = null;
@@ -817,8 +825,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     });
 
     let bskyPosts = [];
-    let fromBsky = false;
-    let bskyLink = null;
 
     const bskyAuthDialog = document.getElementById('bsky-auth-dialog');
     const idInput = document.getElementById('id-input');
@@ -1310,7 +1316,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     // Handle import of WordPress blogpost
-    let fromWP = false;
     let wpChunks = [];
     async function getWPPost(WPUrl) {
         bskyLoadingSpinner.showModal();
@@ -2565,11 +2570,6 @@ document.addEventListener('DOMContentLoaded', async function () {
             });
             altTextArea.addEventListener('input', () => {
                 altCounter.textContent = `${altTextArea.value.length}/${altLimit}`;
-                if (altTextArea.value.length > 0) {
-                    altCancelBtn.textContent = 'Effacer';
-                } else if (altTextArea.value.length === 0) {
-                    altCancelBtn.textContent = 'Annuler';
-                }
                 if (altTextArea.value.length > altLimit) {
                     altCounter.style.color = '#cc0000';
                     altCounter.style.fontWeight = 'bold';
@@ -2611,11 +2611,12 @@ document.addEventListener('DOMContentLoaded', async function () {
                 if (newAltDiv.style.display === 'flex') {
                     newAltDiv.style.display = 'none';
                 } else {
-                    const altText = altTextArea.value;
-                    if (altText) {
-                        altCancelBtn.textContent = 'Effacer';
+                    if (mediaFile.description) {
+                        altTextArea.value = mediaFile.description;
+                        altBtn.style.color = '#009900';
                     } else {
-                        altCancelBtn.textContent = 'Annuler';
+                        altTextArea.value = null;
+                        altBtn.removeAttribute('style');
                     }
                     newAltDiv.style.display = 'flex';
                     newAltDiv.scrollIntoView();
@@ -2644,40 +2645,11 @@ document.addEventListener('DOMContentLoaded', async function () {
             });
             altCancelBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                const altText = altTextArea.value;
-                if (altText.length > 0) {
-                    altTextArea.value = null;
-                    if (previewElt) {
-                        previewElt.removeAttribute('alt');
-                        previewElt.removeAttribute('title');
-                    }
-                    altCounter.textContent = `0/${altLimit}`;
-                    altCancelBtn.textContent = 'Annuler';
-                } else if (altText.length === 0) {
-                    if (previewElt) {
-                        previewElt.removeAttribute('alt');
-                        previewElt.removeAttribute('title');
-                    }
-                    delete mediaFile.description;
-                    altBtn.removeAttribute('style');
-                    newAltDiv.style.display = 'none';
-                }
+                newAltDiv.style.display = 'none';
             });
 
             div.appendChild(altBtn);
             div.appendChild(newAltDiv);
-
-            if (!mediaFile.description) {
-                const altText = altTextArea.value;
-                if (altText) {
-                    altCancelBtn.textContent = 'Effacer';
-                } else {
-                    altCancelBtn.textContent = 'Annuler';
-                }
-                newAltDiv.style.display = 'flex';
-                newAltDiv.scrollIntoView();
-                altTextArea.focus();
-            }
         }
 
         // Handle post deletion
@@ -2860,6 +2832,27 @@ document.addEventListener('DOMContentLoaded', async function () {
     // Functions to upload thread to Mastodon
     let threadUrl;
     postThreadBtn.addEventListener('click', async () => {
+        for (let key in mediaFiles) {
+            console.log(key);
+            if (mediaFiles[key].length > 0) {
+                for (let media of mediaFiles[key]) {
+                    if (!media.description) {
+                        if (
+                            !window.confirm(
+                                "Certains médias n'ont pas de description. Poster quand même ?"
+                            )
+                        ) {
+                            const number = key.split('mediaFiles')[1];
+                            const post = document.getElementById(
+                                `post-${number}`
+                            );
+                            post.scrollIntoView();
+                            return;
+                        }
+                    }
+                }
+            }
+        }
         postThreadBtn.style.display = 'none';
         contentContainer.style.display = 'none';
         counter.style.display = 'block';

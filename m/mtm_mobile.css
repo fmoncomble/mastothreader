@@ -299,6 +299,7 @@ textarea {
 
 #page-title {
     flex-direction: column;
+    margin: auto;
 }
 
 #dl-pic {
@@ -336,7 +337,7 @@ div#dl-msg {
 
 .dropzone {
     position: relative;
-    height: 120px;
+    min-height: 30px;
     border: 2px dashed light-dark(#d9d9e8, #9c9cc9);
     border-radius: 4px;
     background-color: light-dark(#f9f9fb, #292938);
@@ -496,6 +497,7 @@ button:disabled {
     justify-content: center;
     width: 100%;
     margin-top: 5px;
+    padding-bottom: 30px;
 }
 
 .img-preview div {
@@ -605,12 +607,26 @@ button:disabled {
 .alt-dialog .alt-container {
     display: flex;
     flex-direction: column;
+    max-height: 53vh;
+}
+
+.alt-dialog div.alt-img-div {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.alt-dialog .alt-img {
+    max-width: 100%;
+    max-height: 30vh;
+    border-radius: 4px;
 }
 
 .alt-dialog textarea {
     margin: 0;
     width: auto;
-    height: 40vh;
+    height: 30vh;
 }
 
 .alt-dialog .alt-footer {
@@ -1069,4 +1085,5 @@ dialog:focus-visible,
 
 .post-text {
     position: relative;
+    padding-bottom: 30px;
 }
