@@ -2991,6 +2991,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 if (i === 0) {
                     threadUrl = data.url;
                 }
+                await new Promise((resolve) => setTimeout(resolve, 1000));
             } catch (error) {
                 console.error('Fetch error: ', error);
             }
