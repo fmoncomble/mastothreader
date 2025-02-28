@@ -4,6 +4,7 @@ import { getNativeName } from 'https://esm.sh/iso-639-1@3?bundle';
 
 document.addEventListener('DOMContentLoaded', async function () {
     // Declare page elements
+    const instructionsBtn = document.getElementById('instructions-btn');
     const instructionsDiv = document.getElementById('instructions');
     const instanceInput = document.getElementById('instance-input');
     const instanceBtn = document.getElementById('instance-btn');
@@ -23,24 +24,223 @@ document.addEventListener('DOMContentLoaded', async function () {
     const postThreadBtn = document.getElementById('post-thread-btn');
     const spinner = document.getElementById('spinner');
     const counter = document.getElementById('counter');
+    const bskyAuthDialog = document.getElementById('bsky-auth-dialog');
+    const idInput = document.getElementById('id-input');
+    const pwdInput = document.getElementById('pwd-input');
+    const submitBtn = document.getElementById('bsky-login-btn');
+    const cancelBskyLoginBtn = document.getElementById('bsky-cancel-btn');
+    const bskyThreadDialog = document.getElementById('bsky-thread-dialog');
+    const bskyThreadInput = document.getElementById('bsky-thread-input');
+    bskyThreadInput.value = null;
+    const bskyThreadOk = document.getElementById('bsky-thread-ok');
+    const bskyThreadCancel = document.getElementById('bsky-thread-cancel');
+    const convertHandlesCheckbox = document.getElementById('convert-handles');
     const bskyLoadingSpinner = document.getElementById('bsky-loading-dialog');
 
     const yearSpan = document.querySelector('span#year');
     yearSpan.textContent = new Date().toISOString().split('-')[0];
 
+    // Declare localisation variables
+    const uiLang = navigator.language.split('-')[0].toLowerCase();
+    let locData;
+
+    // Declare authentication variables
+    let instance;
+    const redirectUri = window.location.href.split('?')[0];
+    let clientId;
+    let clientSecret;
+    let code;
+    let token;
+
+    // Declare Mastodon instance & user variables
+    let mediaConfig = {};
+    let maxChars;
+    let maxMedia;
+    let lang;
+    let customEmoji;
+    let userAvatarSrc;
+    let userFollowing = [];
+
+    // Declare post variables
+    let defaultViz = 'public';
+    let splitNb = 0;
+    let isSplitting = false;
+    let postItems = [];
+    let originalId;
+    let originalUser;
+    let updateTime = 1;
+    let currentPost;
+    let mediaFiles = {};
+    let oldPosts = [];
+    let i = 0;
+
+    // Declare import variables
+    let mastoText = null;
+    let inReplyUrl = null;
+    let userId = null;
+    let bskyDid = localStorage.getItem('bsky-did')
+        ? localStorage.getItem('bsky-did')
+        : null;
+    let bskyHandle = localStorage.getItem('bsky-handle')
+        ? localStorage.getItem('bsky-handle')
+        : null;
+
+    if (bskyDid && bskyHandle) {
+        bskyResetBtn.style.display = 'inline-block';
+    } else {
+        bskyResetBtn.style.display = 'none';
+    }
+    let bskyUrl = null;
+    let convertHandles = false;
+    let fromBsky = false;
+    let bskyLink = null;
+    let bskyPosts = [];
+    let WPUrl = null;
+    let fromWP = false;
+    let wpChunks = [];
+
+    // Localise UI
+    await localiseUI();
+
+    // Handle Mastodon instance and authentication
+    checkInstance();
+    checkCredentials();
+    if (instance) {
+        localStorage.removeItem(`${instance}-id`);
+        localStorage.removeItem(`${instance}-secret`);
+    }
+    localStorage.removeItem('mastothreadtoken');
+    checkToken();
+
+    // Checking for URL search parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('bsky_url')) {
+        bskyUrl = urlParams.get('bsky_url');
+    }
+    if (urlParams.has('wp_url')) {
+        WPUrl = urlParams.get('wp_url');
+    }
+    if (urlParams.has('user_id')) {
+        userId = urlParams.get('user_id');
+    }
+    if (urlParams.has('instance')) {
+        let originInstance = urlParams.get('instance');
+        if (instance && originInstance !== instance) {
+            if (window.confirm(locData['instance-confirm'])) {
+                instanceInput.value = null;
+                instanceInput.disabled = false;
+                instanceBtn.textContent = 'Valider';
+                localStorage.removeItem('mastothreadinstance');
+                instanceInput.value = null;
+                counter.style.display = 'none';
+                await removeToken();
+                // checkInstance();
+                // checkToken();
+                window.location.reload();
+            } else {
+                userId = null;
+            }
+            checkCredentials();
+        }
+    }
+    if (urlParams.has('reply_to')) {
+        inReplyUrl = urlParams.get('reply_to');
+    }
+    if (urlParams.has('text')) {
+        mastoText = urlParams.get('text');
+    }
+    if (!token && instance) {
+        code = urlParams.get('code');
+        if (code) {
+            token = await exchangeCodeForToken(code);
+            if (token) {
+                localStorage.setItem('mastothreadtoken-v2', token);
+                bskyLink = sessionStorage.getItem('bsky_url') || null;
+                WPUrl = sessionStorage.getItem('wp_url') || null;
+                mastoText = sessionStorage.getItem('text') || null;
+                inReplyUrl = sessionStorage.getItem('reply_to') || null;
+                userId = sessionStorage.getItem('user_id') || null;
+                sessionStorage.clear();
+                checkToken();
+                customEmoji = await getCustomEmoji(instance);
+                if (bskyLink) {
+                    if (window.confirm(locData['bsky-confirm'])) {
+                        if (
+                            window.confirm(locData['convert-handles-confirm'])
+                        ) {
+                            convertHandles = true;
+                        }
+                        await getBskyThread();
+                    }
+                } else if (inReplyUrl) {
+                    inReplyToInput.value = inReplyUrl;
+                    getRepliedToPost();
+                } else if (WPUrl) {
+                    if (window.confirm(locData['wp-confirm'])) {
+                        await getWPPost(WPUrl);
+                    }
+                }
+            }
+        }
+    } else if (!token) {
+        for (let [key, value] of urlParams) {
+            sessionStorage.setItem(key, value);
+        }
+        window.alert(locData['instance-warning']);
+        instanceInput.focus();
+    } else if (token) {
+        await checkApp();
+        customEmoji = await getCustomEmoji(instance);
+        if (bskyUrl) {
+            if (window.confirm(locData['bsky-confirm'])) {
+                if (window.confirm(locData['convert-handles-confirm'])) {
+                    convertHandles = true;
+                }
+                bskyLink = bskyUrl;
+                await getBskyThread();
+            }
+        }
+        if (WPUrl) {
+            if (window.confirm(locData['wp-confirm'])) {
+                await getWPPost(WPUrl);
+            }
+        }
+        if (inReplyUrl) {
+            await checkToken();
+            inReplyToInput.value = inReplyUrl;
+            getRepliedToPost();
+        }
+    }
+
+    // Localizing function
+    async function localiseUI() {
+        let locFile = await fetch(`${uiLang}.json`);
+        if (!locFile.ok) {
+            locFile = await fetch('en.json');
+        }
+        locData = await locFile.json();
+        document.querySelectorAll('[data-lang]').forEach((element) => {
+            const key = element.getAttribute('data-lang');
+            element.textContent = locData[key];
+        });
+        document.querySelectorAll('[placeholder-lang]').forEach((element) => {
+            const key = element.getAttribute('placeholder-lang');
+            element.placeholder = locData[key];
+        });
+    }
+
     // Handle instructions display
-    const instructionsBtn = document.getElementById('instructions-btn');
     instructionsBtn.addEventListener('click', () => {
         if (instructionsDiv.style.display === 'none') {
             instructionsDiv.style.display = 'flex';
-            instructionsBtn.textContent = 'Masquer les instructions';
+            instructionsBtn.textContent = locData['instructions-hide'];
         } else {
             instructionsDiv.style.display = 'none';
-            instructionsBtn.textContent = 'Afficher les instructions';
+            instructionsBtn.textContent = locData['instructions-btn'];
         }
     });
 
-    // Functions to gather information
+    // Functions to gather instance information
     let instanceList = document.createElement('div');
     instanceList.id = 'instance-list';
     instanceList.classList.add('instance-list');
@@ -199,7 +399,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     const dlMsg = document.getElementById('dl-msg');
     const pluginInstall = document.getElementById('plugin-install');
     const pluginLink = document.createElement('a');
-    pluginLink.textContent = 'Installer sur votre navigateur';
+    pluginLink.textContent = locData['plugin-install'];
     pluginLink.target = '_blank';
     pluginInstall.appendChild(pluginLink);
     const userAgent = navigator.userAgent;
@@ -218,181 +418,15 @@ document.addEventListener('DOMContentLoaded', async function () {
         userAgent.indexOf('Safari') !== -1 &&
         userAgent.indexOf('Chrome') === -1
     ) {
-        pluginInstall.textContent = 'Plugin indisponible pour Safari';
+        pluginInstall.textContent = locData['plugin-install-unavailable'];
     } else {
-        pluginInstall.textContent = "Votre navigateur n'est pas pris en charge";
+        pluginInstall.textContent = locData['plugin-install-unavailable'];
     }
     dlPic.onclick = () => {
         if (dlMsg.style.display === 'none') {
             dlMsg.style.display = 'flex';
         } else {
             dlMsg.style.display = 'none';
-        }
-    };
-
-    // Declare Mastodon variables
-    let maxChars;
-    let maxMedia;
-    let lang;
-    let customEmoji;
-    let userAvatarSrc;
-    let userFollowing = [];
-    let postItems = [];
-    let mediaFiles = {};
-    let oldPosts = [];
-    let i = 0;
-
-    // Handle Mastodon instance and authentication
-    let instance;
-    checkInstance();
-    if (instance) {
-        localStorage.removeItem(`${instance}-id`);
-        localStorage.removeItem(`${instance}-secret`);
-    }
-    localStorage.removeItem('mastothreadtoken');
-    let token;
-    checkToken();
-
-    // Initialize import variables
-    let mastoText = null;
-    let inReplyUrl = null;
-    let userId = null;
-    let bskyDid = localStorage.getItem('bsky-did')
-        ? localStorage.getItem('bsky-did')
-        : null;
-    let bskyHandle = localStorage.getItem('bsky-handle')
-        ? localStorage.getItem('bsky-handle')
-        : null;
-
-    if (bskyDid && bskyHandle) {
-        bskyResetBtn.style.display = 'inline-block';
-    } else {
-        bskyResetBtn.style.display = 'none';
-    }
-    let bskyUrl = null;
-    let convertHandles = false;
-    let WPUrl = null;
-    let fromBsky = false;
-    let bskyLink = null;
-    let fromWP = false;
-
-    // Handle data processing on page load
-    window.onload = async function () {
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has('bsky_url')) {
-            bskyUrl = urlParams.get('bsky_url');
-        }
-        if (urlParams.has('wp_url')) {
-            WPUrl = urlParams.get('wp_url');
-        }
-        if (urlParams.has('instance')) {
-            let originInstance = urlParams.get('instance');
-            if (instance && originInstance !== instance) {
-                if (
-                    window.confirm(
-                        `Vous venez de ${originInstance} mais êtes connecté·e à ${instance}.\nVoulez-vous changer d'instance ?`
-                    )
-                ) {
-                    instanceInput.value = null;
-                    instanceInput.disabled = false;
-                    instanceBtn.textContent = 'Valider';
-                    localStorage.removeItem('mastothreadinstance');
-                    instanceInput.value = null;
-                    counter.style.display = 'none';
-                    await removeToken();
-                    checkInstance();
-                    checkToken();
-                    window.location.reload();
-                }
-                checkCredentials();
-            }
-        }
-        if (urlParams.has('user_id')) {
-            userId = urlParams.get('user_id');
-        }
-        if (urlParams.has('reply_to')) {
-            inReplyUrl = urlParams.get('reply_to');
-        }
-        if (urlParams.has('text')) {
-            mastoText = urlParams.get('text');
-        }
-        if (!token && instance) {
-            code = urlParams.get('code');
-            if (code) {
-                token = await exchangeCodeForToken(code);
-                if (token) {
-                    localStorage.setItem('mastothreadtoken-v2', token);
-                    bskyLink = sessionStorage.getItem('bsky_url') || null;
-                    WPUrl = sessionStorage.getItem('wp_url') || null;
-                    mastoText = sessionStorage.getItem('text') || null;
-                    inReplyUrl = sessionStorage.getItem('reply_to') || null;
-                    userId = sessionStorage.getItem('user_id') || null;
-                    sessionStorage.clear();
-                    checkToken();
-                    customEmoji = await getCustomEmoji(instance);
-                    if (bskyLink) {
-                        if (
-                            window.confirm(
-                                `Voulez-vous importer le fil Bluesky ?`
-                            )
-                        ) {
-                            if (
-                                window.confirm(
-                                    `Voulez-vous tenter de convertir les pseudos ?`
-                                )
-                            ) {
-                                convertHandles = true;
-                            }
-                            await getBskyThread();
-                        }
-                    } else if (inReplyUrl) {
-                        inReplyToInput.value = inReplyUrl;
-                        inReplyToInput.dispatchEvent(new Event('input'));
-                    } else if (WPUrl) {
-                        if (
-                            window.confirm(
-                                `Voulez-vous importer le billet WordPress ?`
-                            )
-                        ) {
-                            await getWPPost(WPUrl);
-                        }
-                    }
-                }
-            }
-        } else if (!token) {
-            for (let [key, value] of urlParams) {
-                sessionStorage.setItem(key, value);
-            }
-            window.alert(`Vous n'êtes pas connecté·e à Mastodon.`);
-            instanceInput.focus();
-        } else if (token) {
-            await checkApp();
-            customEmoji = await getCustomEmoji(instance);
-            if (bskyUrl) {
-                if (window.confirm(`Voulez-vous importer le fil Bluesky ?`)) {
-                    if (
-                        window.confirm(
-                            `Voulez-vous tenter de convertir les pseudos ?`
-                        )
-                    ) {
-                        convertHandles = true;
-                    }
-                    bskyLink = bskyUrl;
-                    await getBskyThread();
-                }
-            }
-            if (WPUrl) {
-                if (
-                    window.confirm(`Voulez-vous importer le billet WordPress ?`)
-                ) {
-                    await getWPPost(WPUrl);
-                }
-            }
-            if (inReplyUrl) {
-                await checkToken();
-                inReplyToInput.value = inReplyUrl;
-                inReplyToInput.dispatchEvent(new Event('input'));
-            }
         }
     };
 
@@ -403,23 +437,17 @@ document.addEventListener('DOMContentLoaded', async function () {
         res.then(async (res) => {
             if (!res.ok) {
                 const error = await res.json();
-                window.alert(
-                    `L'application n'est pas autorisée sur ${instance} : ${error.error}.\nVeuillez vous authentifier à nouveau.`
-                );
+                window.alert(locData['app-warning'] + `\n` + error.error + '.');
                 await removeToken();
                 window.location.reload();
             }
         });
     }
 
-    let clientId;
-    let clientSecret;
-    checkCredentials();
     function checkCredentials() {
         clientId = localStorage.getItem(`${instance}-id-v2`);
         clientSecret = localStorage.getItem(`${instance}-secret-v2`);
     }
-    let code;
 
     function checkInstance() {
         instance = localStorage.getItem('mastothreadinstance');
@@ -430,7 +458,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     }
 
-    async function getUserAvatar() {
+    async function getUserInfo() {
         if (userId) {
             try {
                 let followingCount = 0;
@@ -485,22 +513,22 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (token) {
             instanceInput.value = instance + ' ✅';
             instanceInput.disabled = true;
-            instanceBtn.textContent = 'Réinitialiser';
+            instanceBtn.textContent = locData['instance-reset'];
             instructionsDiv.style.display = 'none';
-            instructionsBtn.textContent = 'Afficher les instructions';
+            instructionsBtn.textContent = locData['instructions-btn'];
             if (postItems.length === 0) {
                 await getMax();
                 await buildLangList();
                 numberPostsDiv.style.display = 'flex';
                 inReplyToDiv.style.display = 'block';
-                await getUserAvatar();
+                await getUserInfo();
                 createNewPost(mastoText ? mastoText : null);
                 postThreadBtn.style.display = 'flex';
             }
         } else if (!token) {
             instructionsDiv.style.display = 'flex';
-            instructionsBtn.textContent = 'Masquer les instructions';
-            instanceBtn.textContent = 'Valider';
+            instructionsBtn.textContent = locData['instructions-hide'];
+            instanceBtn.textContent = locData['instance-btn'];
         }
     }
 
@@ -519,7 +547,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             const error = await response.json();
             console.error('Token could not be revoked: ', error);
             window.alert(
-                'La réinitialisation a échoué : ' + error.error_description
+                locData['reset-warning'] + `\n` + error.error_description
             );
         }
     }
@@ -528,7 +556,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (event.key === 'Enter') {
             instance = instanceInput.value;
             if (!instance) {
-                window.alert('Veuillez indiquer votre instance Mastodon');
+                window.alert(locData['instance-empty']);
                 return;
             }
             localStorage.setItem('mastothreadinstance', instance);
@@ -537,8 +565,8 @@ document.addEventListener('DOMContentLoaded', async function () {
                 await createMastoApp();
             }
             redirectToAuthServer();
-            checkInstance();
-            checkToken();
+            // checkInstance();
+            // checkToken();
         }
     });
 
@@ -551,13 +579,13 @@ document.addEventListener('DOMContentLoaded', async function () {
             instanceInput.value = null;
             counter.style.display = 'none';
             await removeToken();
-            checkInstance();
-            checkToken();
+            // checkInstance();
+            // checkToken();
             window.location.reload();
         } else {
             instance = instanceInput.value;
             if (!instance) {
-                window.alert('Veuillez indiquer votre instance Mastodon');
+                window.alert(locData['instance-empty']);
                 return;
             }
             if (instance.includes('@')) {
@@ -569,12 +597,11 @@ document.addEventListener('DOMContentLoaded', async function () {
                 await createMastoApp();
             }
             redirectToAuthServer();
-            checkInstance();
-            checkToken();
+            // checkInstance();
+            // checkToken();
         }
     });
 
-    const redirectUri = window.location.href.split('?')[0];
     async function createMastoApp() {
         const createAppUrl = `https://${instance}/api/v1/apps`;
         try {
@@ -592,9 +619,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             });
             if (!response.ok) {
                 if (response.status === 429) {
-                    window.alert(
-                        'Serveur occupé : veuillez réessayer plus tard.'
-                    );
+                    window.alert(locData['server-busy']);
                     return;
                 }
                 console.error('Error creating app: response ', response.status);
@@ -639,7 +664,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     // Collect Mastodon instance info
-    let mediaConfig = {};
     async function getMax() {
         const response = await fetch(`https://${instance}/api/v1/instance`);
         if (!response.ok) {
@@ -691,9 +715,11 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     // Handle post creation in reply to another post
-    let originalId;
-    let originalUser;
     inReplyToInput.addEventListener('input', async () => {
+        getRepliedToPost();
+    });
+
+    async function getRepliedToPost() {
         try {
             const inReplyToUrl = inReplyToInput.value.trim();
             if (inReplyToInput.value.trim() === '') {
@@ -738,7 +764,8 @@ document.addEventListener('DOMContentLoaded', async function () {
         } catch (error) {
             console.error(error);
         }
-    });
+    }
+    // });
 
     function createRepliedPostPreview(status) {
         const previewAvatar = document.getElementById('replied-post-avatar');
@@ -809,11 +836,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     }
 
-    let defaultViz = 'public';
-    let currentPost;
-    let splitNb = 0;
-    let isSplitting = false;
-
     bskyResetBtn.addEventListener('click', () => {
         bskyDid = null;
         bskyHandle = null;
@@ -824,13 +846,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         bskyResetBtn.style.display = 'none';
     });
 
-    let bskyPosts = [];
-
-    const bskyAuthDialog = document.getElementById('bsky-auth-dialog');
-    const idInput = document.getElementById('id-input');
-    const pwdInput = document.getElementById('pwd-input');
-    const submitBtn = document.getElementById('bsky-login-btn');
-    const cancelBskyLoginBtn = document.getElementById('bsky-cancel-btn');
     cancelBskyLoginBtn.addEventListener('click', () => {
         importSelect.value = '0';
         bskyAuthDialog.close();
@@ -879,13 +894,11 @@ document.addEventListener('DOMContentLoaded', async function () {
                 const minutes = Math.floor((waitTime % 3600) / 60);
                 const seconds = waitTime % 60;
                 const timeString = `${hours} heures, ${minutes} minutes et ${seconds} secondes`;
-                window.alert(
-                    `Trop de tentatives de connexion.\nVeuillez réessayer dans ${timeString}.`
-                );
+                window.alert(locData['bsky-rate-warning'] + timeString);
                 bskyAuthDialog.close();
                 return;
             }
-            window.alert(`Erreur d'authentification: ${errorData.message}`);
+            window.alert(`${locData['auth-error']} ${errorData.message}`);
             bskyAuthDialog.close();
             return;
         }
@@ -893,12 +906,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     importSelect.value = '0';
 
-    const bskyThreadDialog = document.getElementById('bsky-thread-dialog');
-    const bskyThreadInput = document.getElementById('bsky-thread-input');
-    bskyThreadInput.value = null;
-    const bskyThreadOk = document.getElementById('bsky-thread-ok');
-    const bskyThreadCancel = document.getElementById('bsky-thread-cancel');
-    const convertHandlesCheckbox = document.getElementById('convert-handles');
     convertHandlesCheckbox.checked = false;
     convertHandlesCheckbox.addEventListener('change', () => {
         if (convertHandlesCheckbox.checked) {
@@ -957,7 +964,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 getWPPost(WPUrl);
                 wpImportDialog.close();
             } else {
-                window.alert('Lien WordPress invalide.');
+                window.alert(locData['wp-invalid']);
                 wpImportDialog.close();
             }
         } else if (event.key === 'Escape') {
@@ -1038,11 +1045,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     async function getBskyThread() {
         if (!bskyDid || !bskyHandle) {
-            if (
-                window.confirm(
-                    `MastoThreader n'est pas connecté à Bluesky.\nVoulez-vous vous identifier ?`
-                )
-            ) {
+            if (window.confirm(locData['bsky-warning'])) {
                 bskyDid = null;
                 bskyHandle = null;
                 localStorage.removeItem('bsky-did');
@@ -1065,7 +1068,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 pathname = new URL(bskyLink).pathname;
             } catch (error) {
                 bskyThreadInput.value = null;
-                window.alert('Lien Bluesky invalide.');
+                window.alert(locData['bsky-invalid']);
                 bskyLink = null;
                 importSelect.value = '0';
                 bskyLoadingSpinner.close();
@@ -1076,11 +1079,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 (handle.startsWith('did:plc:') && handle !== bskyDid) ||
                 (!handle.startsWith('did:plc:') && handle !== bskyHandle)
             ) {
-                if (
-                    window.confirm(
-                        `Échec : vous n’êtes pas l’auteur du fil Bluesky.\nVoulez-vous vous connecter avec un autre compte ?`
-                    )
-                ) {
+                if (window.confirm(locData['bsky-author-warning'])) {
                     bskyDid = null;
                     bskyHandle = null;
                     localStorage.removeItem('bsky-did');
@@ -1138,7 +1137,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     postItems = [];
                     for (let p of bskyPosts) {
                         let index = bskyPosts.indexOf(p) + 1;
-                        bskyLoadingText.textContent = `Chargement du post ${index}/${bskyPosts.length}...`;
+                        bskyLoadingText.textContent = `${locData['bsky-thread-text']} ${index}/${bskyPosts.length}...`;
                         try {
                             let text = p.record.text;
                             if (convertHandles) {
@@ -1288,7 +1287,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     }
                 } else {
                     bskyThreadInput.value = null;
-                    window.alert('Impossible de récupérer le fil Bluesky.');
+                    window.alert(locData['bsky-error']);
                     bskyLink = null;
                     importSelect.value = '0';
                     fromBsky = false;
@@ -1296,7 +1295,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     return;
                 }
             } else {
-                window.alert('Impossible de récupérer le fil Bluesky.');
+                window.alert(locData['bsky-error']);
                 bskyLink = null;
                 importSelect.value = '0';
                 fromBsky = false;
@@ -1307,24 +1306,21 @@ document.addEventListener('DOMContentLoaded', async function () {
             postItems[0].querySelector('.post-text').focus();
             window.scrollTo(0, 0);
             await new Promise((resolve) => setTimeout(resolve, 0));
-            window.alert(
-                'Le fil est prêt, pensez à le relire avant de publier !'
-            );
+            window.alert(locData['thread-ready']);
         } else {
             importSelect.value = '0';
         }
     }
 
     // Handle import of WordPress blogpost
-    let wpChunks = [];
     async function getWPPost(WPUrl) {
         bskyLoadingSpinner.showModal();
         const WPloadingText = document.getElementById('bsky-loading-text');
-        WPloadingText.textContent = 'Récupération du billet WordPress...';
+        WPloadingText.textContent = locData['wp-loading-text'];
         fromWP = true;
         let res = await fetch(WPUrl);
         if (!res || !res.ok) {
-            window.alert('Impossible de récupérer le billet WordPress.');
+            window.alert(locData['wp-error']);
             bskyLoadingSpinner.close();
             return;
         }
@@ -1469,13 +1465,13 @@ document.addEventListener('DOMContentLoaded', async function () {
         postItems = [];
         for (let p of wpChunks) {
             try {
-                WPloadingText.textContent = `Création du pouet ${
+                WPloadingText.textContent = `${locData['creating-toot']} ${
                     wpChunks.indexOf(p) + 1
                 }/${wpChunks.length}...`;
                 if (p.media.length > 0) {
                     const mediaCounter = document.createElement('div');
                     mediaCounter.classList.add('bsky-loading-text');
-                    mediaCounter.textContent = `Récupération de ${p.media.length} média(s)...`;
+                    mediaCounter.textContent = `${locData['wp-media']}: ${p.media.length}`;
                     WPloadingText.appendChild(mediaCounter);
                 }
                 await createNewPost(p.text, p.media);
@@ -1487,13 +1483,13 @@ document.addEventListener('DOMContentLoaded', async function () {
                 );
             }
         }
-        let finalPostText = `Retrouvez ce billet à l'adresse : ${postLink}`;
+        let finalPostText = `${locData['final-post-text']} ${postLink}`;
         createNewPost(finalPostText);
         bskyLoadingSpinner.close();
         postItems[0].querySelector('.post-text').focus();
         window.scrollTo(0, 0);
         await new Promise((resolve) => setTimeout(resolve, 0));
-        window.alert('Le fil est prêt, pensez à le relire avant de publier !');
+        window.alert(locData['thread-ready']);
     }
 
     // Create new post
@@ -2144,7 +2140,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             dzInst.style.display = 'none';
             const newFiles = e.dataTransfer.items;
             if (files.length >= maxMedia) {
-                window.alert("Le nombre maximum d'images est atteint.");
+                window.alert(locData['media-alert']);
                 return;
             } else {
                 for (let f of newFiles) {
@@ -2191,7 +2187,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                             });
                         }
                     } else {
-                        window.alert("Le nombre maximum d'images est atteint");
+                        window.alert(locData['media-alert']);
                         break;
                     }
                 }
@@ -2207,7 +2203,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             dzInst.style.display = 'none';
             const newFiles = e.target.files;
             if (files.length >= maxMedia) {
-                window.alert("Le nombre maximum d'images est atteint.");
+                window.alert(locData['media-alert']);
                 return;
             } else {
                 for (let f of newFiles) {
@@ -2222,7 +2218,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                             dzInst
                         );
                     } else {
-                        window.alert("Le nombre maximum d'images est atteint");
+                        window.alert(locData['media-alert']);
                         break;
                     }
                 }
@@ -2325,9 +2321,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                                 );
                                 gifDialog.close();
                             } else {
-                                window.alert(
-                                    "Le nombre maximum d'images est atteint"
-                                );
+                                window.alert(locData['media-alert']);
                                 return;
                             }
                         };
@@ -2352,11 +2346,11 @@ document.addEventListener('DOMContentLoaded', async function () {
                             createGifPreviews(data.results, fresh);
                             return data.next;
                         } else {
-                            window.alert('Aucun résultat.');
+                            window.alert(locData['no-result']);
                             return pos;
                         }
                     } else {
-                        window.alert('Impossible de récupérer les gifs.');
+                        window.alert(locData['gif-error']);
                         return pos;
                     }
                 } catch (error) {
@@ -2386,7 +2380,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                             dzInst
                         );
                     } else {
-                        window.alert("Le nombre maximum d'images est atteint");
+                        window.alert(locData['media-alert']);
                         break;
                     }
                 }
@@ -2405,7 +2399,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             let vidSizeLimit = mediaConfig.video_size_limit;
 
             if (!supportedMimeTypes.has(fileType)) {
-                window.alert('Type de fichier non pris en charge.');
+                window.alert(locData['unsupported-media']);
                 const index = files.indexOf(mediaFile);
                 if (index > -1) {
                     files.splice(index, 1);
@@ -2421,9 +2415,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (fileType.includes('video')) {
                 if (mediaFile.file.size > vidSizeLimit) {
                     window.alert(
-                        `La taille de la vidéo dépasse la limite de ${
-                            vidSizeLimit / 1000000
-                        } Mo.`
+                        `${locData['over-limit']} ${vidSizeLimit / 1000000} MB.`
                     );
                     const index = files.indexOf(mediaFile);
                     if (index > -1) {
@@ -2454,9 +2446,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             } else if (fileType.includes('image') || fileType.includes('img')) {
                 if (mediaFile.file.size > imgSizeLimit) {
                     window.alert(
-                        `La taille de l'image dépasse la limite de ${
-                            imgSizeLimit / 1000000
-                        } Mo.`
+                        `${locData['over-limit']} ${imgSizeLimit / 1000000} MB.`
                     );
                     const index = files.indexOf(mediaFile);
                     if (index > -1) {
@@ -2754,13 +2744,12 @@ document.addEventListener('DOMContentLoaded', async function () {
             const i = postItems.indexOf(p);
             const pNo = i + 1;
             const postCount = p.querySelector('.post-count');
-            postCount.textContent = `Pouet ${pNo}/${postItems.length}`;
+            postCount.textContent = `${locData['toot']} ${pNo}/${postItems.length}`;
             p.setAttribute('counter', `${pNo}/${postItems.length}`);
         }
         return postItems.length;
     }
 
-    let updateTime = 1;
     async function updatePostList(message, oldPosts, nbOfPosts) {
         if (!nbOfPosts) {
             nbOfPosts = postItems.length;
@@ -2833,15 +2822,10 @@ document.addEventListener('DOMContentLoaded', async function () {
     let threadUrl;
     postThreadBtn.addEventListener('click', async () => {
         for (let key in mediaFiles) {
-            console.log(key);
             if (mediaFiles[key].length > 0) {
                 for (let media of mediaFiles[key]) {
                     if (!media.description) {
-                        if (
-                            !window.confirm(
-                                "Certains médias n'ont pas de description. Poster quand même ?"
-                            )
-                        ) {
+                        if (!window.confirm(locData['media-error-confirm'])) {
                             const number = key.split('mediaFiles')[1];
                             const post = document.getElementById(
                                 `post-${number}`
@@ -2866,11 +2850,10 @@ document.addEventListener('DOMContentLoaded', async function () {
             return;
         }
         spinner.remove();
-        counter.textContent =
-            'Votre fil a été publié. Pour fermer votre session (ordinateur partagé), cliquez sur « Réinitialiser ».';
+        counter.textContent = locData['thread-published'];
         counter.style.color = '#563acc';
         const restartBtn = document.createElement('button');
-        restartBtn.textContent = 'Composer un nouveau fil';
+        restartBtn.textContent = locData['restart'];
         restartBtn.style.marginTop = '50px';
         restartBtn.onclick = () => {
             window.open(window.location.origin, '_self');
@@ -2898,13 +2881,13 @@ document.addEventListener('DOMContentLoaded', async function () {
             });
             if (!response.ok) {
                 if (response.status === 401) {
-                    window.alert("Vous n'êtes pas authentifié.e");
+                    window.alert(locData['app-warning']);
                     return;
                 }
                 const errorData = await response.json();
                 console.error('Error uploading media: ', errorData);
                 window.alert(
-                    `Un média n'a pas pu être envoyé : ${errorData.error}`
+                    `${locData['media-error-alert']} : ${errorData.error}`
                 );
                 return;
             } else if (response.status === 202) {
@@ -2949,7 +2932,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     async function postThread() {
-        postThreadBtn.textContent = null;
         spinner.style.display = 'inline-flex';
         let replyToId;
         if (originalId) {
@@ -2957,7 +2939,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
         for (let post of postItems) {
             const i = postItems.indexOf(post);
-            counter.textContent = `Publication du pouet ${i + 1}/${
+            counter.textContent = `${locData['posting-toot']} ${i + 1}/${
                 postItems.length
             }...`;
 
@@ -2984,7 +2966,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 mediaCounter.classList.add('counter');
                 counter.appendChild(mediaCounter);
                 for (let media of postMedia) {
-                    mediaCounter.textContent = `(Téléversement du média ${
+                    mediaCounter.textContent = `(${locData['media-upload']} ${
                         postMedia.indexOf(media) + 1
                     }/${postMedia.length}...)`;
                     let mediaId = await uploadMedia(
@@ -2992,7 +2974,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                         media.description
                     );
                     if (!mediaId) {
-                        window.alert(`Un média n'a pas pu être attaché`);
+                        window.alert(locData['media-error-alert']);
                         return;
                     }
                     postMediaIds.push(mediaId);
@@ -3002,10 +2984,10 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (!postText && postMedia.length === 0) {
                 if (i === 0) {
                     if (postItems.length === 1) {
-                        window.alert('Le fil est vide');
+                        window.alert(locData['empty-thread']);
                         return;
                     }
-                    window.alert('Votre premier pouet ne peut pas être vide');
+                    window.alert(locData['empty-toot']);
                     return;
                 }
                 continue;
@@ -3033,13 +3015,13 @@ document.addEventListener('DOMContentLoaded', async function () {
 
                 if (!response.ok) {
                     if (response.status === 401) {
-                        window.alert("Vous n'êtes pas authentifié.e");
+                        window.alert(locData['app-warning']);
                         return;
                     }
                     const errorData = await response.json();
                     console.error('Error posting status: ', errorData);
                     window.alert(
-                        `Le pouet n°${id} n'a pas pu être envoyé.\n${errorData.error}`
+                        `${locData['posting-error-1']}${id} ${locData['posting-error-2']}\n${errorData.error}`
                     );
                     return;
                 }

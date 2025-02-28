@@ -3,6 +3,7 @@
     <head>
         <meta http-equiv="content-type" content="text/html; charset=utf-8" />
         <link rel="stylesheet" href="mtm.css" type="text/css" />
+        <link rel="manifest" href="manifest.json" />
         <script type="text/javascript">
             if (window.location.hostname === 'fmoncomble.github.io') {
                 window.location.href = 'https://mastothreader.prendrelangue.fr';
@@ -160,44 +161,67 @@
                 />
                 <div id="dl-msg" style="display: none">
                     <div id="plugin-info">
-                        Cette extension ajoute un bouton
+                        <span data-lang="plugin-1"
+                            >Cette extension ajoute un bouton</span
+                        >
                         <img
                             id="icon"
                             src="data:image/png;base64,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"
                         />
-                        sur l'interface web de Mastodon pour lancer cette page.
+                        <span data-lang="plugin-2"
+                            >sur l'interface web de Mastodon pour lancer cette
+                            page.</span
+                        >
                     </div>
-                    <div>Le texte déjà entré est conservé.</div>
+                    <div data-lang="plugin-3">
+                        Le texte déjà entré est conservé.
+                    </div>
                     <br />
                     <div id="plugin-install"></div>
                 </div>
             </div>
         </div>
         <div id="instance-div">
-            <div id="instructions-btn">Afficher les instructions</div>
+            <div id="instructions-btn" data-lang="instructions-btn">
+                Afficher les instructions
+            </div>
             <div id="instructions">
-                <p>
+                <p data-lang="instructions-p1">
                     Cette page permet de préparer un fil (série de pouets) pour
                     Mastodon et de le poster en une seule fois.<br />Tapez votre
                     texte, ajoutez vos images, cliquez sur « ajouter un pouet »
                     pour continuer,<br />puis cliquez sur « Poster le fil »
                     quand vous avez fini.
                 </p>
-                <p>
+                <p data-lang="instructions-p2">
                     Vous pouvez aussi coller un texte dans le premier
                     encadré,<br />
                     si ça dépasse MastoThreader se chargera de le segmenter. 😉
                 </p>
-                <p style="color: #563acc">
+                <p
+                    style="color: #563acc; font-weight: bold"
+                    data-lang="instructions-p3"
+                >
                     <b
                         >Entrez votre instance Mastodon ci-dessous <br />
                         et cliquez sur "Valider" pour commencer.</b
                     >
                 </p>
-                <p style="text-decoration: underline">
+                <p
+                    style="text-decoration: underline"
+                    data-lang="instructions-p4"
+                >
                     Ceci est un site statique qui ne collecte aucune de vos
                     données.
                 </p>
+            </div>
+            <div>
+                <span data-lang="legacy" style="font-size: small"
+                    >En cas de problème, une ancienne version de MastoThreader est
+                    accessible </span>
+                    <a data-lang="legacy-link" style="font-size: small" href="https://mastothreader.prendrelangue.fr/legacy/index.html"
+                        >ici</a
+                    >
             </div>
             <div id="instance-input-div">
                 <div style="display: inline-block; vertical-align: middle">
@@ -207,18 +231,25 @@
                     id="instance-input"
                     type="text"
                     placeholder="Instance Mastodon"
+                    placeholder-lang="instance-placeholder"
                 />
-                <button id="instance-btn">Valider</button>
+                <button id="instance-btn" data-lang="instance-btn">
+                    Valider
+                </button>
             </div>
         </div>
         <div id="content-container">
             <div id="number-posts-div" style="margin: 10px 0; display: none">
                 <select id="import" class="import">
-                    <option value="0" disabled selected>
+                    <option value="0" disabled selected data-lang="import">
                         Importer du contenu
                     </option>
-                    <option value="bsky">Importer un fil Bluesky</option>
-                    <option value="wp">Importer un billet Wordpress</option>
+                    <option value="bsky" data-lang="import-bsky">
+                        Importer un fil Bluesky
+                    </option>
+                    <option value="wp" data-lang="import-wp">
+                        Importer un billet Wordpress
+                    </option>
                 </select>
                 <button
                     id="bsky-reset"
@@ -232,17 +263,20 @@
                         type="checkbox"
                         name="number-posts"
                         id="number-posts"
-                    />Numéroter les pouets</label
+                    /><span data-lang="number-posts"
+                        >Numéroter les pouets</span
+                    ></label
                 >
             </div>
             <div id="in-reply-to" class="in-reply-to" style="display: none">
                 <label for="in-reply-input" style="font-size: small">
-                    En réponse à :
+                    <span data-lang="in-reply-input">En réponse à :</span>
                     <input
                         type="text"
                         name="in-reply-input"
                         id="in-reply-input"
                         placeholder="URL du pouet original (facultatif)"
+                        placeholder-lang="in-reply-input-placeholder"
                     />
                 </label>
             </div>
@@ -266,10 +300,18 @@
                     <img class="avatar" />
                     <span class="post-count"></span>
                     <select class="viz-select" title="Régler la visibilité">
-                        <option value="public">Public</option>
-                        <option value="unlisted">Discret</option>
-                        <option value="private">Abonnés</option>
-                        <option value="direct">Personnes mentionnées</option>
+                        <option value="public" data-lang="public">
+                            Public
+                        </option>
+                        <option value="unlisted" data-lang="unlisted">
+                            Discret
+                        </option>
+                        <option value="private" data-lang="private">
+                            Abonnés
+                        </option>
+                        <option value="direct" data-lang="direct">
+                            Personnes mentionnées
+                        </option>
                     </select>
                     <button class="cw-btn" title="Ajouter un avertissement">
                         CW
@@ -283,12 +325,14 @@
                     <textarea
                         class="cw-text"
                         placeholder="Avertissement"
+                        placeholder-lang="cw-placeholder"
                     ></textarea>
                 </div>
                 <div class="textarea">
                     <textarea
                         class="post-text"
                         placeholder="Tapez votre texte ici"
+                        placeholder-lang="textarea-placeholder"
                     ></textarea>
                     <div class="emoji-btn">
                         <svg
@@ -316,18 +360,31 @@
                             class="img-upload"
                             multiple
                             accept="image/*, audio/*, video/*"
-                        />Glissez-déposez vos médias ici
+                        /><span data-lang="img-upload"
+                            >Glissez-déposez vos médias ici</span
+                        >
                     </div>
                     <div class="img-preview">
                         <div class="alt-div" style="display: none">
                             <div class="alt-counter">0/1500</div>
                             <div class="alt-btn-div">
-                                <button class="alt-cancel-btn">Annuler</button>
-                                <button class="alt-save-btn">Valider</button>
+                                <button
+                                    class="alt-cancel-btn"
+                                    data-lang="alt-cancel-btn"
+                                >
+                                    Annuler
+                                </button>
+                                <button
+                                    class="alt-save-btn"
+                                    data-lang="alt-save-btn"
+                                >
+                                    Valider
+                                </button>
                             </div>
                             <textarea
                                 class="alt-text"
                                 placeholder="Ajoutez une description à votre média"
+                                placeholder-lang="alt-text-placeholder"
                             ></textarea>
                         </div>
                     </div>
@@ -346,14 +403,24 @@
                     </div>
                 </div>
                 <div class="img-count"></div>
-                <button class="add-post-btn">Ajouter un pouet</button>
-                <button class="delete-post-btn" style="display: none">
+                <button class="add-post-btn" data-lang="add-post-btn">
+                    Ajouter un pouet
+                </button>
+                <button
+                    class="delete-post-btn"
+                    data-lang="delete-post-btn"
+                    style="display: none"
+                >
                     Supprimer le pouet
                 </button>
             </div>
         </div>
         <div class="btn-div">
-            <button id="post-thread-btn" style="display: none">
+            <button
+                id="post-thread-btn"
+                data-lang="post-thread-btn"
+                style="display: none"
+            >
                 Poster le fil
             </button>
             <span id="spinner" class="spinner" style="display: none"></span>
@@ -371,13 +438,16 @@
             </div>
         </div>
         <dialog id="bsky-auth-dialog" class="bsky-dialog">
-            <div style="margin-bottom: 10px">Authentifez-vous sur Bluesky</div>
+            <div data-lang="bsky-auth" style="margin-bottom: 10px">
+                Authentifez-vous sur Bluesky
+            </div>
             <div class="bsky-input-div">
                 <input
                     type="text"
                     id="id-input"
                     class="bsky-input"
                     placeholder="Identifiant ou adresse de courriel"
+                    placeholder-lang="bsky-id-placeholder"
                     autocomplete="username"
                     style="margin-bottom: 5px"
                 />
@@ -386,16 +456,25 @@
                     id="pwd-input"
                     class="bsky-input"
                     placeholder="Mot de passe"
+                    placeholder-lang="bsky-pwd-placeholder"
                     autocomplete="current-password"
                     style="margin-bottom: 5px"
                 />
             </div>
-            <button id="bsky-cancel-btn" class="cancel">Annuler</button>
-            <button id="bsky-login-btn">Valider</button>
+            <button
+                id="bsky-cancel-btn"
+                data-lang="bsky-cancel-btn"
+                class="cancel"
+            >
+                Annuler
+            </button>
+            <button id="bsky-login-btn" data-lang="bsky-login-btn">
+                Valider
+            </button>
         </dialog>
         <dialog id="bsky-thread-dialog" class="bsky-dialog">
             <div>
-                <div style="margin-bottom: 10px">
+                <div data-lang="bsky-url" style="margin-bottom: 10px">
                     Entrez l'URL du fil Bluesky :
                 </div>
                 <input type="url" id="bsky-thread-input" />
@@ -415,30 +494,52 @@
                         type="checkbox"
                         name="convert-handles"
                         id="convert-handles"
-                    />Convertir les pseudos (beta)</label
+                    /><span data-lang="convert-handles"
+                        >Convertir les pseudos (beta)</span
+                    ></label
                 >
             </div>
             <div>
-                <button id="bsky-thread-cancel" class="cancel">Annuler</button>
-                <button id="bsky-thread-ok">Valider</button>
+                <button
+                    id="bsky-thread-cancel"
+                    data-lang="bsky-thread-cancel"
+                    class="cancel"
+                >
+                    Annuler
+                </button>
+                <button id="bsky-thread-ok" data-lang="bsky-thread-ok">
+                    Valider
+                </button>
             </div>
         </dialog>
         <dialog id="wp-import-dialog" class="bsky-dialog">
             <div>
-                <div style="margin-bottom: 10px">
+                <div data-lang="wp-url" style="margin-bottom: 10px">
                     Entrez l'URL du billet Wordpress :
                 </div>
                 <input type="url" id="wp-url-input" />
             </div>
             <div>
-                <button id="wp-import-cancel" class="cancel">Annuler</button>
-                <button id="wp-import-ok">Valider</button>
+                <button
+                    id="wp-import-cancel"
+                    data-lang="wp-import-cancel"
+                    class="cancel"
+                >
+                    Annuler
+                </button>
+                <button id="wp-import-ok" data-lang="wp-import-ok">
+                    Valider
+                </button>
             </div>
         </dialog>
         <dialog id="bsky-loading-dialog" class="spinner-dialog">
             <div class="bsky-loading-div">
                 <div class="bsky-spinner"></div>
-                <div id="bsky-loading-text" class="bsky-loading-text">
+                <div
+                    id="bsky-loading-text"
+                    data-lang="bsky-loading-text"
+                    class="bsky-loading-text"
+                >
                     Chargement...
                 </div>
             </div>
@@ -450,8 +551,11 @@
                         type="text"
                         id="gif-search"
                         placeholder="Rechercher un GIF"
+                        placeholder-lang="gif-input-placeholder"
                     />
-                    <button id="gif-search-btn">Rechercher</button>
+                    <button id="gif-search-btn" data-lang="gif-search-btn">
+                        Rechercher
+                    </button>
                 </div>
                 <button id="gif-cancel-btn" class="cancel">✕</button>
             </div>
