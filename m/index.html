@@ -6,6 +6,7 @@
             name="viewport"
             content="width=device-width, initial-scale=1, maximum-scale=1"
         />
+        <link rel="manifest" href="manifest.json" />
         <link rel="apple-touch-icon" href="../icons/apple-icon-150x150.png" />
         <link rel="stylesheet" href="mtm_mobile.css" type="text/css" />
         <script src="mtm_mobile.js" type="module"></script>
@@ -154,27 +155,27 @@
             </a>
         </div>
         <div id="instance-div">
-            <div id="instructions-btn">Afficher les instructions</div>
+            <div id="instructions-btn" data-lang="instructions-btn">Afficher les instructions</div>
             <div id="instructions">
-                <p>
+                <p data-lang="instructions-p1">
                     Cette page permet de préparer un fil (série de pouets) pour
                     Mastodon et de le poster en une seule fois.<br />Tapez votre
                     texte, ajoutez vos images, cliquez sur « ajouter un pouet »
                     pour continuer,<br />puis cliquez sur « Poster le fil »
                     quand vous avez fini.
                 </p>
-                <p>
+                <p data-lang="instructions-p2">
                     Vous pouvez aussi coller un texte dans le premier
                     encadré,<br />
                     si ça dépasse MastoThreader se chargera de le segmenter. 😉
                 </p>
-                <p style="color: #563acc">
+                <p style="color: #563acc" data-lang="instructions-p3">
                     <b
                         >Entrez votre instance Mastodon ci-dessous <br />
                         et cliquez sur "Valider" pour commencer.</b
                     >
                 </p>
-                <p style="text-decoration: underline">
+                <p style="text-decoration: underline" data-lang="instructions-p4">
                     Ceci est un site statique qui ne collecte aucune de vos
                     données.
                 </p>
@@ -188,20 +189,21 @@
                         id="instance-input"
                         type="url"
                         placeholder="Instance Mastodon"
+                        placeholder-lang="instance-placeholder"
                     />
                 </div>
-                <button id="instance-btn">Valider</button>
+                <button id="instance-btn" data-lang="instance-btn">Valider</button>
             </div>
         </div>
         <div id="content-container">
             <div id="number-posts-div" style="margin: 10px 0; display: none">
                 <div id="import-div">
                     <select id="import" class="import">
-                        <option value="0" disabled selected>
+                        <option value="0" disabled selected data-lang="import">
                             Importer du contenu
                         </option>
-                        <option value="bsky">Importer un fil Bluesky</option>
-                        <option value="wp">Importer un billet Wordpress</option>
+                        <option value="bsky" data-lang="import-bsky">Importer un fil Bluesky</option>
+                        <option value="wp" data-lang="import-wp">Importer un billet Wordpress</option>
                     </select>
                     <button
                         id="bsky-reset"
@@ -216,17 +218,18 @@
                         type="checkbox"
                         name="number-posts"
                         id="number-posts"
-                    />Numéroter les pouets</label
+                    /><span data-lang="number-posts">Numéroter les pouets</span></label
                 >
             </div>
             <div id="in-reply-to" class="in-reply-to" style="display: none">
                 <label for="in-reply-input" style="font-size: small">
-                    En réponse à :
+                    <span data-lang="in-reply-input">En réponse à :</span>
                     <input
                         type="text"
                         name="in-reply-input"
                         id="in-reply-input"
                         placeholder="Coller l’URL du pouet original (facultatif)"
+                        placeholder-lang="in-reply-input-placeholder"
                     />
                 </label>
             </div>
@@ -253,10 +256,10 @@
                     <div class="post-count"></div>
                     <div class="post-options">
                         <select class="viz-select" title="Régler la visibilité">
-                            <option value="public">Public</option>
-                            <option value="unlisted">Discret</option>
-                            <option value="private">Abonnés</option>
-                            <option value="direct">
+                            <option value="public" data-lang="public">Public</option>
+                            <option value="unlisted" data-lang="unlisted">Discret</option>
+                            <option value="private" data-lang="private">Abonnés</option>
+                            <option value="direct" data-lang="direct">
                                 Personnes mentionnées
                             </option>
                         </select>
@@ -273,12 +276,14 @@
                     <textarea
                         class="cw-text"
                         placeholder="Avertissement"
+                        placeholder-lang="cw-placeholder"
                     ></textarea>
                 </div>
                 <div class="textarea">
                     <textarea
                         class="post-text"
                         placeholder="Tapez votre texte ici"
+                        placeholder-lang="textarea-placeholder"
                     ></textarea>
                     <div class="emoji-btn">
                         <svg
@@ -312,12 +317,13 @@
                         <div class="alt-div" style="display: none">
                             <div class="alt-counter">0/1500</div>
                             <div class="alt-btn-div">
-                                <button class="alt-cancel-btn">Annuler</button>
-                                <button class="alt-save-btn">Valider</button>
+                                <button class="alt-cancel-btn" data-lang="alt-cancel-btn">Annuler</button>
+                                <button class="alt-save-btn" data-lang="alt-save-btn">Valider</button>
                             </div>
                             <textarea
                                 class="alt-text"
                                 placeholder="Ajoutez une description à votre média"
+                                placeholder-lang="alt-text-placeholder"
                             ></textarea>
                         </div>
                     </div>
@@ -341,14 +347,14 @@
                 <div class="img-footer">
                     <div class="img-count"></div>
                 </div>
-                <button class="add-post-btn">Ajouter un pouet</button>
-                <button class="delete-post-btn" style="display: none">
+                <button class="add-post-btn" data-lang="add-post-btn">Ajouter un pouet</button>
+                <button class="delete-post-btn" data-lang="delete-post-btn" style="display: none">
                     Supprimer le pouet
                 </button>
             </div>
         </div>
         <div class="btn-div">
-            <button id="post-thread-btn" style="display: none">
+            <button id="post-thread-btn" data-lang="post-thread-btn" style="display: none">
                 Poster le fil
             </button>
             <span id="spinner" class="spinner" style="display: none"></span>
@@ -366,13 +372,14 @@
             </div>
         </div>
         <dialog id="bsky-auth-dialog" class="bsky-dialog">
-            <div style="margin-bottom: 10px">Authentifez-vous sur Bluesky</div>
+            <div data-lang="bsky-auth" style="margin-bottom: 10px">Authentifez-vous sur Bluesky</div>
             <div class="bsky-input-div">
                 <input
                     type="text"
                     id="id-input"
                     class="bsky-input"
                     placeholder="Identifiant ou adresse de courriel"
+                    placeholder-lang="bsky-id-placeholder"
                     autocomplete="username"
                     style="margin-bottom: 5px"
                 />
@@ -381,16 +388,17 @@
                     id="pwd-input"
                     class="bsky-input"
                     placeholder="Mot de passe"
+                    placeholder-lang="bsky-pwd-placeholder"
                     autocomplete="current-password"
                     style="margin-bottom: 5px"
                 />
             </div>
-            <button id="bsky-cancel-btn" class="cancel">Annuler</button>
-            <button id="bsky-login-btn">Valider</button>
+            <button id="bsky-cancel-btn" data-lang="bsky-cancel-btn" class="cancel">Annuler</button>
+            <button id="bsky-login-btn" data-lang="bsky-login-btn">Valider</button>
         </dialog>
         <dialog id="bsky-thread-dialog" class="bsky-dialog">
             <div>
-                <div style="margin-bottom: 10px">
+                <div data-lang="bsky-url" style="margin-bottom: 10px">
                     Entrez l'URL du fil Bluesky :
                 </div>
                 <input
@@ -414,30 +422,30 @@
                         type="checkbox"
                         name="convert-handles"
                         id="convert-handles"
-                    />Convertir les pseudos (beta)</label
+                    /><span data-lang="convert-handles">Convertir les pseudos (beta)</span></label
                 >
             </div>
             <div>
-                <button id="bsky-thread-cancel" class="cancel">Annuler</button>
-                <button id="bsky-thread-ok">Valider</button>
+                <button id="bsky-thread-cancel" data-lang="bsky-thread-cancel" class="cancel">Annuler</button>
+                <button id="bsky-thread-ok" data-lang="bsky-thread-ok">Valider</button>
             </div>
         </dialog>
         <dialog id="wp-import-dialog" class="bsky-dialog">
             <div>
-                <div style="margin-bottom: 10px">
+                <div data-lang="wp-url" style="margin-bottom: 10px">
                     Entrez l'URL du billet Wordpress :
                 </div>
                 <input type="url" id="wp-url-input" />
             </div>
             <div>
-                <button id="wp-import-cancel" class="cancel">Annuler</button>
-                <button id="wp-import-ok">Valider</button>
+                <button id="wp-import-cancel" data-lang="wp-import-cancel" class="cancel">Annuler</button>
+                <button id="wp-import-ok" data-lang="wp-import-ok">Valider</button>
             </div>
         </dialog>
         <dialog id="bsky-loading-dialog" class="spinner-dialog">
             <div class="bsky-loading-div">
                 <div class="bsky-spinner"></div>
-                <div id="bsky-loading-text" class="bsky-loading-text">
+                <div id="bsky-loading-text" data-lang="bsky-loading-text" class="bsky-loading-text">
                     Chargement...
                 </div>
             </div>
@@ -454,8 +462,9 @@
                                 type="text"
                                 id="gif-search"
                                 placeholder="Rechercher un GIF"
+                                placeholder-lang="gif-input-placeholder"
                             />
-                            <button id="gif-search-btn">Rechercher</button>
+                            <button id="gif-search-btn" data-lang="gif-search-btn">Rechercher</button>
                         </div>
                     </div>
                 </div>
@@ -475,10 +484,10 @@
                 <div class="alt-footer">
                     <div id="alt-counter" class="alt-counter">0/1500</div>
                     <div class="alt-btn-div">
-                        <button id="alt-cancel-btn" class="alt-cancel-btn">
+                        <button id="alt-cancel-btn" data-lang="alt-cancel-btn" class="alt-cancel-btn">
                             Annuler
                         </button>
-                        <button id="alt-save-btn" class="alt-save-btn">
+                        <button id="alt-save-btn" data-lang="alt-save-btn" class="alt-save-btn">
                             Valider
                         </button>
                     </div>

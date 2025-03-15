@@ -129,7 +129,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (window.confirm(locData['instance-confirm'])) {
                 instanceInput.value = null;
                 instanceInput.disabled = false;
-                instanceBtn.textContent = 'Valider';
+                instanceBtn.textContent = locData['instance-btn'];
                 localStorage.removeItem('mastothreadinstance');
                 instanceInput.value = null;
                 counter.style.display = 'none';
@@ -574,7 +574,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (instanceInput.disabled) {
             instanceInput.value = null;
             instanceInput.disabled = false;
-            instanceBtn.textContent = 'Valider';
+            instanceBtn.textContent = locData['instance-btn'];
             localStorage.removeItem('mastothreadinstance');
             instanceInput.value = null;
             counter.style.display = 'none';
@@ -950,7 +950,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             getWPPost(WPUrl);
             wpImportDialog.close();
         } else {
-            window.alert('Lien WordPress invalide.');
+            window.alert(locData['wp-invalid']);
             wpUrlInput.value = null;
             importSelect.value = '0';
             wpImportDialog.close();

@@ -58,6 +58,7 @@
     "bsky-thread-ok": "Import",
     "bsky-warning": "You are not connected to Bluesky. Authenticate?",
     "bsky-error": "Could not import Bluesky thread",
+    "bsky-link": "🔗 Bluesky thread",
     "wp-url": "Enter Wordpress post URL:",
     "wp-invalid": "Invalid Wordpress URL",
     "wp-import-cancel": "Cancel",
