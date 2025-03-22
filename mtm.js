@@ -1931,8 +1931,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         const dzInst = dropzone.querySelector('.dz-inst');
         const imgPreview = dropzone.querySelector('.img-preview');
 
-        const proxyUrl = 'https://corsproxy.io/';
-
         // Get Bluesky embedded media
         if (fromBsky && imgs && imgs.length > 0) {
             dzInst.style.display = 'none';
@@ -2025,7 +2023,12 @@ document.addEventListener('DOMContentLoaded', async function () {
                     files.push(mediaFile);
                     displayThumbnail(mediaFile, imgPreview, imgCount, dzInst);
                 } else if (img.type === 'image') {
-                    fetch(proxyUrl + encodeURIComponent(img.url))
+                    const form = new FormData();
+                    form.append('url', img.url);
+                    fetch('proxy.php', {
+                        method: 'POST',
+                        body: form,
+                    })
                         .then((response) => response.blob())
                         .then((blob) => {
                             const file = new File([blob], 'image.jpg', {
