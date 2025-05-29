@@ -8,6 +8,15 @@ document.addEventListener('DOMContentLoaded', async function () {
     const instructionsDiv = document.getElementById('instructions');
     const instanceInput = document.getElementById('instance-input');
     const instanceBtn = document.getElementById('instance-btn');
+    const clearStorage = document.getElementById('clear-storage');
+    const openOptionsBtn = document.getElementById('open-options');
+    const optionsDiv = document.getElementById('options-container');
+    const scheduleCheckbox = document.getElementById(
+        'schedule-thread-checkbox'
+    );
+    scheduleCheckbox.checked = false;
+    const scheduleInput = document.getElementById('schedule-input');
+    scheduleInput.value = null;
     const contentContainer = document.getElementById('content-container');
     const importSelect = document.querySelector('select.import');
     const bskyResetBtn = document.getElementById('bsky-reset');
@@ -16,6 +25,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     numberPostsCheckbox.checked = false;
     const inReplyToDiv = document.getElementById('in-reply-to');
     const inReplyToInput = document.getElementById('in-reply-input');
+    inReplyToInput.value = null;
     const replyPreview = document.getElementById('reply-preview');
     const previewDiv = document.getElementById('replied-post-preview');
     const threadLink = document.getElementById('thread-link');
@@ -36,9 +46,24 @@ document.addEventListener('DOMContentLoaded', async function () {
     const bskyThreadCancel = document.getElementById('bsky-thread-cancel');
     const convertHandlesCheckbox = document.getElementById('convert-handles');
     const bskyLoadingSpinner = document.getElementById('bsky-loading-dialog');
+    const waitingDialog = document.getElementById('waiting_dialog');
+    const waitingSpinner = waitingDialog.querySelector('div');
+    waitingSpinner.style.display = 'block';
 
     const yearSpan = document.querySelector('span#year');
     yearSpan.textContent = new Date().toISOString().split('-')[0];
+
+    // Clear local storage
+    clearStorage.addEventListener('click', () => {
+        let instance = localStorage.getItem('mastothreadinstance');
+        localStorage.removeItem('mastothreadinstance');
+        localStorage.removeItem('mastothreadtoken-v2');
+        localStorage.removeItem(`${instance}-id-v2`);
+        localStorage.removeItem(`${instance}-secret-v2`);
+        localStorage.removeItem('bsky-did');
+        localStorage.removeItem('bsky-handle');
+        window.location.reload();
+    });
 
     // Declare localisation variables
     const uiLang = navigator.language.split('-')[0].toLowerCase();
@@ -134,8 +159,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                 instanceInput.value = null;
                 counter.style.display = 'none';
                 await removeToken();
-                // checkInstance();
-                // checkToken();
                 window.location.reload();
             } else {
                 userId = null;
@@ -161,8 +184,12 @@ document.addEventListener('DOMContentLoaded', async function () {
                 inReplyUrl = sessionStorage.getItem('reply_to') || null;
                 userId = sessionStorage.getItem('user_id') || null;
                 sessionStorage.clear();
-                checkToken();
+                await checkToken();
+                await checkScheduledPosts();
                 customEmoji = await getCustomEmoji(instance);
+                if (bskyLink || inReplyUrl || WPUrl) {
+                    optionsDiv.style.display = 'flex';
+                }
                 if (bskyLink) {
                     if (window.confirm(locData['bsky-confirm'])) {
                         if (
@@ -190,7 +217,9 @@ document.addEventListener('DOMContentLoaded', async function () {
         instanceInput.focus();
     } else if (token) {
         await checkApp();
+        await checkScheduledPosts();
         customEmoji = await getCustomEmoji(instance);
+        waitingDialog.style.display = 'none';
         if (bskyUrl) {
             if (window.confirm(locData['bsky-confirm'])) {
                 if (window.confirm(locData['convert-handles-confirm'])) {
@@ -516,11 +545,11 @@ document.addEventListener('DOMContentLoaded', async function () {
             instanceBtn.textContent = locData['instance-reset'];
             instructionsDiv.style.display = 'none';
             instructionsBtn.textContent = locData['instructions-btn'];
+            openOptionsBtn.style.display = 'flex';
+            clearStorage.style.display = 'none';
             if (postItems.length === 0) {
                 await getMax();
                 await buildLangList();
-                numberPostsDiv.style.display = 'flex';
-                inReplyToDiv.style.display = 'block';
                 await getUserInfo();
                 createNewPost(mastoText ? mastoText : null);
                 postThreadBtn.style.display = 'flex';
@@ -529,6 +558,8 @@ document.addEventListener('DOMContentLoaded', async function () {
             instructionsDiv.style.display = 'flex';
             instructionsBtn.textContent = locData['instructions-hide'];
             instanceBtn.textContent = locData['instance-btn'];
+            clearStorage.style.display = 'block';
+            openOptionsBtn.style.display = 'none';
         }
     }
 
@@ -565,8 +596,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                 await createMastoApp();
             }
             redirectToAuthServer();
-            // checkInstance();
-            // checkToken();
         }
     });
 
@@ -579,9 +608,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             instanceInput.value = null;
             counter.style.display = 'none';
             await removeToken();
-            // checkInstance();
-            // checkToken();
-            window.location.reload();
+            window.location.href = window.location.href.split('?')[0];
         } else {
             instance = instanceInput.value;
             if (!instance) {
@@ -597,8 +624,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                 await createMastoApp();
             }
             redirectToAuthServer();
-            // checkInstance();
-            // checkToken();
         }
     });
 
@@ -714,6 +739,132 @@ document.addEventListener('DOMContentLoaded', async function () {
         return emojiArray;
     }
 
+    // Handle showing/hiding options
+    openOptionsBtn.addEventListener('click', () => {
+        if (optionsDiv.style.display !== 'flex') {
+            optionsDiv.style.display = 'flex';
+            openOptionsBtn.textContent = locData['close-options'];
+        } else {
+            optionsDiv.style.display = 'none';
+            openOptionsBtn.textContent = locData['open-options'];
+        }
+    });
+
+    // Handle scheduling option
+    scheduleCheckbox.addEventListener('change', () => {
+        if (scheduleCheckbox.checked) {
+            const now = new Date();
+            const offset = now.getTimezoneOffset();
+            const minDate = new Date(
+                now.setMinutes(now.getMinutes() - offset + 5)
+            );
+            scheduleInput.setAttribute(
+                'min',
+                minDate.toISOString().slice(0, 16)
+            );
+            scheduleInput.value = minDate.toISOString().slice(0, 16);
+            scheduleInput.style.display = 'flex';
+        } else {
+            scheduleInput.value = null;
+            scheduleInput.style.display = 'none';
+        }
+    });
+    scheduleInput.addEventListener('change', () => {
+        if (scheduleInput.value) {
+            console.log(
+                'Schedule date: ',
+                new Date(scheduleInput.value).toISOString()
+            );
+        } else {
+            console.log('No schedule date selected');
+        }
+    });
+
+    // Check for scheduled posts
+    async function checkScheduledPosts() {
+        try {
+            let res = await fetch(
+                `https://${instance}/api/v1/scheduled_statuses`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            if (!res.ok) {
+                console.error('Error fetching scheduled posts: ', res.status);
+                return;
+            }
+            let data = await res.json();
+            console.log('Scheduled posts: ', data);
+            if (data.length) {
+                const scheduledList = document.getElementById('scheduled-list');
+                for (let status of data) {
+                    const option = document.createElement('option');
+                    option.value = status.id;
+                    option.textContent =
+                        status.params.text.substring(0, 20) + '...';
+                    scheduledList.appendChild(option);
+                }
+                const cancelScheduleBtn = document.getElementById(
+                    'cancel-schedule-btn'
+                );
+                cancelScheduleBtn.addEventListener('click', async () => {
+                    const selectedOption =
+                        scheduledList.options[scheduledList.selectedIndex];
+                    const statusId = scheduledList.value;
+                    if (statusId) {
+                        await cancelScheduledPost(
+                            statusId,
+                            selectedOption,
+                            cancelScheduleBtn
+                        );
+                    }
+                });
+                const cancelSchedule =
+                    document.getElementById('cancel-schedule');
+                cancelSchedule.style.display = 'flex';
+            }
+        } catch (error) {
+            console.error('Error fetching scheduled posts: ', error);
+        }
+    }
+
+    async function cancelScheduledPost(id, option, button) {
+        try {
+            let res = await fetch(
+                `https://${instance}/api/v1/scheduled_statuses/${id}`,
+                {
+                    method: 'DELETE',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            if (!res.ok) {
+                console.error('Error cancelling scheduled post: ', res.status);
+                return;
+            } else {
+                button.style.backgroundColor = 'green';
+                button.textContent = '✔︎';
+                setTimeout(() => {
+                    option.remove();
+                    if (
+                        document.getElementById('scheduled-list').options
+                            .length === 0
+                    ) {
+                        const cancelSchedule =
+                            document.getElementById('cancel-schedule');
+                        cancelSchedule.style.display = 'none';
+                    }
+                }, 1000);
+                console.log('Scheduled post cancelled successfully');
+            }
+        } catch (error) {
+            console.error('Error cancelling scheduled post: ', error);
+        }
+    }
+
     // Handle post creation in reply to another post
     inReplyToInput.addEventListener('input', async () => {
         getRepliedToPost();
@@ -765,7 +916,6 @@ document.addEventListener('DOMContentLoaded', async function () {
             console.error(error);
         }
     }
-    // });
 
     function createRepliedPostPreview(status) {
         const previewAvatar = document.getElementById('replied-post-avatar');
@@ -819,6 +969,8 @@ document.addEventListener('DOMContentLoaded', async function () {
             updatePostList(message);
         };
 
+        optionsDiv.style.display = 'flex';
+        openOptionsBtn.textContent = locData['close-options'];
         previewDiv.style.display = 'flex';
         let message = 'Updating post list after setting in-reply-to';
         updatePostList(message);
@@ -1163,7 +1315,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                                                 let acct = account.acct;
                                                 text = text.replaceAll(
                                                     m,
-                                                    `${acct} `
+                                                    `@${acct} `
                                                 );
                                             } else {
                                                 continue;
@@ -1492,6 +1644,8 @@ document.addEventListener('DOMContentLoaded', async function () {
         window.alert(locData['thread-ready']);
     }
 
+    waitingDialog.style.display = 'none';
+
     // Create new post
     async function createNewPost(text, imgs) {
         oldPosts = postItems.map(function (p) {
@@ -1503,6 +1657,10 @@ document.addEventListener('DOMContentLoaded', async function () {
             contentContainer.appendChild(newPost);
             postItems.push(newPost);
         } else if (currentPost) {
+            if (scheduleCheckbox.checked) {
+                window.alert(locData['schedule-warning']);
+                return;
+            }
             currentPost.after(newPost);
             const currentIndex = postItems.indexOf(currentPost);
             const newIndex = currentIndex + 1;
@@ -2759,7 +2917,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         } else {
         }
         let numberPosts = numberPostsCheckbox.checked;
-        replyPreview.style.marginBottom = '10px';
+        optionsDiv.style.marginBottom = '10px';
         let threadLinks = Array.from(
             document.querySelectorAll('.thread-link')
         ).filter((t) => t.style.display === 'block');
@@ -2779,7 +2937,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             ) {
                 let replyLink = threadLink.cloneNode(true);
                 p.before(replyLink);
-                replyPreview.style.marginBottom = '0';
+                optionsDiv.style.marginBottom = '0';
                 replyLink.style.display = 'block';
             }
             postItems[postItems.length - 1].style.marginBottom = '20px';
@@ -2863,7 +3021,9 @@ document.addEventListener('DOMContentLoaded', async function () {
         };
         counter.after(restartBtn);
         postThreadBtn.style.display = 'none';
-        window.open(threadUrl, '_blank');
+        if (threadUrl) {
+            window.open(threadUrl, '_blank');
+        }
     });
 
     async function uploadMedia(f, d) {
@@ -2940,6 +3100,10 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (originalId) {
             replyToId = originalId;
         }
+        let scheduledAt = null;
+        if (scheduleCheckbox.checked) {
+            scheduledAt = new Date(scheduleInput.value);
+        }
         for (let post of postItems) {
             const i = postItems.indexOf(post);
             counter.textContent = `${locData['posting-toot']} ${i + 1}/${
@@ -2996,6 +3160,18 @@ document.addEventListener('DOMContentLoaded', async function () {
                 continue;
             }
             try {
+                const body = {
+                    status: postText,
+                    media_ids: postMediaIds,
+                    spoiler_text: cwText,
+                    visibility: visibility,
+                    in_reply_to_id: replyToId,
+                    language: postLang,
+                };
+                if (scheduledAt) {
+                    body.scheduled_at = scheduledAt.toISOString();
+                    console.log(body.scheduled_at);
+                }
                 const response = await fetch(
                     `https://${instance}/api/v1/statuses`,
                     {
@@ -3005,14 +3181,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                             'Content-Type': 'application/json',
                             scope: 'write',
                         },
-                        body: JSON.stringify({
-                            status: postText,
-                            media_ids: postMediaIds,
-                            spoiler_text: cwText,
-                            visibility: visibility,
-                            in_reply_to_id: replyToId,
-                            language: postLang,
-                        }),
+                        body: JSON.stringify(body),
                     }
                 );
 
@@ -3030,6 +3199,12 @@ document.addEventListener('DOMContentLoaded', async function () {
                 }
                 const data = await response.json();
                 replyToId = data.id;
+                if (scheduledAt) {
+                    const seconds = scheduledAt.getUTCSeconds();
+                    scheduledAt = new Date(
+                        scheduledAt.setUTCSeconds(seconds + 1)
+                    );
+                }
                 if (i === 0) {
                     threadUrl = data.url;
                 }
@@ -3038,6 +3213,10 @@ document.addEventListener('DOMContentLoaded', async function () {
                 console.error('Fetch error: ', error);
             }
         }
-        return threadUrl;
+        if (scheduledAt) {
+            return true;
+        } else {
+            return threadUrl;
+        }
     }
 });

@@ -12,6 +12,17 @@ body {
     background-color: light-dark(#e3e6e8, #181821);
 }
 
+.waiting_dialog {
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #cecee3;
+    height: 100vh;
+    width: 100vw;
+}
+
 svg {
     width: 300px;
 }
@@ -94,6 +105,13 @@ div#instructions-btn {
     vertical-align: middle;
 }
 
+span.clear-storage {
+    font-weight: bold;
+    text-decoration: underline;
+    cursor: pointer;
+    color: light-dark(#563acc, #6364ff);
+}
+
 input {
     height: 20px;
     width: 300px;
@@ -103,6 +121,57 @@ input {
     border: solid 1px light-dark(#d9d9e8, #313144);
     border-radius: 4px;
     margin-left: 4px;
+}
+
+input.schedule-input {
+    width: auto;
+}
+
+.open-options {
+    font-weight: bold;
+    text-decoration: underline;
+    cursor: pointer;
+    color: light-dark(#563acc, #6364ff);
+    margin: 10px 0;
+    display: none;
+}
+
+.options-container {
+    border: solid 1px light-dark(#d9d9e8, #313144);
+    border-radius: 4px;
+    background-color: light-dark(white, #181821);
+    color: light-dark(black, #9c9cc9);
+    padding: 10px 20px 0px 20px;
+    display: none;
+    flex-direction: column;
+    align-items: start;
+    justify-content: center;
+    margin-bottom: 10px;
+    width: 510px;
+}
+
+.options-container div.options-div {
+    margin-bottom: 10px;
+}
+
+label.schedule-label,
+label.number-posts,
+div#cancel-schedule,
+label.cancel-schedule {
+    display: flex;
+    align-items: center;
+    font-size: small;
+}
+
+select.cancel-schedule {
+    margin-left: 5px;
+    width: auto;
+    height: 28px;
+    color: light-dark(black, #9c9cc9);
+    border: solid 1px light-dark(#d9d9e8, #313144);
+    border-radius: 4px;
+    background-color: light-dark(#f9f9fb, #292938);
+    display: inline;
 }
 
 button {
@@ -116,15 +185,13 @@ button {
     margin: 10px;
 }
 
-button:hover {
-    background-color: #563acc;
+button#cancel-schedule-btn {
+    width: 100px;
+    height: 28px;
 }
 
-#number-posts-div {
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    margin: 10px 0;
+button:hover {
+    background-color: #563acc;
 }
 
 select.import {
@@ -337,7 +404,6 @@ div#dl-msg {
     bottom: 5px;
     width: 20px;
     height: 20px;
-    /* border: dashed 2px #6364ff; */
     border-radius: 4px;
     color: #6364ff;
     cursor: pointer;
@@ -352,7 +418,6 @@ div#dl-msg {
     bottom: 5px;
     width: 20px;
     height: 20px;
-    /* border: solid 2px #6364ff; */
     border-radius: 4px;
     color: #6364ff;
     cursor: pointer;
@@ -365,12 +430,6 @@ div#dl-msg {
     font-size: xx-small;
     text-align: center;
 }
-
-/* .add-img:hover,
-.add-gif:hover {
-    border-color: light-dark(#563acc, #6364ff);
-    color: light-dark(#563acc, #6364ff);
-} */
 
 .add-img:hover,
 .add-gif:hover,
@@ -456,11 +515,6 @@ button:disabled {
 .img-preview audio {
     width: 85px;
 }
-
-/* .img-preview video {
-    height: 85px;
-    object-fit: cover;
-} */
 
 .char-count,
 .img-count {
@@ -668,7 +722,6 @@ div.footer div a img {
 
 div#replied-post-preview {
     flex-direction: column;
-    width: 550px;
     border: solid 1px light-dark(#d9d9e8, black);
     border-radius: 4px;
     display: flex;
@@ -739,14 +792,6 @@ div.thread-link {
     border-left: solid 3px light-dark(#d9d9e8, #9c9cc9);
     width: 80%;
     height: 20px;
-}
-
-label.number-posts {
-    display: flex;
-    align-items: center;
-    font-size: small;
-    text-align: left;
-    margin: 0 5px;
 }
 
 div.number-posts {

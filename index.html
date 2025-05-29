@@ -217,11 +217,15 @@
             </div>
             <div>
                 <span data-lang="legacy" style="font-size: small"
-                    >En cas de problème, une ancienne version de MastoThreader est
-                    accessible </span>
-                    <a data-lang="legacy-link" style="font-size: small" href="https://mastothreader.prendrelangue.fr/legacy/index.html"
-                        >ici</a
-                    >
+                    >En cas de problème, une ancienne version de MastoThreader
+                    est accessible
+                </span>
+                <a
+                    data-lang="legacy-link"
+                    style="font-size: small"
+                    href="https://mastothreader.prendrelangue.fr/legacy/index.html"
+                    >ici</a
+                >
             </div>
             <div id="instance-input-div">
                 <div style="display: inline-block; vertical-align: middle">
@@ -237,60 +241,116 @@
                     Valider
                 </button>
             </div>
+            <div>
+                <span class="clear-storage" id="clear-storage" data-lang="clear-storage"
+                    >Si l'authentification échoue, cliquez ici et
+                    réessayez.</span
+                >
+            </div>
         </div>
         <div id="content-container">
-            <div id="number-posts-div" style="margin: 10px 0; display: none">
-                <select id="import" class="import">
-                    <option value="0" disabled selected data-lang="import">
-                        Importer du contenu
-                    </option>
-                    <option value="bsky" data-lang="import-bsky">
-                        Importer un fil Bluesky
-                    </option>
-                    <option value="wp" data-lang="import-wp">
-                        Importer un billet Wordpress
-                    </option>
-                </select>
-                <button
-                    id="bsky-reset"
-                    class="bsky-reset cancel"
-                    style="display: none"
-                >
-                    ⛓️‍💥 Bluesky
-                </button>
-                <label for="number-posts" class="number-posts">
-                    <input
-                        type="checkbox"
-                        name="number-posts"
-                        id="number-posts"
-                    /><span data-lang="number-posts"
-                        >Numéroter les pouets</span
-                    ></label
-                >
+            <div
+                id="open-options"
+                class="open-options"
+                data-lang="open-options"
+            >
+                Afficher les options
             </div>
-            <div id="in-reply-to" class="in-reply-to" style="display: none">
-                <label for="in-reply-input" style="font-size: small">
-                    <span data-lang="in-reply-input">En réponse à :</span>
-                    <input
-                        type="text"
-                        name="in-reply-input"
-                        id="in-reply-input"
-                        placeholder="URL du pouet original (facultatif)"
-                        placeholder-lang="in-reply-input-placeholder"
-                    />
-                </label>
-            </div>
-            <div id="reply-preview" style="margin-bottom: 10px">
-                <div id="replied-post-preview" style="display: none">
-                    <div id="replied-post-header">
-                        <div id="replied-post-avatar"></div>
-                        <div id="replied-post-display-name"></div>
-                        <div id="replied-post-time"></div>
-                        <div id="reply-preview-close">×</div>
+            <div id="options-container" class="options-container">
+                <div id="schedule-thread" class="options-div">
+                    <label
+                        for="schedule-thread-input"
+                        class="schedule-label"
+                        style="font-size: small"
+                    >
+                        <input type="checkbox" id="schedule-thread-checkbox" />
+                        <span data-lang="schedule-thread-input"
+                            >Programmer le fil</span
+                        >
+                        <input
+                            type="datetime-local"
+                            id="schedule-input"
+                            class="schedule-input"
+                            style="display: none"
+                        />
+                    </label>
+                    <div id="cancel-schedule" style="display: none">
+                        <label
+                            for="cancel-scheduled-post"
+                            class="cancel-schedule"
+                        >
+                            <span data-lang="cancel-scheduled-post"
+                                >Annuler un fil programmé</span
+                            >
+                            <select
+                                id="scheduled-list"
+                                class="cancel-schedule"
+                            ></select>
+                        </label>
+                        <button
+                            id="cancel-schedule-btn"
+                            class="cancel"
+                            data-lang="cancel"
+                        >
+                            Annuler
+                        </button>
                     </div>
-                    <div id="replied-post-content">
-                        <div id="replied-post-text"></div>
-                        <div id="replied-post-media"></div>
+                </div>
+                <div id="number-posts-div" class="options-div">
+                    <label for="number-posts" class="number-posts">
+                        <input
+                            type="checkbox"
+                            name="number-posts"
+                            id="number-posts"
+                        /><span data-lang="number-posts"
+                            >Numéroter les pouets</span
+                        ></label
+                    >
+                </div>
+                <div id="import-content" class="options-div">
+                    <select id="import" class="import">
+                        <option value="0" disabled selected data-lang="import">
+                            Importer du contenu
+                        </option>
+                        <option value="bsky" data-lang="import-bsky">
+                            Importer un fil Bluesky
+                        </option>
+                        <option value="wp" data-lang="import-wp">
+                            Importer un billet Wordpress
+                        </option>
+                    </select>
+                    <button
+                        id="bsky-reset"
+                        class="bsky-reset cancel"
+                        style="display: none"
+                    >
+                        ⛓️‍💥 Bluesky
+                    </button>
+                </div>
+                <div id="in-reply-to" class="in-reply-to options-div">
+                    <label for="in-reply-input" style="font-size: small">
+                        <span data-lang="in-reply-input">En réponse à :</span>
+                        <input
+                            type="text"
+                            name="in-reply-input"
+                            id="in-reply-input"
+                            placeholder="URL du pouet original (facultatif)"
+                            placeholder-lang="in-reply-input-placeholder"
+                        />
+                    </label>
+                </div>
+                <div id="reply-preview" class="options-div">
+                    <div id="replied-post-preview" style="display: none">
+                        <div id="replied-post-header">
+                            <div id="replied-post-avatar"></div>
+                            <div id="replied-post-display-name"></div>
+                            <div id="replied-post-time"></div>
+                            <div id="reply-preview-close">×</div>
+                        </div>
+                        <div id="replied-post-content">
+                            <div id="replied-post-text"></div>
+                            <div id="replied-post-media"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -437,6 +497,9 @@
                 /></a>
             </div>
         </div>
+        <dialog id="waiting_dialog" class="waiting_dialog">
+            <div class="spinner"></div>
+        </dialog>
         <dialog id="bsky-auth-dialog" class="bsky-dialog">
             <div data-lang="bsky-auth" style="margin-bottom: 10px">
                 Authentifez-vous sur Bluesky
