@@ -1,6 +1,7 @@
 import { franc } from 'https://esm.sh/franc@6?bundle';
 import { iso6393 } from 'https://esm.sh/iso-639-3@3?bundle';
 import { getNativeName } from 'https://esm.sh/iso-639-1@3?bundle';
+import muxjs from 'https://esm.sh/mux.js@6.3.0'
 
 document.addEventListener('DOMContentLoaded', async function () {
     // Declare page elements
