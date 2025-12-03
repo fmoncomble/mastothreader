@@ -105,6 +105,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 	let mastoText = null;
 	let inReplyUrl = null;
 	let userId = null;
+	let userName = null;
 	let bskyDid = localStorage.getItem("bsky-did")
 		? localStorage.getItem("bsky-did")
 		: null;
@@ -137,7 +138,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 		localStorage.removeItem(`${instance}-secret`);
 	}
 	localStorage.removeItem("mastothreadtoken");
-	checkToken();
+	await checkToken();
 
 	// Checking for URL search parameters
 	const urlParams = new URLSearchParams(window.location.search);
@@ -147,9 +148,24 @@ document.addEventListener("DOMContentLoaded", async function () {
 	if (urlParams.has("wp_url")) {
 		WPUrl = urlParams.get("wp_url");
 	}
-	// if (urlParams.has("user_id")) {
-	// 	userId = urlParams.get("user_id");
-	// }
+	if (urlParams.has("user_id")) {
+		let originUserId = urlParams.get("user_id");
+		if (userId && originUserId !== userId) {
+			if (window.confirm(locData["user-confirm"])) {
+				instanceInput.value = null;
+				instanceInput.disabled = false;
+				instanceBtn.textContent = locData["instance-btn"];
+				localStorage.removeItem("mastothreadinstance");
+				instanceInput.value = null;
+				counter.style.display = "none";
+				await removeToken();
+				window.location.reload();
+			} else {
+				userId = null;
+			}
+			checkCredentials();
+		}
+	}
 	if (urlParams.has("instance")) {
 		let originInstance = urlParams.get("instance");
 		if (instance && originInstance !== instance) {
@@ -492,7 +508,17 @@ document.addEventListener("DOMContentLoaded", async function () {
 			return;
 		} else {
 			let data = await res.json();
-            userAvatarSrc = data.picture;
+			userName = data.preferred_username;
+			userAvatarSrc = data.picture;
+			let idRes = await fetch(
+				`https://${instance}/api/v1/accounts/lookup?acct=${data.preferred_username}`
+			);
+			if (!idRes.ok) {
+				console.error("Error fetching user ID");
+			} else {
+				let idData = await idRes.json();
+				userId = idData.id;
+			}
 		}
 	}
 
@@ -520,11 +546,16 @@ document.addEventListener("DOMContentLoaded", async function () {
 			instructionsBtn.textContent = locData["instructions-btn"];
 			openOptionsBtn.style.display = "flex";
 			clearStorage.style.display = "none";
+			await getUserId();
+			document.getElementById("instance-text-input").style.display =
+				"none";
+			document.getElementById("logged-in-as").textContent =
+				locData["logged-in-as"] + ` @${userName}@${instance} ✅`;
+			document.getElementById("logged-in-as").style.display = "flex";
 			if (postItems.length === 0) {
 				await getMax();
 				await buildLangList();
 				// await getUserInfo();
-				await getUserId();
 				createNewPost(mastoText ? mastoText : null);
 				postThreadBtn.style.display = "flex";
 				waitingDialog.close();
@@ -2779,6 +2810,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 						altBtn.removeAttribute("style");
 					}
 					newAltDiv.style.display = "flex";
+					newAltDiv.style.left = `-${div.offsetLeft}px`;
 					newAltDiv.scrollIntoView();
 					altTextArea.focus();
 				}

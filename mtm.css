@@ -120,6 +120,27 @@ div#instructions-btn {
 	vertical-align: middle;
 }
 
+#logged-in-as,
+#instance-text-input {
+	display: flex;
+	align-items: center;
+	width: 100%;
+	position: relative;
+}
+
+#logged-in-as {
+	display: none;
+	justify-content: center;
+	font-size: small;
+	margin-top: 10px;
+	margin-bottom: 10px;
+	color:  #aaa;
+	background-color: light-dark(#f9f9fb, #292938);
+	height: 20px;
+	padding: 5px;
+	border-radius: 4px;
+}
+
 span.clear-storage {
 	font-weight: bold;
 	text-decoration: underline;
@@ -630,8 +651,8 @@ button:disabled {
 
 .alt-div {
 	position: absolute !important;
-	left: 50%;
-	transform: translateX(-50%);
+	/* left: 50%;
+	transform: translateX(-50%); */
 	z-index: 1;
 	align-items: center;
 	justify-content: center;
