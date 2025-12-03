@@ -29,10 +29,10 @@
     "in-reply-input": "In reply to:",
     "in-reply-input-placeholder": "URL of initial toot (optional)",
     "toot": "Toot",
-    "public": "Public",
-    "unlisted": "Quiet public",
-    "private": "Followers",
-    "direct": "Specific people",
+    "public": "🌐 Public",
+    "unlisted": "🌙 Quiet public",
+    "private": "🔒 Followers",
+    "direct": "✉️ Specific people",
     "cw-placeholder": "Content warning",
     "textarea-placeholder": "Type your text here",
     "img-upload": "Drag & drop your media here",
@@ -96,5 +96,6 @@
     "posting-error-1": "Toot #",
     "posting-error-2": "could not be published.",
     "thread-published": "Your thread is now published. To close your session (shared computer), click 'Reset'.",
-    "restart": "Write a new thread"
+    "restart": "Write a new thread",
+    "user-info-error": "Could not retrieve your user information. Please reauthenticate."
 }

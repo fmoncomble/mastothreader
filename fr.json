@@ -38,10 +38,10 @@
     "in-reply-input": "En réponse à :",
     "in-reply-input-placeholder": "URL du pouet original (facultatif)",
     "toot": "Pouet",
-    "public": "Public",
-    "unlisted": "Discret",
-    "private": "Abonnés",
-    "direct": "Personnes mentionnées",
+    "public": "🌐 Public",
+    "unlisted": "🌙 Discret",
+    "private": "🔒 Abonnés",
+    "direct": "✉️ Personnes mentionnées",
     "cw-placeholder": "Avertissement",
     "textarea-placeholder": "Tapez votre texte ici",
     "img-upload": "Glissez-déposez vos médias ici",
@@ -58,7 +58,7 @@
     "bsky-login-btn": "Valider",
     "bsky-url": "Entrez l'URL du fil Bluesky :",
     "convert-handles": "Convertir les pseudos (beta)",
-    "bsky-thread-cancel": "Annuler@",
+    "bsky-thread-cancel": "Annuler",
     "bsky-thread-ok": "Valider",
     "bsky-warning": "Vous n'êtes pas connecté·e à Bluesky. Voulez-vous vous authentifier ?",
     "bsky-error": "Impossible d'importer le fil Bluesky",
@@ -96,5 +96,6 @@
     "posting-error-1": "Le pouet n°",
     "posting-error-2": "n'a pas pu être envoyé.",
     "thread-published": "Votre fil a été publié. Pour fermer votre session (ordinateur partagé), cliquez sur « Réinitialiser ».",
-    "restart": "Composer un nouveau fil"
+    "restart": "Composer un nouveau fil",
+    "user-info-error": "Impossible de récupérer vos informations utilisateur. Veuillez vous authentifier à nouveau."
 }
