@@ -25,7 +25,7 @@ Le site ne collecte aucune de vos données. Les identifiants sont stockés local
 - [x] Version mobile.
 - [x] Détection du mode d'affichage clair / sombre.
 - [x] Banque d'émojis.
-- [ ] Localisation.
+- [x] Localisation.
 
 ### Extension pour navigateur
 - Ajoute un bouton "fil" à l'interface web de Mastodon, qui renvoie vers l'interface. Le texte déjà saisi est conservé, ainsi le cas échéant que le lien vers le pouet auquel le fil répond.  

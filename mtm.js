@@ -556,6 +556,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 				await getMax();
 				await buildLangList();
 				// await getUserInfo();
+				mastoText = new URLSearchParams(window.location.search).get("text");
 				createNewPost(mastoText ? mastoText : null);
 				postThreadBtn.style.display = "flex";
 				waitingDialog.close();
