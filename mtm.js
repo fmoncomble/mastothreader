@@ -1,80 +1,80 @@
-import { franc } from "https://esm.sh/franc@6?bundle";
-import { iso6393 } from "https://esm.sh/iso-639-3@3?bundle";
-import { getNativeName } from "https://esm.sh/iso-639-1@3?bundle";
-import muxjs from "https://esm.sh/mux.js@6.3.0";
+import { franc } from 'https://esm.sh/franc@6?bundle';
+import { iso6393 } from 'https://esm.sh/iso-639-3@3?bundle';
+import { getNativeName } from 'https://esm.sh/iso-639-1@3?bundle';
+import muxjs from 'https://esm.sh/mux.js@6.3.0';
 
-document.addEventListener("DOMContentLoaded", async function () {
+document.addEventListener('DOMContentLoaded', async function () {
 	// Declare page elements
-	const instructionsBtn = document.getElementById("instructions-btn");
-	const instructionsDiv = document.getElementById("instructions");
-	const instanceInput = document.getElementById("instance-input");
-	const instanceBtn = document.getElementById("instance-btn");
-	const clearStorage = document.getElementById("clear-storage");
-	const openOptionsBtn = document.getElementById("open-options");
-	const optionsDiv = document.getElementById("options-container");
+	const instructionsBtn = document.getElementById('instructions-btn');
+	const instructionsDiv = document.getElementById('instructions');
+	const instanceInput = document.getElementById('instance-input');
+	const instanceBtn = document.getElementById('instance-btn');
+	const clearStorage = document.getElementById('clear-storage');
+	const openOptionsBtn = document.getElementById('open-options');
+	const optionsDiv = document.getElementById('options-container');
 	const scheduleCheckbox = document.getElementById(
-		"schedule-thread-checkbox"
+		'schedule-thread-checkbox'
 	);
 	scheduleCheckbox.checked = false;
-	const scheduleInput = document.getElementById("schedule-input");
+	const scheduleInput = document.getElementById('schedule-input');
 	scheduleInput.value = null;
-	const contentContainer = document.getElementById("content-container");
-	const importSelect = document.querySelector("select.import");
-	const bskyResetBtn = document.getElementById("bsky-reset");
-	const numberPostsDiv = document.getElementById("number-posts-div");
-	const numberPostsCheckbox = document.getElementById("number-posts");
+	const contentContainer = document.getElementById('content-container');
+	const importSelect = document.querySelector('select.import');
+	const bskyResetBtn = document.getElementById('bsky-reset');
+	const numberPostsDiv = document.getElementById('number-posts-div');
+	const numberPostsCheckbox = document.getElementById('number-posts');
 	numberPostsCheckbox.checked = false;
-	const inReplyToDiv = document.getElementById("in-reply-to");
-	const inReplyToInput = document.getElementById("in-reply-input");
+	const inReplyToDiv = document.getElementById('in-reply-to');
+	const inReplyToInput = document.getElementById('in-reply-input');
 	inReplyToInput.value = null;
-	const replyPreview = document.getElementById("reply-preview");
-	const previewDiv = document.getElementById("replied-post-preview");
-	const threadLink = document.getElementById("thread-link");
-	const postItem = document.getElementById("post-item");
-	const languageSelect = document.querySelector(".lang-select");
-	const postThreadBtn = document.getElementById("post-thread-btn");
-	const spinner = document.getElementById("spinner");
-	const counter = document.getElementById("counter");
-	const bskyAuthDialog = document.getElementById("bsky-auth-dialog");
-	const idInput = document.getElementById("id-input");
-	const pwdInput = document.getElementById("pwd-input");
-	const submitBtn = document.getElementById("bsky-login-btn");
-	const cancelBskyLoginBtn = document.getElementById("bsky-cancel-btn");
-	const bskyThreadDialog = document.getElementById("bsky-thread-dialog");
-	const bskyThreadInput = document.getElementById("bsky-thread-input");
+	const replyPreview = document.getElementById('reply-preview');
+	const previewDiv = document.getElementById('replied-post-preview');
+	const threadLink = document.getElementById('thread-link');
+	const postItem = document.getElementById('post-item');
+	const languageSelect = document.querySelector('.lang-select');
+	const postThreadBtn = document.getElementById('post-thread-btn');
+	const spinner = document.getElementById('spinner');
+	const counter = document.getElementById('counter');
+	const bskyAuthDialog = document.getElementById('bsky-auth-dialog');
+	const idInput = document.getElementById('id-input');
+	const pwdInput = document.getElementById('pwd-input');
+	const submitBtn = document.getElementById('bsky-login-btn');
+	const cancelBskyLoginBtn = document.getElementById('bsky-cancel-btn');
+	const bskyThreadDialog = document.getElementById('bsky-thread-dialog');
+	const bskyThreadInput = document.getElementById('bsky-thread-input');
 	bskyThreadInput.value = null;
-	const bskyThreadOk = document.getElementById("bsky-thread-ok");
-	const bskyThreadCancel = document.getElementById("bsky-thread-cancel");
-	const convertHandlesCheckbox = document.getElementById("convert-handles");
-	const bskyLoadingSpinner = document.getElementById("bsky-loading-dialog");
-	const waitingDialog = document.getElementById("waiting_dialog");
-	const waitingSpinner = waitingDialog.querySelector("div.spinner");
-	waitingSpinner.style.display = "flex";
+	const bskyThreadOk = document.getElementById('bsky-thread-ok');
+	const bskyThreadCancel = document.getElementById('bsky-thread-cancel');
+	const convertHandlesCheckbox = document.getElementById('convert-handles');
+	const bskyLoadingSpinner = document.getElementById('bsky-loading-dialog');
+	const waitingDialog = document.getElementById('waiting_dialog');
+	const waitingSpinner = waitingDialog.querySelector('div.spinner');
+	waitingSpinner.style.display = 'flex';
 
 	waitingDialog.showModal();
 
-	const yearSpan = document.querySelector("span#year");
-	yearSpan.textContent = new Date().toISOString().split("-")[0];
+	const yearSpan = document.querySelector('span#year');
+	yearSpan.textContent = new Date().toISOString().split('-')[0];
 
 	// Clear local storage
-	clearStorage.addEventListener("click", () => {
-		let instance = localStorage.getItem("mastothreadinstance");
-		localStorage.removeItem("mastothreadinstance");
-		localStorage.removeItem("mastothreadtoken-v2");
+	clearStorage.addEventListener('click', () => {
+		let instance = localStorage.getItem('mastothreadinstance');
+		localStorage.removeItem('mastothreadinstance');
+		localStorage.removeItem('mastothreadtoken-v2');
 		localStorage.removeItem(`${instance}-id-v2`);
 		localStorage.removeItem(`${instance}-secret-v2`);
-		localStorage.removeItem("bsky-did");
-		localStorage.removeItem("bsky-handle");
+		localStorage.removeItem('bsky-did');
+		localStorage.removeItem('bsky-handle');
 		window.location.reload();
 	});
 
 	// Declare localisation variables
-	const uiLang = navigator.language.split("-")[0].toLowerCase();
+	const uiLang = navigator.language.split('-')[0].toLowerCase();
 	let locData;
 
 	// Declare authentication variables
 	let instance;
-	const redirectUri = window.location.href.split("?")[0];
+	const redirectUri = window.location.href.split('?')[0];
 	let clientId;
 	let clientSecret;
 	let code;
@@ -89,7 +89,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 	let userAvatarSrc;
 
 	// Declare post variables
-	let defaultViz = "public";
+	let defaultViz = 'public';
+	let defaultQuote = 'public';
 	let splitNb = 0;
 	let isSplitting = false;
 	let postItems = [];
@@ -106,17 +107,17 @@ document.addEventListener("DOMContentLoaded", async function () {
 	let inReplyUrl = null;
 	let userId = null;
 	let userName = null;
-	let bskyDid = localStorage.getItem("bsky-did")
-		? localStorage.getItem("bsky-did")
+	let bskyDid = localStorage.getItem('bsky-did')
+		? localStorage.getItem('bsky-did')
 		: null;
-	let bskyHandle = localStorage.getItem("bsky-handle")
-		? localStorage.getItem("bsky-handle")
+	let bskyHandle = localStorage.getItem('bsky-handle')
+		? localStorage.getItem('bsky-handle')
 		: null;
 
 	if (bskyDid && bskyHandle) {
-		bskyResetBtn.style.display = "inline-block";
+		bskyResetBtn.style.display = 'inline-block';
 	} else {
-		bskyResetBtn.style.display = "none";
+		bskyResetBtn.style.display = 'none';
 	}
 	let bskyUrl = null;
 	let convertHandles = false;
@@ -137,27 +138,27 @@ document.addEventListener("DOMContentLoaded", async function () {
 		localStorage.removeItem(`${instance}-id`);
 		localStorage.removeItem(`${instance}-secret`);
 	}
-	localStorage.removeItem("mastothreadtoken");
+	localStorage.removeItem('mastothreadtoken');
 	await checkToken();
 
 	// Checking for URL search parameters
 	const urlParams = new URLSearchParams(window.location.search);
-	if (urlParams.has("bsky_url")) {
-		bskyUrl = urlParams.get("bsky_url");
+	if (urlParams.has('bsky_url')) {
+		bskyUrl = urlParams.get('bsky_url');
 	}
-	if (urlParams.has("wp_url")) {
-		WPUrl = urlParams.get("wp_url");
+	if (urlParams.has('wp_url')) {
+		WPUrl = urlParams.get('wp_url');
 	}
-	if (urlParams.has("user_id")) {
-		let originUserId = urlParams.get("user_id");
+	if (urlParams.has('user_id')) {
+		let originUserId = urlParams.get('user_id');
 		if (userId && originUserId !== userId) {
-			if (window.confirm(locData["user-confirm"])) {
+			if (window.confirm(locData['user-confirm'])) {
 				instanceInput.value = null;
 				instanceInput.disabled = false;
-				instanceBtn.textContent = locData["instance-btn"];
-				localStorage.removeItem("mastothreadinstance");
+				instanceBtn.textContent = locData['instance-btn'];
+				localStorage.removeItem('mastothreadinstance');
 				instanceInput.value = null;
-				counter.style.display = "none";
+				counter.style.display = 'none';
 				await removeToken();
 				window.location.reload();
 			} else {
@@ -166,16 +167,16 @@ document.addEventListener("DOMContentLoaded", async function () {
 			checkCredentials();
 		}
 	}
-	if (urlParams.has("instance")) {
-		let originInstance = urlParams.get("instance");
+	if (urlParams.has('instance')) {
+		let originInstance = urlParams.get('instance');
 		if (instance && originInstance !== instance) {
-			if (window.confirm(locData["instance-confirm"])) {
+			if (window.confirm(locData['instance-confirm'])) {
 				instanceInput.value = null;
 				instanceInput.disabled = false;
-				instanceBtn.textContent = locData["instance-btn"];
-				localStorage.removeItem("mastothreadinstance");
+				instanceBtn.textContent = locData['instance-btn'];
+				localStorage.removeItem('mastothreadinstance');
 				instanceInput.value = null;
-				counter.style.display = "none";
+				counter.style.display = 'none';
 				await removeToken();
 				window.location.reload();
 			} else {
@@ -184,34 +185,34 @@ document.addEventListener("DOMContentLoaded", async function () {
 			checkCredentials();
 		}
 	}
-	if (urlParams.has("reply_to")) {
-		inReplyUrl = urlParams.get("reply_to");
+	if (urlParams.has('reply_to')) {
+		inReplyUrl = urlParams.get('reply_to');
 	}
-	if (urlParams.has("text")) {
-		mastoText = urlParams.get("text");
+	if (urlParams.has('text')) {
+		mastoText = urlParams.get('text');
 	}
 	if (!token && instance) {
-		code = urlParams.get("code");
+		code = urlParams.get('code');
 		if (code) {
 			token = await exchangeCodeForToken(code);
 			if (token) {
-				localStorage.setItem("mastothreadtoken-v2", token);
-				bskyLink = sessionStorage.getItem("bsky_url") || null;
-				WPUrl = sessionStorage.getItem("wp_url") || null;
-				mastoText = sessionStorage.getItem("text") || null;
-				inReplyUrl = sessionStorage.getItem("reply_to") || null;
-				userId = sessionStorage.getItem("user_id") || null;
+				localStorage.setItem('mastothreadtoken-v2', token);
+				bskyLink = sessionStorage.getItem('bsky_url') || null;
+				WPUrl = sessionStorage.getItem('wp_url') || null;
+				mastoText = sessionStorage.getItem('text') || null;
+				inReplyUrl = sessionStorage.getItem('reply_to') || null;
+				userId = sessionStorage.getItem('user_id') || null;
 				sessionStorage.clear();
 				await checkToken();
 				await checkScheduledPosts();
 				customEmoji = await getCustomEmoji(instance);
 				if (bskyLink || inReplyUrl || WPUrl) {
-					optionsDiv.style.display = "flex";
+					optionsDiv.style.display = 'flex';
 				}
 				if (bskyLink) {
-					if (window.confirm(locData["bsky-confirm"])) {
+					if (window.confirm(locData['bsky-confirm'])) {
 						if (
-							window.confirm(locData["convert-handles-confirm"])
+							window.confirm(locData['convert-handles-confirm'])
 						) {
 							convertHandles = true;
 						}
@@ -221,7 +222,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 					inReplyToInput.value = inReplyUrl;
 					getRepliedToPost();
 				} else if (WPUrl) {
-					if (window.confirm(locData["wp-confirm"])) {
+					if (window.confirm(locData['wp-confirm'])) {
 						await getWPPost(WPUrl);
 					}
 				}
@@ -231,16 +232,15 @@ document.addEventListener("DOMContentLoaded", async function () {
 		for (let [key, value] of urlParams) {
 			sessionStorage.setItem(key, value);
 		}
-		window.alert(locData["instance-warning"]);
+		window.alert(locData['instance-warning']);
 		instanceInput.focus();
 	} else if (token) {
 		await checkApp();
 		await checkScheduledPosts();
 		customEmoji = await getCustomEmoji(instance);
-		// waitingDialog.close();
 		if (bskyUrl) {
-			if (window.confirm(locData["bsky-confirm"])) {
-				if (window.confirm(locData["convert-handles-confirm"])) {
+			if (window.confirm(locData['bsky-confirm'])) {
+				if (window.confirm(locData['convert-handles-confirm'])) {
 					convertHandles = true;
 				}
 				bskyLink = bskyUrl;
@@ -248,7 +248,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 			}
 		}
 		if (WPUrl) {
-			if (window.confirm(locData["wp-confirm"])) {
+			if (window.confirm(locData['wp-confirm'])) {
 				await getWPPost(WPUrl);
 			}
 		}
@@ -263,36 +263,36 @@ document.addEventListener("DOMContentLoaded", async function () {
 	async function localiseUI() {
 		let locFile = await fetch(`${uiLang}.json`);
 		if (!locFile.ok) {
-			locFile = await fetch("en.json");
+			locFile = await fetch('en.json');
 		}
 		locData = await locFile.json();
-		document.querySelectorAll("[data-lang]").forEach((element) => {
-			const key = element.getAttribute("data-lang");
-			element.textContent = locData[key];
+		document.querySelectorAll('[data-lang]').forEach((element) => {
+			const key = element.getAttribute('data-lang');
+			element.innerHTML = locData[key];
 		});
-		document.querySelectorAll("[placeholder-lang]").forEach((element) => {
-			const key = element.getAttribute("placeholder-lang");
+		document.querySelectorAll('[placeholder-lang]').forEach((element) => {
+			const key = element.getAttribute('placeholder-lang');
 			element.placeholder = locData[key];
 		});
 	}
 
 	// Handle instructions display
-	instructionsBtn.addEventListener("click", () => {
-		if (instructionsDiv.style.display === "none") {
-			instructionsDiv.style.display = "flex";
-			instructionsBtn.textContent = locData["instructions-hide"];
+	instructionsBtn.addEventListener('click', () => {
+		if (instructionsDiv.style.display === 'none') {
+			instructionsDiv.style.display = 'flex';
+			instructionsBtn.textContent = locData['instructions-hide'];
 		} else {
-			instructionsDiv.style.display = "none";
-			instructionsBtn.textContent = locData["instructions-btn"];
+			instructionsDiv.style.display = 'none';
+			instructionsBtn.textContent = locData['instructions-btn'];
 		}
 	});
 
 	// Functions to gather instance information
-	let instanceList = document.getElementById("instance-list");
+	let instanceList = document.getElementById('instance-list');
 	instanceList.style.left = `${instanceInput.offsetLeft}px`;
 	async function buildInstList(input) {
 		if (!input) {
-			instanceList.style.display = "none";
+			instanceList.style.display = 'none';
 			return;
 		}
 		let matches;
@@ -301,26 +301,26 @@ document.addEventListener("DOMContentLoaded", async function () {
 		}
 		if (matches && matches.length > 0) {
 			instanceList.innerHTML = null;
-			instanceList.style.display = "block";
+			instanceList.style.display = 'block';
 			for (let m of matches) {
-				const instItem = document.createElement("div");
-				instItem.classList.add("instance-item");
-				const instName = document.createElement("span");
+				const instItem = document.createElement('div');
+				instItem.classList.add('instance-item');
+				const instName = document.createElement('span');
 				instName.textContent = m;
 				instItem.appendChild(instName);
-				instItem.addEventListener("click", () => {
+				instItem.addEventListener('click', () => {
 					instanceInput.value = m;
-					instanceList.style.display = "none";
+					instanceList.style.display = 'none';
 					instanceBtn.click();
 				});
 				instanceList.appendChild(instItem);
 			}
 			instanceList
-				.querySelector(".instance-item")
-				.classList.add("selected");
+				.querySelector('.instance-item')
+				.classList.add('selected');
 		} else {
 			instanceList.innerHTML = null;
-			instanceList.style.display = "none";
+			instanceList.style.display = 'none';
 		}
 	}
 
@@ -328,7 +328,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 	async function searchInstance(input) {
 		searching = true;
 		try {
-			let res = await fetch("inst.php?input=" + input);
+			let res = await fetch('inst.php?input=' + input);
 			if (res.ok) {
 				let matches = [];
 				let data = await res.json();
@@ -343,60 +343,60 @@ document.addEventListener("DOMContentLoaded", async function () {
 				return matches;
 			}
 		} catch (error) {
-			console.error("Error fetching instances: ", error);
+			console.error('Error fetching instances: ', error);
 		}
 	}
 
-	instanceInput.addEventListener("input", async (e) => {
+	instanceInput.addEventListener('input', async (e) => {
 		e.preventDefault();
 		let input = e.target.value;
 		buildInstList(input.toLowerCase());
 	});
 	let instIndex = 0;
-	instanceInput.addEventListener("keydown", (e) => {
-		let instanceItems = instanceList.querySelectorAll(".instance-item");
+	instanceInput.addEventListener('keydown', (e) => {
+		let instanceItems = instanceList.querySelectorAll('.instance-item');
 		let currentInst = instanceItems[instIndex];
 		if (instanceItems && instanceItems.length > 0) {
-			if (e.key === "ArrowDown") {
+			if (e.key === 'ArrowDown') {
 				e.preventDefault();
 				if (instIndex < instanceItems.length - 1) {
 					instIndex++;
 					let oldInst = instanceItems[instIndex - 1];
 					currentInst = instanceItems[instIndex];
 					if (oldInst) {
-						oldInst.classList.remove("selected");
+						oldInst.classList.remove('selected');
 					}
 					if (currentInst) {
-						currentInst.classList.add("selected");
+						currentInst.classList.add('selected');
 						instanceInput.value =
-							currentInst.querySelector("span").textContent;
+							currentInst.querySelector('span').textContent;
 					}
 				}
-			} else if (e.key === "ArrowUp") {
+			} else if (e.key === 'ArrowUp') {
 				e.preventDefault();
 				if (instIndex > 0) {
 					instIndex--;
 					let oldInst = instanceItems[instIndex + 1];
 					currentInst = instanceItems[instIndex];
 					if (oldInst) {
-						oldInst.classList.remove("selected");
+						oldInst.classList.remove('selected');
 					}
 					if (currentInst) {
-						currentInst.classList.add("selected");
+						currentInst.classList.add('selected');
 						instanceInput.value =
-							currentInst.querySelector("span").textContent;
+							currentInst.querySelector('span').textContent;
 					}
 				}
-			} else if (e.key === "Escape") {
+			} else if (e.key === 'Escape') {
 				e.preventDefault();
-				instanceList.style.display = "none";
-			} else if (e.key === "Tab" || e.key === "Enter") {
+				instanceList.style.display = 'none';
+			} else if (e.key === 'Tab' || e.key === 'Enter') {
 				e.preventDefault();
-				currentInst = instanceList.querySelector(".selected");
+				currentInst = instanceList.querySelector('.selected');
 				if (currentInst) {
 					instanceInput.value =
-						currentInst.querySelector("span").textContent;
-					instanceList.style.display = "none";
+						currentInst.querySelector('span').textContent;
+					instanceList.style.display = 'none';
 				}
 			}
 		}
@@ -421,7 +421,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 					const langValue = lang.code;
 					const langName = lang.name;
 					const nativeName = lang.native_name;
-					const option = document.createElement("option");
+					const option = document.createElement('option');
 					option.value = langValue;
 					option.textContent = langName;
 					if (nativeName) {
@@ -433,47 +433,47 @@ document.addEventListener("DOMContentLoaded", async function () {
 				}
 			}
 		} catch (error) {
-			console.error("Error fetching languages: ", error);
+			console.error('Error fetching languages: ', error);
 		}
 	}
 
 	// Handle plugin download link
-	const pluginDl = document.getElementById("plugin-dl");
+	const pluginDl = document.getElementById('plugin-dl');
 	if (window.screen.width < 600) {
-		pluginDl.style.display = "none";
+		pluginDl.style.display = 'none';
 	}
-	const dlPic = document.getElementById("dl-pic");
-	const dlMsg = document.getElementById("dl-msg");
-	const pluginInstall = document.getElementById("plugin-install");
-	const pluginLink = document.createElement("a");
-	pluginLink.textContent = locData["plugin-install"];
-	pluginLink.target = "_blank";
+	const dlPic = document.getElementById('dl-pic');
+	const dlMsg = document.getElementById('dl-msg');
+	const pluginInstall = document.getElementById('plugin-install');
+	const pluginLink = document.createElement('a');
+	pluginLink.textContent = locData['plugin-install'];
+	pluginLink.target = '_blank';
 	pluginInstall.appendChild(pluginLink);
 	const userAgent = navigator.userAgent;
 	if (
-		userAgent.indexOf("Chrome") !== -1 ||
-		userAgent.indexOf("Edge") !== -1 ||
-		userAgent.indexOf("OPR") !== -1 ||
-		userAgent.indexOf("Opera") !== -1
+		userAgent.indexOf('Chrome') !== -1 ||
+		userAgent.indexOf('Edge') !== -1 ||
+		userAgent.indexOf('OPR') !== -1 ||
+		userAgent.indexOf('Opera') !== -1
 	) {
 		pluginLink.href =
-			"https://chromewebstore.google.com/detail/mastothreader-plugin/majdplkphamfebljfgebiniknbodhdgi";
-	} else if (userAgent.indexOf("Firefox") !== -1) {
+			'https://chromewebstore.google.com/detail/mastothreader-plugin/majdplkphamfebljfgebiniknbodhdgi';
+	} else if (userAgent.indexOf('Firefox') !== -1) {
 		pluginLink.href =
-			"https://github.com/fmoncomble/mastothreader/releases/latest/download/mastothreader.xpi";
+			'https://github.com/fmoncomble/mastothreader/releases/latest/download/mastothreader.xpi';
 	} else if (
-		userAgent.indexOf("Safari") !== -1 &&
-		userAgent.indexOf("Chrome") === -1
+		userAgent.indexOf('Safari') !== -1 &&
+		userAgent.indexOf('Chrome') === -1
 	) {
-		pluginInstall.textContent = locData["plugin-install-unavailable"];
+		pluginInstall.textContent = locData['plugin-install-unavailable'];
 	} else {
-		pluginInstall.textContent = locData["plugin-install-unavailable"];
+		pluginInstall.textContent = locData['plugin-install-unavailable'];
 	}
 	dlPic.onclick = () => {
-		if (dlMsg.style.display === "none") {
-			dlMsg.style.display = "flex";
+		if (dlMsg.style.display === 'none') {
+			dlMsg.style.display = 'flex';
 		} else {
-			dlMsg.style.display = "none";
+			dlMsg.style.display = 'none';
 		}
 	};
 
@@ -484,7 +484,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 		res.then(async (res) => {
 			if (!res.ok) {
 				const error = await res.json();
-				window.alert(locData["app-warning"] + `\n` + error.error + ".");
+				window.alert(locData['app-warning'] + `\n` + error.error + '.');
 				await removeToken();
 				window.location.reload();
 			} else {
@@ -498,10 +498,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 			headers: { Authorization: `Bearer ${token}` },
 		});
 		if (!res.ok) {
-			console.error("Error fetching user info");
-			window.alert(locData["user-info-error"]);
+			console.error('Error fetching user info');
+			window.alert(locData['user-info-error']);
 			await removeToken();
-			localStorage.removeItem("mastothreadtoken-v2");
+			localStorage.removeItem('mastothreadtoken-v2');
 			localStorage.removeItem(`${instance}-id-v2`);
 			localStorage.removeItem(`${instance}-secret-v2`);
 			window.location.reload();
@@ -514,7 +514,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 				`https://${instance}/api/v1/accounts/lookup?acct=${data.preferred_username}`
 			);
 			if (!idRes.ok) {
-				console.error("Error fetching user ID");
+				console.error('Error fetching user ID');
 			} else {
 				let idData = await idRes.json();
 				userId = idData.id;
@@ -528,7 +528,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 	}
 
 	function checkInstance() {
-		instance = localStorage.getItem("mastothreadinstance");
+		instance = localStorage.getItem('mastothreadinstance');
 		if (instance) {
 			instanceInput.value = instance;
 		} else if (!instance) {
@@ -537,68 +537,69 @@ document.addEventListener("DOMContentLoaded", async function () {
 	}
 
 	async function checkToken() {
-		token = localStorage.getItem("mastothreadtoken-v2");
+		token = localStorage.getItem('mastothreadtoken-v2');
 		if (token) {
-			instanceInput.value = instance + " ✅";
+			instanceInput.value = instance + ' ✅';
 			instanceInput.disabled = true;
-			instanceBtn.textContent = locData["instance-reset"];
-			instructionsDiv.style.display = "none";
-			instructionsBtn.textContent = locData["instructions-btn"];
-			openOptionsBtn.style.display = "flex";
-			clearStorage.style.display = "none";
+			instanceBtn.textContent = locData['instance-reset'];
+			instructionsDiv.style.display = 'none';
+			instructionsBtn.textContent = locData['instructions-btn'];
+			openOptionsBtn.style.display = 'flex';
+			clearStorage.style.display = 'none';
 			await getUserId();
-			document.getElementById("instance-text-input").style.display =
-				"none";
-			document.getElementById("logged-in-as").textContent =
-				locData["logged-in-as"] + ` @${userName}@${instance} ✅`;
-			document.getElementById("logged-in-as").style.display = "flex";
+			document.getElementById('instance-text-input').style.display =
+				'none';
+			document.getElementById('logged-in-as').textContent =
+				locData['logged-in-as'] + ` @${userName}@${instance} ✅`;
+			document.getElementById('logged-in-as').style.display = 'flex';
 			if (postItems.length === 0) {
 				await getMax();
 				await buildLangList();
-				// await getUserInfo();
-				mastoText = new URLSearchParams(window.location.search).get("text");
+				mastoText = new URLSearchParams(window.location.search).get(
+					'text'
+				);
 				createNewPost(mastoText ? mastoText : null);
-				postThreadBtn.style.display = "flex";
+				postThreadBtn.style.display = 'flex';
 				waitingDialog.close();
 			}
 		} else if (!token) {
-			instructionsDiv.style.display = "flex";
-			instructionsBtn.textContent = locData["instructions-hide"];
-			instanceBtn.textContent = locData["instance-btn"];
-			clearStorage.style.display = "block";
-			openOptionsBtn.style.display = "none";
+			instructionsDiv.style.display = 'flex';
+			instructionsBtn.textContent = locData['instructions-hide'];
+			instanceBtn.textContent = locData['instance-btn'];
+			clearStorage.style.display = 'block';
+			openOptionsBtn.style.display = 'none';
 			waitingDialog.close();
 		}
 	}
 
 	async function removeToken() {
-		localStorage.removeItem("mastothreadtoken-v2");
+		localStorage.removeItem('mastothreadtoken-v2');
 		const formData = new FormData();
-		formData.append("client_id", clientId);
-		formData.append("client_secret", clientSecret);
-		formData.append("token", token);
+		formData.append('client_id', clientId);
+		formData.append('client_secret', clientSecret);
+		formData.append('token', token);
 		const response = await fetch(`https://${instance}/oauth/revoke`, {
-			method: "POST",
-			mode: "no-cors",
+			method: 'POST',
+			mode: 'no-cors',
 			body: formData,
 		});
 		if (response.status === 403) {
 			const error = await response.json();
-			console.error("Token could not be revoked: ", error);
+			console.error('Token could not be revoked: ', error);
 			window.alert(
-				locData["reset-warning"] + `\n` + error.error_description
+				locData['reset-warning'] + `\n` + error.error_description
 			);
 		}
 	}
 
-	instanceInput.addEventListener("keydown", async (event) => {
-		if (event.key === "Enter") {
+	instanceInput.addEventListener('keydown', async (event) => {
+		if (event.key === 'Enter') {
 			instance = instanceInput.value;
 			if (!instance) {
-				window.alert(locData["instance-empty"]);
+				window.alert(locData['instance-empty']);
 				return;
 			}
-			localStorage.setItem("mastothreadinstance", instance);
+			localStorage.setItem('mastothreadinstance', instance);
 			checkCredentials();
 			if (!clientId && !clientSecret) {
 				await createMastoApp();
@@ -607,26 +608,26 @@ document.addEventListener("DOMContentLoaded", async function () {
 		}
 	});
 
-	instanceBtn.addEventListener("click", async () => {
+	instanceBtn.addEventListener('click', async () => {
 		if (instanceInput.disabled) {
 			instanceInput.value = null;
 			instanceInput.disabled = false;
-			instanceBtn.textContent = locData["instance-btn"];
-			localStorage.removeItem("mastothreadinstance");
+			instanceBtn.textContent = locData['instance-btn'];
+			localStorage.removeItem('mastothreadinstance');
 			instanceInput.value = null;
-			counter.style.display = "none";
+			counter.style.display = 'none';
 			await removeToken();
-			window.location.href = window.location.href.split("?")[0];
+			window.location.href = window.location.href.split('?')[0];
 		} else {
 			instance = instanceInput.value;
 			if (!instance) {
-				window.alert(locData["instance-empty"]);
+				window.alert(locData['instance-empty']);
 				return;
 			}
-			if (instance.includes("@")) {
-				instance = instance.split("@")[1];
+			if (instance.includes('@')) {
+				instance = instance.split('@')[1];
 			}
-			localStorage.setItem("mastothreadinstance", instance);
+			localStorage.setItem('mastothreadinstance', instance);
 			checkCredentials();
 			if (!clientId && !clientSecret) {
 				await createMastoApp();
@@ -639,23 +640,23 @@ document.addEventListener("DOMContentLoaded", async function () {
 		const createAppUrl = `https://${instance}/api/v1/apps`;
 		try {
 			const response = await fetch(createAppUrl, {
-				method: "POST",
+				method: 'POST',
 				headers: {
-					"Content-Type": "application/json",
+					'Content-Type': 'application/json',
 				},
 				body: JSON.stringify({
-					client_name: "MastoThreader",
+					client_name: 'MastoThreader',
 					redirect_uris: redirectUri,
-					scopes: "profile read write",
+					scopes: 'profile read write',
 					website: redirectUri,
 				}),
 			});
 			if (!response.ok) {
 				if (response.status === 429) {
-					window.alert(locData["server-busy"]);
+					window.alert(locData['server-busy']);
 					return;
 				}
-				console.error("Error creating app: response ", response.status);
+				console.error('Error creating app: response ', response.status);
 				return;
 			}
 			const data = await response.json();
@@ -664,12 +665,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 			localStorage.setItem(`${instance}-id-v2`, clientId);
 			localStorage.setItem(`${instance}-secret-v2`, clientSecret);
 		} catch (error) {
-			console.error("Error fetching: ", error);
+			console.error('Error fetching: ', error);
 		}
 	}
 
 	function redirectToAuthServer() {
-		const scope = "profile read write";
+		const scope = 'profile read write';
 		const authUrl = `https://${instance}/oauth/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(
 			redirectUri
 		)}&scope=${encodeURIComponent(scope)}`;
@@ -680,16 +681,16 @@ document.addEventListener("DOMContentLoaded", async function () {
 		const tokenUrl = `https://${instance}/oauth/token`;
 
 		const response = await fetch(tokenUrl, {
-			method: "POST",
+			method: 'POST',
 			headers: {
-				"Content-Type": "application/x-www-form-urlencoded",
+				'Content-Type': 'application/x-www-form-urlencoded',
 			},
 			body: new URLSearchParams({
 				code: authCode,
 				client_id: clientId,
 				client_secret: clientSecret,
 				redirect_uri: redirectUri,
-				grant_type: "authorization_code",
+				grant_type: 'authorization_code',
 			}),
 		});
 		const data = await response.json();
@@ -700,7 +701,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 	async function getMax() {
 		const response = await fetch(`https://${instance}/api/v1/instance`);
 		if (!response.ok) {
-			console.error("Could not fetch instance");
+			console.error('Could not fetch instance');
 			return;
 		}
 		const data = await response.json();
@@ -714,7 +715,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 			`https://${instance}/api/v1/custom_emojis`
 		);
 		if (!response.ok) {
-			console.error("Could not fetch custom emojis");
+			console.error('Could not fetch custom emojis');
 			return;
 		}
 		const data = await response.json();
@@ -724,12 +725,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 			if (d.category) {
 				dCat = `${instance} ${d.category.toLowerCase()}`;
 			} else {
-				dCat = "Custom";
+				dCat = 'Custom';
 			}
 			if (!emojiArray.find((c) => c.id === dCat.toLowerCase())) {
 				let category = {};
 				category.id = dCat.toLowerCase();
-				category.name = d.category ? d.category : "Custom";
+				category.name = d.category ? d.category : 'Custom';
 				category.emojis = [];
 				emojiArray.push(category);
 			}
@@ -748,18 +749,18 @@ document.addEventListener("DOMContentLoaded", async function () {
 	}
 
 	// Handle showing/hiding options
-	openOptionsBtn.addEventListener("click", () => {
-		if (optionsDiv.style.display !== "flex") {
-			optionsDiv.style.display = "flex";
-			openOptionsBtn.textContent = locData["close-options"];
+	openOptionsBtn.addEventListener('click', () => {
+		if (optionsDiv.style.display !== 'flex') {
+			optionsDiv.style.display = 'flex';
+			openOptionsBtn.textContent = locData['close-options'];
 		} else {
-			optionsDiv.style.display = "none";
-			openOptionsBtn.textContent = locData["open-options"];
+			optionsDiv.style.display = 'none';
+			openOptionsBtn.textContent = locData['open-options'];
 		}
 	});
 
 	// Handle scheduling option
-	scheduleCheckbox.addEventListener("change", () => {
+	scheduleCheckbox.addEventListener('change', () => {
 		if (scheduleCheckbox.checked) {
 			const now = new Date();
 			const offset = now.getTimezoneOffset();
@@ -767,24 +768,24 @@ document.addEventListener("DOMContentLoaded", async function () {
 				now.setMinutes(now.getMinutes() - offset + 5)
 			);
 			scheduleInput.setAttribute(
-				"min",
+				'min',
 				minDate.toISOString().slice(0, 16)
 			);
 			scheduleInput.value = minDate.toISOString().slice(0, 16);
-			scheduleInput.style.display = "flex";
+			scheduleInput.style.display = 'flex';
 		} else {
 			scheduleInput.value = null;
-			scheduleInput.style.display = "none";
+			scheduleInput.style.display = 'none';
 		}
 	});
-	scheduleInput.addEventListener("change", () => {
+	scheduleInput.addEventListener('change', () => {
 		if (scheduleInput.value) {
 			console.log(
-				"Schedule date: ",
+				'Schedule date: ',
 				new Date(scheduleInput.value).toISOString()
 			);
 		} else {
-			console.log("No schedule date selected");
+			console.log('No schedule date selected');
 		}
 	});
 
@@ -800,23 +801,23 @@ document.addEventListener("DOMContentLoaded", async function () {
 				}
 			);
 			if (!res.ok) {
-				console.error("Error fetching scheduled posts: ", res.status);
+				console.error('Error fetching scheduled posts: ', res.status);
 				return;
 			}
 			let data = await res.json();
 			if (data.length) {
-				const scheduledList = document.getElementById("scheduled-list");
+				const scheduledList = document.getElementById('scheduled-list');
 				for (let status of data) {
-					const option = document.createElement("option");
+					const option = document.createElement('option');
 					option.value = status.id;
 					option.textContent =
-						status.params.text.substring(0, 20) + "...";
+						status.params.text.substring(0, 20) + '...';
 					scheduledList.appendChild(option);
 				}
 				const cancelScheduleBtn = document.getElementById(
-					"cancel-schedule-btn"
+					'cancel-schedule-btn'
 				);
-				cancelScheduleBtn.addEventListener("click", async () => {
+				cancelScheduleBtn.addEventListener('click', async () => {
 					const selectedOption =
 						scheduledList.options[scheduledList.selectedIndex];
 					const statusId = scheduledList.value;
@@ -829,11 +830,11 @@ document.addEventListener("DOMContentLoaded", async function () {
 					}
 				});
 				const cancelSchedule =
-					document.getElementById("cancel-schedule");
-				cancelSchedule.style.display = "flex";
+					document.getElementById('cancel-schedule');
+				cancelSchedule.style.display = 'flex';
 			}
 		} catch (error) {
-			console.error("Error fetching scheduled posts: ", error);
+			console.error('Error fetching scheduled posts: ', error);
 		}
 	}
 
@@ -842,59 +843,59 @@ document.addEventListener("DOMContentLoaded", async function () {
 			let res = await fetch(
 				`https://${instance}/api/v1/scheduled_statuses/${id}`,
 				{
-					method: "DELETE",
+					method: 'DELETE',
 					headers: {
 						Authorization: `Bearer ${token}`,
 					},
 				}
 			);
 			if (!res.ok) {
-				console.error("Error cancelling scheduled post: ", res.status);
+				console.error('Error cancelling scheduled post: ', res.status);
 				return;
 			} else {
-				button.style.backgroundColor = "green";
-				button.textContent = "✔︎";
+				button.style.backgroundColor = 'green';
+				button.textContent = '✔︎';
 				setTimeout(() => {
 					option.remove();
 					if (
-						document.getElementById("scheduled-list").options
+						document.getElementById('scheduled-list').options
 							.length === 0
 					) {
 						const cancelSchedule =
-							document.getElementById("cancel-schedule");
-						cancelSchedule.style.display = "none";
+							document.getElementById('cancel-schedule');
+						cancelSchedule.style.display = 'none';
 					}
 				}, 1000);
 			}
 		} catch (error) {
-			console.error("Error cancelling scheduled post: ", error);
+			console.error('Error cancelling scheduled post: ', error);
 		}
 	}
 
 	// Handle post creation in reply to another post
-	inReplyToInput.addEventListener("input", async () => {
+	inReplyToInput.addEventListener('input', async () => {
 		getRepliedToPost();
 	});
 
 	async function getRepliedToPost() {
 		try {
 			const inReplyToUrl = inReplyToInput.value.trim();
-			if (inReplyToInput.value.trim() === "") {
-				previewDiv.style.display = "none";
+			if (inReplyToInput.value.trim() === '') {
+				previewDiv.style.display = 'none';
 				originalId = null;
 				const firstPostItem = postItems[0];
-				const textarea = firstPostItem.querySelector(".post-text");
+				const textarea = firstPostItem.querySelector('.post-text');
 				const text = textarea.value;
 				if (originalUser && text.startsWith(originalUser)) {
-					textarea.value = text.replace(originalUser, "").trim();
+					textarea.value = text.replace(originalUser, '').trim();
 				}
 				originalUser = null;
 				updateCharCount(firstPostItem, textarea.value);
-				let message = "Updating post list after clearing in-reply-to";
+				let message = 'Updating post list after clearing in-reply-to';
 				updatePostList(message);
 				return;
 			}
-			if (!inReplyToUrl.startsWith("http")) {
+			if (!inReplyToUrl.startsWith('http')) {
 				return;
 			}
 			const res = await fetch(
@@ -913,7 +914,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 				originalId = data.statuses[0].id;
 				originalUser = `@${data.statuses[0].account.acct}`;
 				const firstPostItem = postItems[0];
-				const textarea = firstPostItem.querySelector(".post-text");
+				const textarea = firstPostItem.querySelector('.post-text');
 				updateCharCount(firstPostItem, textarea.value);
 				createRepliedPostPreview(data.statuses[0]);
 				textarea.focus();
@@ -924,30 +925,30 @@ document.addEventListener("DOMContentLoaded", async function () {
 	}
 
 	function createRepliedPostPreview(status) {
-		const previewAvatar = document.getElementById("replied-post-avatar");
+		const previewAvatar = document.getElementById('replied-post-avatar');
 		previewAvatar.innerHTML = null;
 		const previewName = document.getElementById(
-			"replied-post-display-name"
+			'replied-post-display-name'
 		);
 		previewName.innerHTML = null;
-		const previewTime = document.getElementById("replied-post-time");
+		const previewTime = document.getElementById('replied-post-time');
 		previewTime.innerHTML = null;
 
-		const avatar = document.createElement("img");
+		const avatar = document.createElement('img');
 		avatar.src = status.account.avatar;
 		avatar.alt = status.account.display_name;
 		previewAvatar.appendChild(avatar);
 
-		const name = document.createElement("span");
+		const name = document.createElement('span');
 		name.textContent = status.account.display_name;
 		previewName.appendChild(name);
 
-		const time = document.createElement("time");
+		const time = document.createElement('time');
 		time.textContent = new Date(status.created_at).toLocaleString();
 		previewTime.appendChild(time);
 
-		const previewTextDiv = document.getElementById("replied-post-text");
-		const previewMediaDiv = document.getElementById("replied-post-media");
+		const previewTextDiv = document.getElementById('replied-post-text');
+		const previewMediaDiv = document.getElementById('replied-post-media');
 
 		const previewText = status.content;
 		previewTextDiv.innerHTML = previewText;
@@ -955,69 +956,69 @@ document.addEventListener("DOMContentLoaded", async function () {
 		previewMediaDiv.innerHTML = null;
 		const media = status.media_attachments;
 		for (let m of media) {
-			const img = document.createElement("img");
+			const img = document.createElement('img');
 			img.src = m.preview_url;
 			img.alt = m.description;
 			previewMediaDiv.appendChild(img);
 		}
 
-		const closeBtn = document.getElementById("reply-preview-close");
+		const closeBtn = document.getElementById('reply-preview-close');
 		closeBtn.onclick = () => {
 			inReplyToInput.value = null;
-			previewDiv.style.display = "none";
+			previewDiv.style.display = 'none';
 			inReplyUrl = null;
 			originalId = null;
 			originalUser = null;
 			const firstPostItem = postItems[0];
-			const textarea = firstPostItem.querySelector(".post-text");
+			const textarea = firstPostItem.querySelector('.post-text');
 			updateCharCount(firstPostItem, textarea.value);
-			let message = "Updating post list after clearing in-reply-to";
+			let message = 'Updating post list after clearing in-reply-to';
 			updatePostList(message);
 		};
 
-		optionsDiv.style.display = "flex";
-		openOptionsBtn.textContent = locData["close-options"];
-		previewDiv.style.display = "flex";
-		let message = "Updating post list after setting in-reply-to";
+		optionsDiv.style.display = 'flex';
+		openOptionsBtn.textContent = locData['close-options'];
+		previewDiv.style.display = 'flex';
+		let message = 'Updating post list after setting in-reply-to';
 		updatePostList(message);
 	}
 
 	function updateCharCount(post, postText) {
-		const charCount = post.querySelector(".char-count");
+		const charCount = post.querySelector('.char-count');
 		charCount.textContent = `${postText.length}/${maxChars}`;
 		if (postText.length > maxChars) {
 			postText = postText.trim();
-			charCount.style.color = "#cc0000";
-			charCount.style.fontWeight = "bold";
+			charCount.style.color = '#cc0000';
+			charCount.style.fontWeight = 'bold';
 		} else {
-			charCount.removeAttribute("style");
+			charCount.removeAttribute('style');
 		}
 	}
 
-	bskyResetBtn.addEventListener("click", () => {
+	bskyResetBtn.addEventListener('click', () => {
 		bskyDid = null;
 		bskyHandle = null;
-		localStorage.removeItem("bsky-did");
-		localStorage.removeItem("bsky-handle");
+		localStorage.removeItem('bsky-did');
+		localStorage.removeItem('bsky-handle');
 		bskyLink = null;
 		bskyThreadInput.value = null;
-		bskyResetBtn.style.display = "none";
+		bskyResetBtn.style.display = 'none';
 	});
 
-	cancelBskyLoginBtn.addEventListener("click", () => {
-		importSelect.value = "0";
+	cancelBskyLoginBtn.addEventListener('click', () => {
+		importSelect.value = '0';
 		bskyAuthDialog.close();
 	});
-	submitBtn.addEventListener("click", async () => {
+	submitBtn.addEventListener('click', async () => {
 		const form = {};
 		form.identifier = idInput.value;
 		form.password = pwdInput.value;
 		const res = await fetch(
 			`https://bsky.social/xrpc/com.atproto.server.createSession`,
 			{
-				method: "POST",
+				method: 'POST',
 				headers: {
-					"Content-Type": "application/json",
+					'Content-Type': 'application/json',
 				},
 				body: JSON.stringify(form),
 			}
@@ -1026,10 +1027,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 			const data = await res.json();
 			bskyAuthDialog.close();
 			bskyDid = data.did;
-			localStorage.setItem("bsky-did", bskyDid);
+			localStorage.setItem('bsky-did', bskyDid);
 			bskyHandle = data.handle;
-			localStorage.setItem("bsky-handle", bskyHandle);
-			bskyResetBtn.style.display = "inline-block";
+			localStorage.setItem('bsky-handle', bskyHandle);
+			bskyResetBtn.style.display = 'inline-block';
 			idInput.value = null;
 			pwdInput.value = null;
 			await new Promise((resolve) => setTimeout(resolve, 0));
@@ -1045,114 +1046,114 @@ document.addEventListener("DOMContentLoaded", async function () {
 			const errorData = await res.json();
 			if (res.status === 429) {
 				const resHeaders = res.headers;
-				const resetTime = resHeaders.get("Ratelimit-Reset");
+				const resetTime = resHeaders.get('Ratelimit-Reset');
 				const now = Math.floor(Date.now() / 1000);
 				const waitTime = resetTime - now;
 				const hours = Math.floor(waitTime / 3600);
 				const minutes = Math.floor((waitTime % 3600) / 60);
 				const seconds = waitTime % 60;
 				const timeString = `${hours} heures, ${minutes} minutes et ${seconds} secondes`;
-				window.alert(locData["bsky-rate-warning"] + timeString);
+				window.alert(locData['bsky-rate-warning'] + timeString);
 				bskyAuthDialog.close();
 				return;
 			}
-			window.alert(`${locData["auth-error"]} ${errorData.message}`);
+			window.alert(`${locData['auth-error']} ${errorData.message}`);
 			bskyAuthDialog.close();
 			return;
 		}
 	});
 
-	importSelect.value = "0";
+	importSelect.value = '0';
 
 	convertHandlesCheckbox.checked = false;
-	convertHandlesCheckbox.addEventListener("change", () => {
+	convertHandlesCheckbox.addEventListener('change', () => {
 		if (convertHandlesCheckbox.checked) {
 			convertHandles = true;
 		} else {
 			convertHandles = false;
 		}
 	});
-	bskyThreadOk.addEventListener("click", () => {
+	bskyThreadOk.addEventListener('click', () => {
 		bskyLink = bskyThreadInput.value;
 		getBskyThread();
 		bskyThreadDialog.close();
 	});
-	bskyThreadInput.addEventListener("keydown", (event) => {
-		if (event.key === "Enter") {
+	bskyThreadInput.addEventListener('keydown', (event) => {
+		if (event.key === 'Enter') {
 			bskyLink = bskyThreadInput.value;
 			getBskyThread();
 			bskyThreadDialog.close();
-		} else if (event.key === "Escape") {
-			importSelect.value = "0";
+		} else if (event.key === 'Escape') {
+			importSelect.value = '0';
 			bskyLink = null;
 			bskyThreadInput.value = null;
 			bskyThreadDialog.close();
 		}
 	});
-	bskyThreadCancel.addEventListener("click", () => {
-		importSelect.value = "0";
+	bskyThreadCancel.addEventListener('click', () => {
+		importSelect.value = '0';
 		bskyLink = null;
 		bskyThreadInput.value = null;
 		bskyThreadDialog.close();
 	});
 
-	const wpImportDialog = document.getElementById("wp-import-dialog");
-	const wpUrlInput = document.getElementById("wp-url-input");
+	const wpImportDialog = document.getElementById('wp-import-dialog');
+	const wpUrlInput = document.getElementById('wp-url-input');
 	wpUrlInput.value = null;
-	const wpImportOk = document.getElementById("wp-import-ok");
-	const wpImportCancel = document.getElementById("wp-import-cancel");
-	wpImportOk.addEventListener("click", async () => {
+	const wpImportOk = document.getElementById('wp-import-ok');
+	const wpImportCancel = document.getElementById('wp-import-cancel');
+	wpImportOk.addEventListener('click', async () => {
 		let url = wpUrlInput.value;
 		WPUrl = await resolveWPUrl(url);
 		if (WPUrl) {
 			getWPPost(WPUrl);
 			wpImportDialog.close();
 		} else {
-			window.alert(locData["wp-invalid"]);
+			window.alert(locData['wp-invalid']);
 			wpUrlInput.value = null;
-			importSelect.value = "0";
+			importSelect.value = '0';
 			wpImportDialog.close();
 		}
 	});
-	wpUrlInput.addEventListener("keydown", async (event) => {
-		if (event.key === "Enter") {
+	wpUrlInput.addEventListener('keydown', async (event) => {
+		if (event.key === 'Enter') {
 			let url = wpUrlInput.value;
 			WPUrl = await resolveWPUrl(url);
 			if (WPUrl) {
 				getWPPost(WPUrl);
 				wpImportDialog.close();
 			} else {
-				window.alert(locData["wp-invalid"]);
+				window.alert(locData['wp-invalid']);
 				wpImportDialog.close();
 			}
-		} else if (event.key === "Escape") {
-			importSelect.value = "0";
+		} else if (event.key === 'Escape') {
+			importSelect.value = '0';
 			WPUrl = null;
 			wpUrlInput.value = null;
 			wpImportDialog.close();
 		}
 	});
-	wpImportCancel.addEventListener("click", () => {
-		importSelect.value = "0";
+	wpImportCancel.addEventListener('click', () => {
+		importSelect.value = '0';
 		WPUrl = null;
 		wpUrlInput.value = null;
 		wpImportDialog.close();
 	});
 
 	async function resolveWPUrl(WPUrl) {
-		if (!WPUrl.startsWith("http")) {
+		if (!WPUrl.startsWith('http')) {
 			return;
 		}
 		let form = new FormData();
-		form.append("url", WPUrl);
-		let response = await fetch("proxy.php", {
-			method: "POST",
+		form.append('url', WPUrl);
+		let response = await fetch('proxy.php', {
+			method: 'POST',
 			body: form,
 		});
 		if (response.ok) {
 			const html = await response.text();
 			const parser = new DOMParser();
-			const doc = parser.parseFromString(html, "text/html");
+			const doc = parser.parseFromString(html, 'text/html');
 			const head = doc.head;
 			const apiLink = head.querySelector(
 				'link[rel="alternate"][type="application/json"]'
@@ -1162,8 +1163,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 			} else {
 				const url = new URL(WPUrl);
 				const domain = url.hostname;
-				const path = url.pathname.replace(/\/$/, "");
-				const pathSegments = path.split("/");
+				const path = url.pathname.replace(/\/$/, '');
+				const pathSegments = path.split('/');
 				const slug = pathSegments.pop();
 				const apiLink = `https://public-api.wordpress.com/rest/v1.1/sites/${domain}/posts/slug:${slug}`;
 				const res = await fetch(apiLink);
@@ -1176,15 +1177,15 @@ document.addEventListener("DOMContentLoaded", async function () {
 		}
 	}
 
-	importSelect.addEventListener("change", async () => {
-		if (importSelect.value === "bsky") {
+	importSelect.addEventListener('change', async () => {
+		if (importSelect.value === 'bsky') {
 			if (!bskyDid) {
 				bskyAuthDialog.showModal();
 			} else if (bskyDid && bskyHandle) {
 				bskyThreadInput.value = null;
 				bskyThreadDialog.showModal();
 			}
-		} else if (importSelect.value === "wp") {
+		} else if (importSelect.value === 'wp') {
 			wpImportDialog.showModal();
 		} else {
 			for (let p of postItems) {
@@ -1193,7 +1194,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 			postItems = [];
 			bskyPosts = [];
 			fromBsky = false;
-			const bskyDiv = document.getElementById("bsky-link");
+			const bskyDiv = document.getElementById('bsky-link');
 			if (bskyDiv) {
 				bskyDiv.remove();
 			}
@@ -1203,55 +1204,55 @@ document.addEventListener("DOMContentLoaded", async function () {
 
 	async function getBskyThread() {
 		if (!bskyDid || !bskyHandle) {
-			if (window.confirm(locData["bsky-warning"])) {
+			if (window.confirm(locData['bsky-warning'])) {
 				bskyDid = null;
 				bskyHandle = null;
-				localStorage.removeItem("bsky-did");
-				localStorage.removeItem("bsky-handle");
+				localStorage.removeItem('bsky-did');
+				localStorage.removeItem('bsky-handle');
 				bskyAuthDialog.showModal();
 				return;
 			} else {
 				bskyLink = null;
-				importSelect.value = "0";
+				importSelect.value = '0';
 				bskyLoadingSpinner.close();
 				return;
 			}
 		}
 		if (bskyLink) {
 			const bskyLoadingText =
-				document.getElementById("bsky-loading-text");
+				document.getElementById('bsky-loading-text');
 			bskyLoadingSpinner.showModal();
 			let pathname;
 			try {
 				pathname = new URL(bskyLink).pathname;
 			} catch (error) {
 				bskyThreadInput.value = null;
-				window.alert(locData["bsky-invalid"]);
+				window.alert(locData['bsky-invalid']);
 				bskyLink = null;
-				importSelect.value = "0";
+				importSelect.value = '0';
 				bskyLoadingSpinner.close();
 				return;
 			}
-			let handle = pathname.split("/")[2];
+			let handle = pathname.split('/')[2];
 			if (
-				(handle.startsWith("did:plc:") && handle !== bskyDid) ||
-				(!handle.startsWith("did:plc:") && handle !== bskyHandle)
+				(handle.startsWith('did:plc:') && handle !== bskyDid) ||
+				(!handle.startsWith('did:plc:') && handle !== bskyHandle)
 			) {
-				if (window.confirm(locData["bsky-author-warning"])) {
+				if (window.confirm(locData['bsky-author-warning'])) {
 					bskyDid = null;
 					bskyHandle = null;
-					localStorage.removeItem("bsky-did");
-					localStorage.removeItem("bsky-handle");
+					localStorage.removeItem('bsky-did');
+					localStorage.removeItem('bsky-handle');
 					bskyAuthDialog.showModal();
 					return;
 				} else {
 					bskyLink = null;
-					importSelect.value = "0";
+					importSelect.value = '0';
 					bskyLoadingSpinner.close();
 					return;
 				}
 			}
-			let rkey = pathname.split("/")[4];
+			let rkey = pathname.split('/')[4];
 			if (rkey) {
 				let uri = `at://${bskyDid}/app.bsky.feed.post/${rkey}`;
 				let res = await fetch(
@@ -1260,12 +1261,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 				if (res.ok) {
 					bskyThreadInput.value = null;
 					let data = await res.json();
-					let div = document.createElement("div");
-					div.id = "bsky-link";
-					div.classList.add("number-posts");
-					let a = document.createElement("a");
+					let div = document.createElement('div');
+					div.id = 'bsky-link';
+					div.classList.add('number-posts');
+					let a = document.createElement('a');
 					a.href = bskyLink;
-					a.target = "_blank";
+					a.target = '_blank';
 					a.textContent = bskyLink;
 					div.appendChild(a);
 					numberPostsDiv.after(div);
@@ -1295,7 +1296,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 					postItems = [];
 					for (let p of bskyPosts) {
 						let index = bskyPosts.indexOf(p) + 1;
-						bskyLoadingText.textContent = `${locData["bsky-thread-text"]} ${index}/${bskyPosts.length}...`;
+						bskyLoadingText.textContent = `${locData['bsky-thread-text']} ${index}/${bskyPosts.length}...`;
 						try {
 							let text = p.record.text;
 							if (convertHandles) {
@@ -1307,7 +1308,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 											.slice(1)
 											.toLowerCase()
 											.trim();
-										handle = handle.split(".")[0];
+										handle = handle.split('.')[0];
 										let searchUrl = `https://${instance}/api/v2/search?q=${handle}&type=accounts&resolve=true`;
 										let res = await fetch(searchUrl, {
 											headers: {
@@ -1337,7 +1338,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 								const links = facets.filter(
 									(f) =>
 										f.features[0].$type ===
-										"app.bsky.richtext.facet#link"
+										'app.bsky.richtext.facet#link'
 								);
 								for (let l of links) {
 									const uri = l.features[0].uri;
@@ -1386,17 +1387,17 @@ document.addEventListener("DOMContentLoaded", async function () {
 								if (images && images.length > 0) {
 									for (let i of images) {
 										let img = {};
-										img.type = "image";
+										img.type = 'image';
 										img.url = i.fullsize;
 										img.thumbnail = i.thumb;
 										img.alt = i.alt;
 										imgs.push(img);
 									}
 								}
-								if (p.embed.$type.includes("video")) {
+								if (p.embed.$type.includes('video')) {
 									let video = p.embed;
 									let vid = {};
-									vid.type = "video";
+									vid.type = 'video';
 									vid.thumbnail = video.thumbnail;
 									vid.url = video.playlist;
 									vid.alt = video.alt;
@@ -1406,7 +1407,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 									let uri =
 										p.embed.record.uri ||
 										p.embed.record.record.uri;
-									let elts = uri.split("/");
+									let elts = uri.split('/');
 									let rDid = elts[2];
 									let rKey = elts[4];
 									let rUrl = `https://bsky.app/profile/${rDid}/post/${rKey}`;
@@ -1419,9 +1420,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 								if (card) {
 									let cardUrl = card.uri;
 									if (cardUrl) {
-										if (cardUrl.includes(".gif")) {
+										if (cardUrl.includes('.gif')) {
 											let img = {};
-											img.type = "image";
+											img.type = 'image';
 											img.url = cardUrl;
 											img.alt = card.description;
 											imgs.push(img);
@@ -1445,40 +1446,40 @@ document.addEventListener("DOMContentLoaded", async function () {
 					}
 				} else {
 					bskyThreadInput.value = null;
-					window.alert(locData["bsky-error"]);
+					window.alert(locData['bsky-error']);
 					bskyLink = null;
-					importSelect.value = "0";
+					importSelect.value = '0';
 					fromBsky = false;
 					bskyLoadingSpinner.close();
 					return;
 				}
 			} else {
-				window.alert(locData["bsky-error"]);
+				window.alert(locData['bsky-error']);
 				bskyLink = null;
-				importSelect.value = "0";
+				importSelect.value = '0';
 				fromBsky = false;
 				bskyLoadingSpinner.close();
 				return;
 			}
 			bskyLoadingSpinner.close();
-			postItems[0].querySelector(".post-text").focus();
+			postItems[0].querySelector('.post-text').focus();
 			window.scrollTo(0, 0);
 			await new Promise((resolve) => setTimeout(resolve, 0));
-			window.alert(locData["thread-ready"]);
+			window.alert(locData['thread-ready']);
 		} else {
-			importSelect.value = "0";
+			importSelect.value = '0';
 		}
 	}
 
 	// Handle import of WordPress blogpost
 	async function getWPPost(WPUrl) {
 		bskyLoadingSpinner.showModal();
-		const WPloadingText = document.getElementById("bsky-loading-text");
-		WPloadingText.textContent = locData["wp-loading-text"];
+		const WPloadingText = document.getElementById('bsky-loading-text');
+		WPloadingText.textContent = locData['wp-loading-text'];
 		fromWP = true;
 		let res = await fetch(WPUrl);
 		if (!res || !res.ok) {
-			window.alert(locData["wp-error"]);
+			window.alert(locData['wp-error']);
 			bskyLoadingSpinner.close();
 			return;
 		}
@@ -1489,31 +1490,31 @@ document.addEventListener("DOMContentLoaded", async function () {
 		}
 		let postLink = data.link || data.URL;
 		const parser = new DOMParser();
-		const doc = parser.parseFromString(content, "text/html");
+		const doc = parser.parseFromString(content, 'text/html');
 		const body = doc.body;
 		const elements = Array.from(
 			body.querySelectorAll(
-				"h1, h2, h3, h4, h5, h6, p, li, img, video, iframe"
+				'h1, h2, h3, h4, h5, h6, p, li, img, video, iframe'
 			)
 		);
 
 		let index = 0;
-		let chunk = { text: "", media: [] };
+		let chunk = { text: '', media: [] };
 
 		while (elements && elements.length > 0 && index < elements.length) {
 			let e = elements[index];
 			if (e.textContent && e.textContent.length > 0) {
-				if (e.parentElement.tagName === "BLOCKQUOTE") {
+				if (e.parentElement.tagName === 'BLOCKQUOTE') {
 					e.textContent = `“${e.textContent}”`;
 				}
-				if (e.tagName === "LI") {
+				if (e.tagName === 'LI') {
 					e.textContent = `• ${e.textContent}`;
 				}
-				const links = e.querySelectorAll("a");
+				const links = e.querySelectorAll('a');
 				if (links.length > 0) {
 					for (let l of links) {
-						const url = l.getAttribute("href");
-						if (url.startsWith("http") && url !== l.textContent) {
+						const url = l.getAttribute('href');
+						if (url.startsWith('http') && url !== l.textContent) {
 							l.textContent += ` (${url})`;
 						}
 					}
@@ -1522,21 +1523,21 @@ document.addEventListener("DOMContentLoaded", async function () {
 					chunk.text += e.textContent.trim();
 				} else if (chunk.media.length > 0) {
 					wpChunks.push(chunk);
-					chunk = { text: "", media: [] };
+					chunk = { text: '', media: [] };
 					chunk.text += e.textContent.trim();
 				} else if (chunk.text.length === 0) {
 					chunk.text += e.textContent.trim();
 				} else {
-					if (e.tagName.includes("H")) {
+					if (e.tagName.includes('H')) {
 						wpChunks.push(chunk);
-						chunk = { text: "", media: [] };
+						chunk = { text: '', media: [] };
 						chunk.text += e.textContent.trim();
 					} else {
 						chunk.text += `\n\n${e.textContent.trim()}`;
 					}
 				}
 				index++;
-			} else if (e.tagName === "IMG" || e.tagName === "VIDEO") {
+			} else if (e.tagName === 'IMG' || e.tagName === 'VIDEO') {
 				if (chunk.media.length < maxMedia) {
 					let media = {
 						type: e.tagName.toLowerCase(),
@@ -1546,7 +1547,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 					chunk.media.push(media);
 				} else {
 					wpChunks.push(chunk);
-					chunk = { text: "", media: [] };
+					chunk = { text: '', media: [] };
 					let media = {
 						type: e.tagName.toLowerCase(),
 						url: e.src,
@@ -1555,13 +1556,13 @@ document.addEventListener("DOMContentLoaded", async function () {
 					chunk.media.push(media);
 				}
 				index++;
-			} else if (e.tagName === "IFRAME" && e.src.includes("youtube")) {
-				const ytEmbedElts = e.src.split("/");
-				const embed = ytEmbedElts.find((e) => e === "embed");
+			} else if (e.tagName === 'IFRAME' && e.src.includes('youtube')) {
+				const ytEmbedElts = e.src.split('/');
+				const embed = ytEmbedElts.find((e) => e === 'embed');
 				if (embed) {
 					const ytID =
 						ytEmbedElts[ytEmbedElts.indexOf(embed) + 1].split(
-							"?"
+							'?'
 						)[0];
 					const ytLink = `https://www.youtube.com/watch?v=${ytID}`;
 					chunk.text += `\n\n${ytLink}`;
@@ -1576,13 +1577,13 @@ document.addEventListener("DOMContentLoaded", async function () {
 		async function splitText(chunk) {
 			return new Promise(async (resolve) => {
 				let text = chunk.text;
-				let newChunk = { text: "", media: [] };
+				let newChunk = { text: '', media: [] };
 				let segments = [];
 				if (text) {
 					const regex = /([,.;:!?\n])/gu;
 					segments = text.split(regex);
 				}
-				let oldText = "";
+				let oldText = '';
 				for (let i = 0; i < segments.length; i += 1) {
 					let segment = segments[i];
 					if (oldText.length + segment.length < maxChars) {
@@ -1590,7 +1591,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 					} else {
 						chunk.text = oldText;
 						let remainingSegments = segments.slice(i);
-						let remainingText = remainingSegments.join("");
+						let remainingText = remainingSegments.join('');
 						if (remainingText) {
 							newChunk.text = remainingText.trim();
 							if (wpChunks.indexOf(chunk) > 0) {
@@ -1623,13 +1624,13 @@ document.addEventListener("DOMContentLoaded", async function () {
 		postItems = [];
 		for (let p of wpChunks) {
 			try {
-				WPloadingText.textContent = `${locData["creating-toot"]} ${
+				WPloadingText.textContent = `${locData['creating-toot']} ${
 					wpChunks.indexOf(p) + 1
 				}/${wpChunks.length}...`;
 				if (p.media.length > 0) {
-					const mediaCounter = document.createElement("div");
-					mediaCounter.classList.add("bsky-loading-text");
-					mediaCounter.textContent = `${locData["wp-media"]}: ${p.media.length}`;
+					const mediaCounter = document.createElement('div');
+					mediaCounter.classList.add('bsky-loading-text');
+					mediaCounter.textContent = `${locData['wp-media']}: ${p.media.length}`;
 					WPloadingText.appendChild(mediaCounter);
 				}
 				await createNewPost(p.text, p.media);
@@ -1641,30 +1642,28 @@ document.addEventListener("DOMContentLoaded", async function () {
 				);
 			}
 		}
-		let finalPostText = `${locData["final-post-text"]} ${postLink}`;
+		let finalPostText = `${locData['final-post-text']} ${postLink}`;
 		createNewPost(finalPostText);
 		bskyLoadingSpinner.close();
-		postItems[0].querySelector(".post-text").focus();
+		postItems[0].querySelector('.post-text').focus();
 		window.scrollTo(0, 0);
 		await new Promise((resolve) => setTimeout(resolve, 0));
-		window.alert(locData["thread-ready"]);
+		window.alert(locData['thread-ready']);
 	}
-
-	// waitingDialog.close();
 
 	// Create new post
 	async function createNewPost(text, imgs) {
 		oldPosts = postItems.map(function (p) {
-			return p.getAttribute("counter");
+			return p.getAttribute('counter');
 		});
 		const newPost = postItem.cloneNode(true);
-		const addPostBtn = newPost.querySelector(".add-post-btn");
+		const addPostBtn = newPost.querySelector('.add-post-btn');
 		if (postItems.length === 0) {
 			contentContainer.appendChild(newPost);
 			postItems.push(newPost);
 		} else if (currentPost) {
 			if (scheduleCheckbox.checked) {
-				window.alert(locData["schedule-warning"]);
+				window.alert(locData['schedule-warning']);
 				return;
 			}
 			currentPost.after(newPost);
@@ -1673,116 +1672,294 @@ document.addEventListener("DOMContentLoaded", async function () {
 			postItems.splice(newIndex, 0, newPost);
 		}
 		updatePostCount();
-		oldPosts.splice(postItems.indexOf(newPost), 0, "skip");
-		let message = "Updating list of posts after creation";
+		oldPosts.splice(postItems.indexOf(newPost), 0, 'skip');
+		let message = 'Updating list of posts after creation';
 
-		const avatar = newPost.querySelector(".avatar");
+		const avatar = newPost.querySelector('.avatar');
 		if (userAvatarSrc) {
 			avatar.src = userAvatarSrc;
 		} else {
-			avatar.src = "icons/generic_avatar.png";
+			avatar.src = 'icons/generic_avatar.png';
 		}
 
-		const vizSelect = newPost.querySelector(".viz-select");
+		const vizSelect = newPost.querySelector('.viz-select');
+		const vizList = newPost.querySelector('.viz-list');
+		const vizItems = vizList.querySelectorAll('.viz-item');
 
-		// Function to replace privacy option text with icons for mobile display
-		const vizList = newPost.querySelector(".viz-list");
-		const vizItems = vizList.querySelectorAll(".viz-item");
-		vizSelect.addEventListener("click", () => {
+		const quoteSelect = newPost.querySelector('.quote-select');
+		const quoteList = newPost.querySelector('.quote-list');
+		const quoteItems = quoteList.querySelectorAll('.quote-item');
+
+		vizSelect.addEventListener('click', () => {
 			vizList.style.display =
-				vizList.style.display === "flex" ? "none" : "flex";
-			document.addEventListener("click", function outsideClick(event) {
+				vizList.style.display === 'flex' ? 'none' : 'flex';
+			document.addEventListener('click', function outsideClick(event) {
 				if (
 					!vizSelect.contains(event.target) &&
 					!vizList.contains(event.target)
 				) {
-					vizList.style.display = "none";
-					document.removeEventListener("click", outsideClick);
+					vizList.style.display = 'none';
+					document.removeEventListener('click', outsideClick);
 				}
 			});
 		});
-		vizSelect.addEventListener("keydown", (e) => {
-			if (e.key === "Escape") {
+		vizSelect.addEventListener('keydown', (e) => {
+			if (e.key === 'Escape') {
 				e.preventDefault();
-				vizList.style.display = "none";
+				vizList.style.display = 'none';
 			}
 		});
+		const vizClasses = {
+			public: 'fa-solid fa-earth-europe',
+			unlisted: 'fa-solid fa-moon',
+			private: 'fa-solid fa-lock',
+			direct: 'fa-solid fa-at',
+		};
 		vizItems.forEach((item) => {
-			item.addEventListener("click", () => {
-				const dataValue = item.getAttribute("data-value");
-				vizSelect.setAttribute("data-value", dataValue);
-				vizSelect.textContent = locData[dataValue].split(" ")[0];
+			item.addEventListener('click', () => {
+				const dataValue = item.getAttribute('data-value');
+				if (dataValue === 'private' || dataValue === 'direct') {
+					defaultQuote = 'nobody';
+					quoteItems.forEach((it) => {
+						if (
+							it.getAttribute('data-value') === 'public' ||
+							it.getAttribute('data-value') === 'followers'
+						) {
+							it.removeAttribute('style');
+							it.classList.add('disabled');
+							it.querySelector('i').style.color = 'gray';
+						} else if (it.getAttribute('data-value') === 'nobody') {
+							it.style.fontWeight = 'bold';
+						}
+					});
+					quoteSelect.setAttribute('data-value', 'nobody');
+					quoteSelect.innerHTML = `<i
+						class="${quoteClasses['nobody']}"
+						></i
+					>`;
+					for (let p of postItems) {
+						const quoteS = p.querySelector('.quote-select');
+						quoteS.setAttribute('data-value', 'nobody');
+						quoteS.innerHTML = `<i
+								class="${quoteClasses['nobody']}"
+								></i>`;
+						const pQuoteList = p.querySelector('.quote-list');
+						const pQuoteItems =
+							pQuoteList.querySelectorAll('.quote-item');
+						pQuoteItems.forEach((it) => {
+							it.removeAttribute('style');
+							if (it.getAttribute('data-value') === 'nobody') {
+								it.style.fontWeight = 'bold';
+							}
+						});
+					}
+				} else {
+					quoteItems.forEach((it) => {
+						it.classList.remove('disabled');
+						it.querySelector('i').style.color = '#563acc';
+					});
+				}
+				vizSelect.setAttribute('data-value', dataValue);
+				vizSelect.innerHTML = `<i
+					class="${vizClasses[dataValue]}"
+					></i
+				>`;
 				const newIndex = postItems.indexOf(newPost);
 				if (newIndex === 0) {
 					defaultViz = dataValue;
-					if (defaultViz !== "public") {
+					if (defaultViz !== 'public') {
 						for (let p of postItems) {
-							const vizS = p.querySelector(".viz-select");
-							vizS.setAttribute("data-value", defaultViz);
-							vizS.textContent =
-								locData[defaultViz].split(" ")[0];
+							const vizS = p.querySelector('.viz-select');
+							vizS.setAttribute('data-value', defaultViz);
+							vizS.innerHTML = `<i
+								class="${vizClasses[defaultViz]}"
+								></i>`;
+							const pVizList = p.querySelector('.viz-list');
+							const pVizItems =
+								pVizList.querySelectorAll('.viz-item');
+							pVizItems.forEach((it) => {
+								it.removeAttribute('style');
+								if (
+									it.getAttribute('data-value') === defaultViz
+								) {
+									it.style.fontWeight = 'bold';
+								}
+							});
 						}
 					}
 				}
 				vizItems.forEach((it) => {
-					it.removeAttribute("style");
+					it.removeAttribute('style');
 				});
-				item.style.fontWeight = "bold";
-				vizList.style.display = "none";
+				item.style.fontWeight = 'bold';
+				vizList.style.display = 'none';
 			});
 		});
 
 		const index = postItems.indexOf(newPost);
 		if (index === 0) {
-			vizSelect.setAttribute("data-value", "public");
-			vizSelect.textContent = locData["public"].split(" ")[0];
+			vizSelect.setAttribute('data-value', 'public');
+			vizSelect.innerHTML = `<i
+									class="fa-solid fa-earth-europe"
+									></i
+								>`;
 		} else {
-			if (defaultViz !== "public") {
-				vizSelect.setAttribute("data-value", defaultViz);
-				vizSelect.textContent = locData[defaultViz].split(" ")[0];
+			if (defaultViz !== 'public') {
+				vizSelect.setAttribute('data-value', defaultViz);
+				vizSelect.innerHTML = `<i
+									class="${vizClasses[defaultViz]}"
+									></i
+								>`;
 			} else {
-				vizSelect.setAttribute("data-value", "unlisted");
-				vizSelect.textContent = locData["unlisted"].split(" ")[0];
+				vizSelect.setAttribute('data-value', 'unlisted');
+				vizSelect.innerHTML = `<i
+									class="fa-solid fa-moon"
+									></i
+								>`;
 			}
 		}
 		vizItems.forEach((it) => {
-			it.removeAttribute("style");
+			it.removeAttribute('style');
 			if (
-				it.getAttribute("data-value") ===
-				vizSelect.getAttribute("data-value")
+				it.getAttribute('data-value') ===
+				vizSelect.getAttribute('data-value')
 			) {
-				it.style.fontWeight = "bold";
+				it.style.fontWeight = 'bold';
 			}
 		});
 
-		const langSelect = newPost.querySelector(".lang-select");
+		const quoteClasses = {
+			public: 'fa-solid fa-quote-left',
+			followers: 'fa-solid fa-single-quote-left',
+			nobody: 'fa-solid fa-comment-slash',
+		};
+		quoteSelect.addEventListener('click', () => {
+			quoteList.style.display =
+				quoteList.style.display === 'flex' ? 'none' : 'flex';
+			document.addEventListener(
+				'click',
+				function outsideQuoteClick(event) {
+					if (
+						!quoteSelect.contains(event.target) &&
+						!quoteList.contains(event.target)
+					) {
+						quoteList.style.display = 'none';
+						document.removeEventListener(
+							'click',
+							outsideQuoteClick
+						);
+					}
+				}
+			);
+		});
+		quoteSelect.addEventListener('keydown', (e) => {
+			if (e.key === 'Escape') {
+				e.preventDefault();
+				quoteList.style.display = 'none';
+			}
+		});
+		quoteItems.forEach((item) => {
+			item.addEventListener('click', () => {
+				if (item.classList.contains('disabled')) {
+					return;
+				}
+				const quoteValue = item.getAttribute('data-value');
+				quoteSelect.setAttribute('data-value', quoteValue);
+				quoteSelect.innerHTML = `<i
+					class="${quoteClasses[quoteValue]}"
+					></i
+				>`;
+				const newIndex = postItems.indexOf(newPost);
+				if (newIndex === 0) {
+					defaultQuote = quoteValue;
+					if (defaultQuote !== 'public') {
+						for (let p of postItems) {
+							const quoteS = p.querySelector('.quote-select');
+							quoteS.setAttribute('data-value', defaultQuote);
+							quoteS.innerHTML = `<i
+								class="${quoteClasses[defaultQuote]}"
+								></i>`;
+							const pQuoteList = p.querySelector('.quote-list');
+							const pQuoteItems =
+								pQuoteList.querySelectorAll('.quote-item');
+							pQuoteItems.forEach((it) => {
+								it.removeAttribute('style');
+								if (
+									it.getAttribute('data-value') ===
+									defaultQuote
+								) {
+									it.style.fontWeight = 'bold';
+								}
+							});
+						}
+					}
+				}
+				quoteItems.forEach((it) => {
+					it.removeAttribute('style');
+				});
+				item.style.fontWeight = 'bold';
+				quoteList.style.display = 'none';
+			});
+		});
+		if (index === 0) {
+			quoteSelect.setAttribute('data-value', 'public');
+			quoteSelect.innerHTML = `<i
+									class="fa-solid fa-quote-left"
+									></i
+								>`;
+		} else {
+			if (defaultQuote !== 'public') {
+				quoteSelect.setAttribute('data-value', defaultQuote);
+				quoteSelect.innerHTML = `<i
+									class="${quoteClasses[defaultQuote]}"
+									></i
+								>`;
+			} else {
+				quoteSelect.setAttribute('data-value', 'public');
+				quoteSelect.innerHTML = `<i
+									class="fa-solid fa-quote-left"
+									></i
+								>`;
+			}
+		}
+		quoteItems.forEach((it) => {
+			it.removeAttribute('style');
+			if (
+				it.getAttribute('data-value') ===
+				quoteSelect.getAttribute('data-value')
+			) {
+				it.style.fontWeight = 'bold';
+			}
+		});
+
+		const langSelect = newPost.querySelector('.lang-select');
 		langSelect.value = lang;
-		langSelect.addEventListener("change", () => {
+		langSelect.addEventListener('change', () => {
 			lang = langSelect.value;
 		});
 
 		i++;
-		newPost.id = "post-" + i;
+		newPost.id = 'post-' + i;
 		for (let p of postItems) {
-			const deletePostBtn = p.querySelector(".delete-post-btn");
+			const deletePostBtn = p.querySelector('.delete-post-btn');
 			if (postItems.length > 1) {
-				deletePostBtn.style.display = "inline-block";
+				deletePostBtn.style.display = 'inline-block';
 			}
 		}
 
-		newPost.style.display = "flex";
-		addPostBtn.addEventListener("click", () => {
+		newPost.style.display = 'flex';
+		addPostBtn.addEventListener('click', () => {
 			if (postItems.length > 0) {
-				currentPost = addPostBtn.closest(".post-item");
+				currentPost = addPostBtn.closest('.post-item');
 			}
 			createNewPost();
 		});
 
-		const charCount = newPost.querySelector(".char-count");
+		const charCount = newPost.querySelector('.char-count');
 		charCount.textContent = `0/${maxChars}`;
 
-		const textarea = newPost.querySelector(".post-text");
-		textarea.style.minHeight = Number((maxChars / 50) * 16.8) + "px";
+		const textarea = newPost.querySelector('.post-text');
+		textarea.style.minHeight = Number((maxChars / 50) * 16.8) + 'px';
 		if (text) {
 			text = text.trim();
 			if (text.length > maxChars) {
@@ -1791,7 +1968,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 				textarea.value = text;
 				if (text.length > 30) {
 					let language = franc(text);
-					if (language === "und") {
+					if (language === 'und') {
 						language = lang;
 					} else {
 						let guess = iso6393.find(
@@ -1814,20 +1991,20 @@ document.addEventListener("DOMContentLoaded", async function () {
 			updateCharCount(newPost, textarea.value);
 		}
 
-		const emojiBtn = newPost.querySelector(".emoji-btn");
-		emojiBtn.addEventListener("click", async () => {
+		const emojiBtn = newPost.querySelector('.emoji-btn');
+		emojiBtn.addEventListener('click', async () => {
 			const customCategories = customEmoji.map((c) => c.id);
 			const categories = [
-				"frequent",
+				'frequent',
 				...customCategories,
-				"people",
-				"nature",
-				"foods",
-				"activity",
-				"places",
-				"objects",
-				"symbols",
-				"flags",
+				'people',
+				'nature',
+				'foods',
+				'activity',
+				'places',
+				'objects',
+				'symbols',
+				'flags',
 			];
 			let options = {
 				custom: customEmoji,
@@ -1847,12 +2024,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 						picker.remove();
 					}
 				},
-				previewPosition: "none",
+				previewPosition: 'none',
 			};
 			const picker = new EmojiMart.Picker(options);
-			picker.classList.add("emoji-picker");
+			picker.classList.add('emoji-picker');
 			window.onkeydown = (e) => {
-				if (e.key === "Escape") {
+				if (e.key === 'Escape') {
 					picker.remove();
 				}
 			};
@@ -1860,67 +2037,67 @@ document.addEventListener("DOMContentLoaded", async function () {
 		});
 
 		async function getMention(getInput) {
-			let mention = "";
+			let mention = '';
 			let start = textarea.selectionStart - 1;
 			let suggestions = [];
-			textarea.removeEventListener("input", getInput);
-			textarea.addEventListener("keydown", keyDown);
-			let followingList = document.createElement("div");
-			followingList.id = "following-list";
-			followingList.classList.add("following-list");
+			textarea.removeEventListener('input', getInput);
+			textarea.addEventListener('keydown', keyDown);
+			let followingList = document.createElement('div');
+			followingList.id = 'following-list';
+			followingList.classList.add('following-list');
 			let choices;
 			let currentChoice;
 			let i = 0;
 			function keyDown(e) {
-				if (e.key === "Escape") {
+				if (e.key === 'Escape') {
 					e.preventDefault();
 					followingList.remove();
 				}
-				if (e.key === "ArrowDown") {
+				if (e.key === 'ArrowDown') {
 					e.preventDefault();
 					if (i < choices.length - 1) {
 						i++;
 						let oldChoice = choices[i - 1];
 						currentChoice = choices[i];
 						if (oldChoice) {
-							oldChoice.classList.remove("selected");
+							oldChoice.classList.remove('selected');
 						}
 						if (currentChoice) {
-							currentChoice.classList.add("selected");
+							currentChoice.classList.add('selected');
 						}
 					}
-				} else if (e.key === "ArrowUp") {
+				} else if (e.key === 'ArrowUp') {
 					e.preventDefault();
 					if (i > 0) {
 						i--;
 						let oldChoice = choices[i + 1];
 						currentChoice = choices[i];
 						if (oldChoice) {
-							oldChoice.classList.remove("selected");
+							oldChoice.classList.remove('selected');
 						}
 						if (currentChoice) {
-							currentChoice.classList.add("selected");
+							currentChoice.classList.add('selected');
 						}
 					}
 				}
-				if (e.key === "Enter" || e.key === "Tab") {
+				if (e.key === 'Enter' || e.key === 'Tab') {
 					e.preventDefault();
-					let acct = currentChoice.querySelector(".acct").textContent;
+					let acct = currentChoice.querySelector('.acct').textContent;
 					textarea.value =
 						textarea.value.slice(0, start) +
 						acct +
 						textarea.value.slice(textarea.selectionEnd) +
-						" ";
+						' ';
 					followingList.remove();
-					mention = "";
-					textarea.removeEventListener("input", buildMention);
-					textarea.removeEventListener("keydown", keyDown);
-					textarea.addEventListener("input", getInput);
+					mention = '';
+					textarea.removeEventListener('input', buildMention);
+					textarea.removeEventListener('keydown', keyDown);
+					textarea.addEventListener('input', getInput);
 					updateCharCount(newPost, textarea.value);
 					textarea.focus();
 				}
 			}
-			textarea.addEventListener("input", buildMention);
+			textarea.addEventListener('input', buildMention);
 			let fetching = false;
 			async function buildMention(e) {
 				e.preventDefault();
@@ -1934,23 +2111,23 @@ document.addEventListener("DOMContentLoaded", async function () {
 				} else {
 					mention = mention.slice(0, -1);
 					if (AtMention.length === 0 || textarea.value.length === 0) {
-						mention = "";
+						mention = '';
 						followingList.remove();
-						textarea.removeEventListener("input", buildMention);
-						textarea.removeEventListener("keydown", keyDown);
-						textarea.addEventListener("input", getInput);
+						textarea.removeEventListener('input', buildMention);
+						textarea.removeEventListener('keydown', keyDown);
+						textarea.addEventListener('input', getInput);
 						textarea.focus();
 					}
 				}
-				if (e.data === " ") {
+				if (e.data === ' ') {
 					followingList.remove();
-					mention = "";
-					textarea.removeEventListener("input", buildMention);
-					textarea.removeEventListener("keydown", keyDown);
-					textarea.addEventListener("input", getInput);
+					mention = '';
+					textarea.removeEventListener('input', buildMention);
+					textarea.removeEventListener('keydown', keyDown);
+					textarea.addEventListener('input', getInput);
 					textarea.focus();
 				}
-				let mentionBuffer = "";
+				let mentionBuffer = '';
 				if (mention.length > 1 && fetching) {
 					await new Promise((resolve) => setTimeout(resolve, 200));
 					mentionBuffer = new String(mention);
@@ -1973,7 +2150,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 					if (res.ok) {
 						let accounts = await res.json();
 						suggestions = [];
-						followingList.innerHTML = "";
+						followingList.innerHTML = '';
 						if (accounts.length > 0) {
 							for (let a of accounts) {
 								if (
@@ -1989,31 +2166,31 @@ document.addEventListener("DOMContentLoaded", async function () {
 						}
 						if (suggestions.length > 0) {
 							for (let a of suggestions) {
-								let fDiv = document.createElement("div");
-								fDiv.classList.add("following-item");
-								let avatar = document.createElement("img");
+								let fDiv = document.createElement('div');
+								fDiv.classList.add('following-item');
+								let avatar = document.createElement('img');
 								avatar.src = a.avatar;
 								fDiv.appendChild(avatar);
-								let username = document.createElement("span");
-								username.classList.add("username");
+								let username = document.createElement('span');
+								username.classList.add('username');
 								username.textContent = `${a.username}`;
-								let acct = document.createElement("span");
-								acct.classList.add("acct");
+								let acct = document.createElement('span');
+								acct.classList.add('acct');
 								acct.textContent = `@${a.acct}`;
 								fDiv.appendChild(username);
 								fDiv.appendChild(acct);
 								followingList.appendChild(fDiv);
 							}
-							followingList.style.display = "block";
+							followingList.style.display = 'block';
 							textarea.after(followingList);
 							let listDivs = Array.from(
-								followingList.querySelectorAll("div")
+								followingList.querySelectorAll('div')
 							);
 							for (let d of listDivs) {
 								d.onclick = () => {
 									let acct =
 										d.querySelector(
-											"span.acct"
+											'span.acct'
 										).textContent;
 									textarea.value =
 										textarea.value.slice(0, start) +
@@ -2021,19 +2198,19 @@ document.addEventListener("DOMContentLoaded", async function () {
 										textarea.value.slice(
 											textarea.selectionEnd
 										) +
-										" ";
+										' ';
 									followingList.remove();
-									mention = "";
+									mention = '';
 									textarea.removeEventListener(
-										"input",
+										'input',
 										buildMention
 									);
 									textarea.removeEventListener(
-										"keydown",
+										'keydown',
 										keyDown
 									);
 									textarea.addEventListener(
-										"input",
+										'input',
 										getInput
 									);
 									updateCharCount(newPost, textarea.value);
@@ -2042,14 +2219,14 @@ document.addEventListener("DOMContentLoaded", async function () {
 							}
 							choices =
 								followingList.querySelectorAll(
-									"div.following-item"
+									'div.following-item'
 								);
 							if (choices.length > 0) {
 								choices.forEach((c) => {
-									c.classList.remove("selected");
+									c.classList.remove('selected');
 								});
 								currentChoice = choices[0];
-								currentChoice.classList.add("selected");
+								currentChoice.classList.add('selected');
 							} else if (choices.length === 0) {
 								followingList.remove();
 							}
@@ -2061,15 +2238,15 @@ document.addEventListener("DOMContentLoaded", async function () {
 				}
 			}
 		}
-		textarea.addEventListener("input", getInput);
+		textarea.addEventListener('input', getInput);
 		async function getInput(e) {
-			if (e.data === "@") {
+			if (e.data === '@') {
 				await getMention(getInput);
 			}
 			let postText = textarea.value;
 			if (postText.length > 30) {
 				let language = franc(postText);
-				if (language === "und") {
+				if (language === 'und') {
 					language = lang;
 				} else {
 					let guess = iso6393.find(
@@ -2085,36 +2262,36 @@ document.addEventListener("DOMContentLoaded", async function () {
 			if (postText.length > maxChars) {
 				await splitIntoToots(newPost, postText, textarea);
 			} else {
-				charCount.removeAttribute("style");
+				charCount.removeAttribute('style');
 			}
 		}
 
-		textarea.addEventListener("focus", async () => {
+		textarea.addEventListener('focus', async () => {
 			let postText = textarea.value;
 			updateCharCount(newPost, postText);
 			if (postText.length > maxChars) {
 				await splitIntoToots(newPost, postText, textarea);
 			} else {
-				charCount.removeAttribute("style");
+				charCount.removeAttribute('style');
 			}
 		});
 
-		const cwDiv = newPost.querySelector(".cw-div");
-		const cwText = newPost.querySelector(".cw-text");
-		const cwBtn = newPost.querySelector(".cw-btn");
-		cwBtn.addEventListener("click", () => {
-			if (cwDiv.style.display === "none") {
-				cwDiv.style.display = "inline-flex";
-				cwBtn.style.color = "orange";
-				cwBtn.style.borderColor = "orange";
-				cwBtn.style.borderWidth = "2px";
-				cwBtn.style.textDecorationLine = "line-through";
+		const cwDiv = newPost.querySelector('.cw-div');
+		const cwText = newPost.querySelector('.cw-text');
+		const cwBtn = newPost.querySelector('.cw-btn');
+		cwBtn.addEventListener('click', () => {
+			if (cwDiv.style.display === 'none') {
+				cwDiv.style.display = 'inline-flex';
+				cwBtn.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="color: #ffffff;"></i>`;
+				cwBtn.style.backgroundColor = '#563acc';
 				cwBtn.title = "Supprimer l'avertissement";
+				cwText.focus();
 			} else {
 				cwText.value = null;
-				cwDiv.style.display = "none";
-				cwBtn.removeAttribute("style");
-				cwBtn.title = "Ajouter un avertissement";
+				cwDiv.style.display = 'none';
+				cwBtn.removeAttribute('style');
+				cwBtn.title = 'Ajouter un avertissement';
+				cwBtn.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i>`;
 			}
 		});
 
@@ -2122,20 +2299,20 @@ document.addEventListener("DOMContentLoaded", async function () {
 		mediaFiles[`mediaFiles${i}`] = [];
 		let files = mediaFiles[`mediaFiles${i}`];
 
-		const imgCount = newPost.querySelector(".img-count");
+		const imgCount = newPost.querySelector('.img-count');
 		imgCount.textContent = `0/${maxMedia}`;
 
-		const dropzone = newPost.querySelector(".dropzone");
-		const dzInst = dropzone.querySelector(".dz-inst");
-		const imgPreview = dropzone.querySelector(".img-preview");
+		const dropzone = newPost.querySelector('.dropzone');
+		const dzInst = dropzone.querySelector('.dz-inst');
+		const imgPreview = dropzone.querySelector('.img-preview');
 
 		// Get Bluesky embedded media
 		if (fromBsky && imgs && imgs.length > 0) {
-			dzInst.style.display = "none";
+			dzInst.style.display = 'none';
 			for (let img of imgs) {
-				if (img.type === "video") {
+				if (img.type === 'video') {
 					let mediaFile = {};
-					let baseUrl = img.url.split("playlist.m3u8")[0];
+					let baseUrl = img.url.split('playlist.m3u8')[0];
 					await getVideo(baseUrl, img, mediaFile, i);
 					async function getVideo(baseUrl, img, mediaFile, i) {
 						async function getManifest() {
@@ -2146,12 +2323,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 						const manifest = await getManifest();
 						let maxRes = 0;
 						function getMaxRes() {
-							const lines = manifest.split("\n");
+							const lines = manifest.split('\n');
 							for (let l of lines) {
-								if (l.startsWith("#EXT-X-STREAM-INF")) {
+								if (l.startsWith('#EXT-X-STREAM-INF')) {
 									let res = l
-										.split("RESOLUTION=")[1]
-										.split("x")[1];
+										.split('RESOLUTION=')[1]
+										.split('x')[1];
 									if (res > maxRes) {
 										maxRes = res;
 									}
@@ -2166,9 +2343,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 						async function getTsUrls(playlistUrl) {
 							const res = await fetch(playlistUrl);
 							const data = await res.text();
-							const lines = data.split("\n");
+							const lines = data.split('\n');
 							for (let l of lines) {
-								if (l.includes("video") && l.includes(".ts")) {
+								if (l.includes('video') && l.includes('.ts')) {
 									tsUrls.push(`${baseUrl}${maxRes}p/${l}`);
 								}
 							}
@@ -2176,14 +2353,14 @@ document.addEventListener("DOMContentLoaded", async function () {
 						await getTsUrls(playlistUrl);
 						const file = await getVideo(tsUrls);
 						async function getVideo(tsUrls) {
-							let mime = "video/mp4";
+							let mime = 'video/mp4';
 							async function transmuxSegments(tsUrls) {
 								let segments = [];
 								let transmuxer = new muxjs.mp4.Transmuxer();
 								if (tsUrls.length === 0) {
 									return;
 								}
-								transmuxer.on("data", function (segment) {
+								transmuxer.on('data', function (segment) {
 									let data = new Uint8Array(
 										segment.initSegment.byteLength +
 											segment.data.byteLength
@@ -2209,7 +2386,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 								return blob;
 							}
 							const blob = await createBlob(tsUrls);
-							const videoFile = new File([blob], "video.mp4", {
+							const videoFile = new File([blob], 'video.mp4', {
 								type: blob.type,
 							});
 							return videoFile;
@@ -2220,16 +2397,16 @@ document.addEventListener("DOMContentLoaded", async function () {
 					mediaFile.description = img.alt;
 					files.push(mediaFile);
 					displayThumbnail(mediaFile, imgPreview, imgCount, dzInst);
-				} else if (img.type === "image") {
+				} else if (img.type === 'image') {
 					const form = new FormData();
-					form.append("url", img.url);
-					fetch("proxy.php", {
-						method: "POST",
+					form.append('url', img.url);
+					fetch('proxy.php', {
+						method: 'POST',
 						body: form,
 					})
 						.then((response) => response.blob())
 						.then((blob) => {
-							const file = new File([blob], "image.jpg", {
+							const file = new File([blob], 'image.jpg', {
 								type: blob.type,
 							});
 							let mediaFile = {};
@@ -2246,7 +2423,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 							);
 						})
 						.catch((error) =>
-							console.error("Error fetching image:", error)
+							console.error('Error fetching image:', error)
 						);
 				}
 			}
@@ -2254,12 +2431,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 
 		// Get WP media
 		if (fromWP && imgs && imgs.length > 0) {
-			dzInst.style.display = "none";
+			dzInst.style.display = 'none';
 			for (let img of imgs) {
-				if (img.type === "img") {
+				if (img.type === 'img') {
 					let res = await getWPMedia(img);
 					let blob = await res[0].blob();
-					const file = new File([blob], "image.jpg", {
+					const file = new File([blob], 'image.jpg', {
 						type: blob.type,
 					});
 					let mediaFile = {};
@@ -2272,7 +2449,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 					}
 					files.push(mediaFile);
 					displayThumbnail(mediaFile, imgPreview, imgCount, dzInst);
-				} else if (img.type === "video") {
+				} else if (img.type === 'video') {
 					let mediaFile = {};
 					mediaFile.url = img.url;
 					mediaFile.type = img.type;
@@ -2282,7 +2459,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 					if (!img.alt) {
 						mediaFile.description = res[1];
 					}
-					const file = new File([blob], "video.mp4", {
+					const file = new File([blob], 'video.mp4', {
 						type: blob.type,
 					});
 					mediaFile.file = file;
@@ -2296,9 +2473,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 			return new Promise(async (resolve) => {
 				let mediaAlt = null;
 				if (!img.alt) {
-					let urlSegments = WPUrl.split("/").slice(0, -2);
-					let baseUrl = urlSegments.join("/") + "/media/";
-					let searchTerm = img.url.split("/").pop().split("?")[0];
+					let urlSegments = WPUrl.split('/').slice(0, -2);
+					let baseUrl = urlSegments.join('/') + '/media/';
+					let searchTerm = img.url.split('/').pop().split('?')[0];
 					let searchUrl = `${baseUrl}?search=${searchTerm}`;
 					let res = await fetch(searchUrl);
 					if (res.ok) {
@@ -2311,9 +2488,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 					}
 				}
 				let form = new FormData();
-				form.append("url", img.url);
-				let response = await fetch("proxy.php", {
-					method: "POST",
+				form.append('url', img.url);
+				let response = await fetch('proxy.php', {
+					method: 'POST',
 					body: form,
 				});
 				if (!response.ok) {
@@ -2323,31 +2500,31 @@ document.addEventListener("DOMContentLoaded", async function () {
 			});
 		}
 
-		const overlay = newPost.querySelector("div.overlay");
-		newPost.addEventListener("dragover", (e) => {
+		const overlay = newPost.querySelector('div.overlay');
+		newPost.addEventListener('dragover', (e) => {
 			e.preventDefault();
-			overlay.style.display = "flex";
+			overlay.style.display = 'flex';
 		});
 
-		overlay.addEventListener("dragleave", (e) => {
+		overlay.addEventListener('dragleave', (e) => {
 			e.preventDefault();
-			overlay.style.display = "none";
+			overlay.style.display = 'none';
 		});
 
-		newPost.addEventListener("drop", async (e) => {
+		newPost.addEventListener('drop', async (e) => {
 			e.preventDefault();
-			dropzone.classList.remove("dz-active");
-			overlay.style.display = "none";
-			dzInst.style.display = "none";
+			dropzone.classList.remove('dz-active');
+			overlay.style.display = 'none';
+			dzInst.style.display = 'none';
 			const newFiles = e.dataTransfer.items;
 			if (files.length >= maxMedia) {
-				window.alert(locData["media-alert"]);
+				window.alert(locData['media-alert']);
 				return;
 			} else {
 				for (let f of newFiles) {
 					if (files.length < maxMedia) {
 						let mediaFile = {};
-						if (f.kind === "file") {
+						if (f.kind === 'file') {
 							f = f.getAsFile();
 							mediaFile.file = f;
 							files.push(mediaFile);
@@ -2358,8 +2535,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 								dzInst
 							);
 						} else if (
-							f.kind === "string" &&
-							f.type === "text/uri-list"
+							f.kind === 'string' &&
+							f.type === 'text/uri-list'
 						) {
 							f.getAsString((url) => {
 								fetch(url)
@@ -2367,7 +2544,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 									.then((blob) => {
 										const file = new File(
 											[blob],
-											"image.jpg",
+											'image.jpg',
 											{ type: blob.type }
 										);
 										mediaFile.file = file;
@@ -2381,30 +2558,30 @@ document.addEventListener("DOMContentLoaded", async function () {
 									})
 									.catch((error) =>
 										console.error(
-											"Error fetching image:",
+											'Error fetching image:',
 											error
 										)
 									);
 							});
 						}
 					} else {
-						window.alert(locData["media-alert"]);
+						window.alert(locData['media-alert']);
 						break;
 					}
 				}
 			}
 		});
 
-		const imgUpload = newPost.querySelector("input.img-upload");
-		const addImg = newPost.querySelector("div.add-img");
+		const imgUpload = newPost.querySelector('input.img-upload');
+		const addImg = newPost.querySelector('div.add-img');
 		addImg.onclick = () => {
 			imgUpload.click();
 		};
-		imgUpload.addEventListener("change", async (e) => {
-			dzInst.style.display = "none";
+		imgUpload.addEventListener('change', async (e) => {
+			dzInst.style.display = 'none';
 			const newFiles = e.target.files;
 			if (files.length >= maxMedia) {
-				window.alert(locData["media-alert"]);
+				window.alert(locData['media-alert']);
 				return;
 			} else {
 				for (let f of newFiles) {
@@ -2419,18 +2596,18 @@ document.addEventListener("DOMContentLoaded", async function () {
 							dzInst
 						);
 					} else {
-						window.alert(locData["media-alert"]);
+						window.alert(locData['media-alert']);
 						break;
 					}
 				}
 			}
 		});
 
-		const addGif = newPost.querySelector("div.add-gif");
-		const gifDialog = document.getElementById("gif-dialog");
-		const gifResults = document.getElementById("gif-results");
-		const gifCancelBtn = document.getElementById("gif-cancel-btn");
-		const gifSearch = document.getElementById("gif-search");
+		const addGif = newPost.querySelector('div.add-gif');
+		const gifDialog = document.getElementById('gif-dialog');
+		const gifResults = document.getElementById('gif-results');
+		const gifCancelBtn = document.getElementById('gif-cancel-btn');
+		const gifSearch = document.getElementById('gif-search');
 		addGif.onclick = async () => {
 			let query = null;
 			let fresh = true;
@@ -2438,7 +2615,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 			let pos = await getGifs();
 			gifDialog.showModal();
 			gifCancelBtn.onclick = () => {
-				gifResults.innerHTML = "";
+				gifResults.innerHTML = '';
 				gifResults.scrollTo(0, 0);
 				gifDialog.close();
 			};
@@ -2478,7 +2655,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 			}
 			function createGifPreviews(results) {
 				let gifPreviews = Array.from(
-					gifResults.querySelectorAll(".gif-preview")
+					gifResults.querySelectorAll('.gif-preview')
 				);
 				if (fresh) {
 					let removed = gifPreviews.splice(results.length);
@@ -2490,29 +2667,29 @@ document.addEventListener("DOMContentLoaded", async function () {
 					if (fresh && gifPreviews.length > 0) {
 						gifPreview = gifPreviews[results.indexOf(r)];
 					} else {
-						gifPreview = document.createElement("img");
+						gifPreview = document.createElement('img');
 					}
-					gifPreview.classList.add("gif-preview");
+					gifPreview.classList.add('gif-preview');
 					gifPreview.src = r.media_formats.tinygif.url;
 					gifPreview.alt = r.content_description;
-					gifPreview.setAttribute("ref", r.media_formats.gif.url);
+					gifPreview.setAttribute('ref', r.media_formats.gif.url);
 					gifResults.appendChild(gifPreview);
 				}
 				gifPreviews = Array.from(
-					gifResults.querySelectorAll(".gif-preview")
+					gifResults.querySelectorAll('.gif-preview')
 				);
 				if (gifPreviews && gifPreviews.length > 0) {
 					for (let g of gifPreviews) {
 						g.onclick = async () => {
 							let mediaFile = {};
-							let response = await fetch(g.getAttribute("ref"));
+							let response = await fetch(g.getAttribute('ref'));
 							let blob = await response.blob();
-							const file = new File([blob], "image.gif", {
+							const file = new File([blob], 'image.gif', {
 								type: blob.type,
 							});
 							mediaFile.file = file;
 							mediaFile.description = g.alt;
-							dzInst.style.display = "none";
+							dzInst.style.display = 'none';
 							if (files.length < maxMedia) {
 								files.push(mediaFile);
 								displayThumbnail(
@@ -2523,7 +2700,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 								);
 								gifDialog.close();
 							} else {
-								window.alert(locData["media-alert"]);
+								window.alert(locData['media-alert']);
 								return;
 							}
 						};
@@ -2548,28 +2725,28 @@ document.addEventListener("DOMContentLoaded", async function () {
 							createGifPreviews(data.results, fresh);
 							return data.next;
 						} else {
-							window.alert(locData["no-result"]);
+							window.alert(locData['no-result']);
 							return pos;
 						}
 					} else {
-						window.alert(locData["gif-error"]);
+						window.alert(locData['gif-error']);
 						return pos;
 					}
 				} catch (error) {
-					console.error("Error fetching gifs:", error);
+					console.error('Error fetching gifs:', error);
 					return pos;
 				}
 			}
 		};
 
-		textarea.addEventListener("paste", (e) => {
-			dropzone.classList.remove("dz-active");
-			overlay.style.display = "none";
-			dzInst.style.display = "none";
+		textarea.addEventListener('paste', (e) => {
+			dropzone.classList.remove('dz-active');
+			overlay.style.display = 'none';
+			dzInst.style.display = 'none';
 			const items = (e.clipboardData || e.originalEvent.clipboardData)
 				.items;
 			for (let item of items) {
-				if (item.kind === "file") {
+				if (item.kind === 'file') {
 					let mediaFile = {};
 					const file = item.getAsFile();
 					if (files.length < maxMedia) {
@@ -2582,7 +2759,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 							dzInst
 						);
 					} else {
-						window.alert(locData["media-alert"]);
+						window.alert(locData['media-alert']);
 						break;
 					}
 				}
@@ -2591,8 +2768,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
 		function displayThumbnail(mediaFile, imgPreview, imgCount, dzInst) {
 			imgCount.textContent = `${files.length}/${maxMedia}`;
-			const div = document.createElement("div");
-			const removeBtn = document.createElement("button");
+			const div = document.createElement('div');
+			const removeBtn = document.createElement('button');
 			let previewElt;
 			let fileType = mediaFile.file.type;
 			let supportedMimeTypes = new Set(mediaConfig.supported_mime_types);
@@ -2601,7 +2778,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 			let vidSizeLimit = mediaConfig.video_size_limit;
 
 			if (!supportedMimeTypes.has(fileType)) {
-				window.alert(locData["unsupported-media"]);
+				window.alert(locData['unsupported-media']);
 				const index = files.indexOf(mediaFile);
 				if (index > -1) {
 					files.splice(index, 1);
@@ -2609,15 +2786,15 @@ document.addEventListener("DOMContentLoaded", async function () {
 				div.remove();
 				imgCount.textContent = `${files.length}/${maxMedia}`;
 				if (files.length === 0) {
-					dzInst.style.display = "block";
+					dzInst.style.display = 'block';
 				}
 				return;
 			}
 
-			if (fileType.includes("video")) {
+			if (fileType.includes('video')) {
 				if (mediaFile.file.size > vidSizeLimit) {
 					window.alert(
-						`${locData["over-limit"]} ${vidSizeLimit / 1000000} MB.`
+						`${locData['over-limit']} ${vidSizeLimit / 1000000} MB.`
 					);
 					const index = files.indexOf(mediaFile);
 					if (index > -1) {
@@ -2626,13 +2803,13 @@ document.addEventListener("DOMContentLoaded", async function () {
 					div.remove();
 					imgCount.textContent = `${files.length}/${maxMedia}`;
 					if (files.length === 0) {
-						dzInst.style.display = "block";
+						dzInst.style.display = 'block';
 					}
 					return;
 				}
-				const video = document.createElement("video");
+				const video = document.createElement('video');
 				if (!video.canPlayType(mediaFile.file.type)) {
-					video.poster = "icons/video_placeholder.webp";
+					video.poster = 'icons/video_placeholder.webp';
 					video.controls = false;
 				} else {
 					video.src = URL.createObjectURL(mediaFile.file);
@@ -2645,10 +2822,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 				}
 				previewElt = video;
 				div.appendChild(video);
-			} else if (fileType.includes("image") || fileType.includes("img")) {
+			} else if (fileType.includes('image') || fileType.includes('img')) {
 				if (mediaFile.file.size > imgSizeLimit) {
 					window.alert(
-						`${locData["over-limit"]} ${imgSizeLimit / 1000000} MB.`
+						`${locData['over-limit']} ${imgSizeLimit / 1000000} MB.`
 					);
 					const index = files.indexOf(mediaFile);
 					if (index > -1) {
@@ -2657,7 +2834,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 					div.remove();
 					imgCount.textContent = `${files.length}/${maxMedia}`;
 					if (files.length === 0) {
-						dzInst.style.display = "block";
+						dzInst.style.display = 'block';
 					}
 					return;
 				}
@@ -2673,28 +2850,28 @@ document.addEventListener("DOMContentLoaded", async function () {
 					};
 				};
 				imgReader.readAsDataURL(image);
-			} else if (fileType.includes("audio")) {
-				const audio = document.createElement("audio");
+			} else if (fileType.includes('audio')) {
+				const audio = document.createElement('audio');
 				audio.src = URL.createObjectURL(mediaFile.file);
 				audio.controls = false;
 				audio.muted = true;
 				audio.alt = mediaFile.description;
-				audio.addEventListener("click", (e) => {
+				audio.addEventListener('click', (e) => {
 					e.preventDefault();
 					e.stopPropagation();
 				});
 				previewElt = audio;
 				div.appendChild(audio);
-				const audioImg = document.createElement("img");
-				audioImg.src = "icons/speaker_icon.png";
-				audioImg.alt = "Audio";
+				const audioImg = document.createElement('img');
+				audioImg.src = 'icons/speaker_icon.png';
+				audioImg.alt = 'Audio';
 				div.appendChild(audioImg);
 			}
 
-			removeBtn.textContent = "✖";
-			removeBtn.classList.add("remove-btn");
+			removeBtn.textContent = '✖';
+			removeBtn.classList.add('remove-btn');
 
-			removeBtn.addEventListener("click", async (e) => {
+			removeBtn.addEventListener('click', async (e) => {
 				e.stopPropagation();
 				const index = files.indexOf(mediaFile);
 				if (index > -1) {
@@ -2703,33 +2880,33 @@ document.addEventListener("DOMContentLoaded", async function () {
 				div.remove();
 				imgCount.textContent = `${files.length}/${maxMedia}`;
 				if (files.length === 0) {
-					dzInst.style.display = "block";
+					dzInst.style.display = 'block';
 				}
 			});
 
-			div.addEventListener("click", (e) => {
+			div.addEventListener('click', (e) => {
 				e.preventDefault();
-				const zoomed = document.createElement("dialog");
-				zoomed.classList.add("zoomed");
+				const zoomed = document.createElement('dialog');
+				zoomed.classList.add('zoomed');
 				const zoomedElt = previewElt.cloneNode(true);
-				zoomedElt.classList.add("zoomed");
+				zoomedElt.classList.add('zoomed');
 				if (
-					zoomedElt.tagName === "VIDEO" ||
-					zoomedElt.tagName === "AUDIO"
+					zoomedElt.tagName === 'VIDEO' ||
+					zoomedElt.tagName === 'AUDIO'
 				) {
 					zoomedElt.controls = true;
 				}
-				zoomed.addEventListener("click", (e) => {
+				zoomed.addEventListener('click', (e) => {
 					e.preventDefault();
 					zoomed.remove();
 				});
-				zoomed.addEventListener("keydown", (e) => {
+				zoomed.addEventListener('keydown', (e) => {
 					e.preventDefault();
-					if (e.key === "Escape") {
+					if (e.key === 'Escape') {
 						zoomed.remove();
 					}
 				});
-				zoomedElt.addEventListener("play", () => {
+				zoomedElt.addEventListener('play', () => {
 					zoomed.focus();
 				});
 				zoomed.appendChild(zoomedElt);
@@ -2740,83 +2917,82 @@ document.addEventListener("DOMContentLoaded", async function () {
 			div.appendChild(removeBtn);
 			imgPreview.appendChild(div);
 
-			const altBtn = document.createElement("button");
-			altBtn.textContent = "ALT";
-			altBtn.classList.add("alt-btn");
-			const altDiv = imgPreview.querySelector(".alt-div");
-			const newAltDiv = altDiv.cloneNode(true);
-			const altTextArea = newAltDiv.querySelector(".alt-text");
+			const altBtn = document.createElement('button');
+			altBtn.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="color: #ffffff;"></i><span>&nbsp;ALT</span>`;
+			altBtn.classList.add('alt-btn');
+			const altDialog = imgPreview.querySelector('.alt-dialog');
+			const newAltDialog = altDialog.cloneNode(true);
+			const newAltDiv = newAltDialog.querySelector('.alt-div');
+			const altTextArea = newAltDialog.querySelector('.alt-text');
 
 			if (mediaFile.description) {
 				altTextArea.value = mediaFile.description;
-				altBtn.style.color = "#009900";
+				setAltBtn();
 				if (previewElt) {
 					previewElt.alt = mediaFile.description;
 					previewElt.title = mediaFile.description;
 				}
 			}
 
-			const altCounter = newAltDiv.querySelector(".alt-counter");
-			newAltDiv.addEventListener("click", (e) => {
+			const altCounter = newAltDiv.querySelector('.alt-counter');
+			newAltDialog.addEventListener('click', (e) => {
 				e.stopPropagation();
 			});
-			altTextArea.addEventListener("input", () => {
+			newAltDiv.addEventListener('click', (e) => {
+				e.stopPropagation();
+			});
+			altTextArea.addEventListener('input', () => {
 				altCounter.textContent = `${altTextArea.value.length}/${altLimit}`;
 				if (altTextArea.value.length > altLimit) {
-					altCounter.style.color = "#cc0000";
-					altCounter.style.fontWeight = "bold";
+					altCounter.style.color = '#cc0000';
+					altCounter.style.fontWeight = 'bold';
 				} else {
-					altCounter.removeAttribute("style");
+					altCounter.removeAttribute('style');
 				}
 			});
-			altTextArea.addEventListener("keydown", (e) => {
-				const altText = altTextArea.value;
+			const altSaveBtn = newAltDiv.querySelector('.alt-save-btn');
+			const altCancelBtn = newAltDiv.querySelector('.alt-cancel-btn');
+			altTextArea.addEventListener('keydown', (e) => {
 				if (
-					(e.key === "Enter" && e.metaKey) ||
-					(e.key === "Enter" && e.ctrlKey)
+					(e.key === 'Enter' && e.metaKey) ||
+					(e.key === 'Enter' && e.ctrlKey)
 				) {
-					if (altText && altText.length > 0) {
-						if (previewElt) {
-							previewElt.alt = altText;
-							previewElt.title = altText;
-						}
-						mediaFile.description = altText;
-						altBtn.style.color = "#009900";
-					} else if (!altText || altText.length === 0) {
-						if (previewElt) {
-							previewElt.removeAttribute("alt");
-							previewElt.removeAttribute("title");
-						}
-						delete mediaFile.description;
-						altBtn.removeAttribute("style");
-					}
-					newAltDiv.style.display = "none";
-				} else if (e.key === "Escape") {
-					newAltDiv.style.display = "none";
+					e.preventDefault();
+					altSaveBtn.click();
+				} else if (e.key === 'Escape') {
+					e.preventDefault();
+					altCancelBtn.click();
 				}
 			});
 
-			const altSaveBtn = newAltDiv.querySelector(".alt-save-btn");
-			const altCancelBtn = newAltDiv.querySelector(".alt-cancel-btn");
-			altBtn.addEventListener("click", (e) => {
+			function setAltBtn() {
+				altBtn.classList.add('alt-set');
+				altBtn.innerHTML = `<i class="fa-solid fa-check" style="color: #009900;"></i><span>&nbsp;ALT</span>`;
+			}
+
+			function unsetAltBtn() {
+				altBtn.classList.remove('alt-set');
+				altBtn.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="color: #ffffff;"></i><span>&nbsp;ALT</span>`;
+			}
+
+			altBtn.addEventListener('click', (e) => {
+				e.preventDefault();
 				e.stopPropagation();
-				if (newAltDiv.style.display === "flex") {
-					newAltDiv.style.display = "none";
+				if (mediaFile.description) {
+					altTextArea.value = mediaFile.description;
 				} else {
-					if (mediaFile.description) {
-						altTextArea.value = mediaFile.description;
-						altBtn.style.color = "#009900";
-					} else {
-						altTextArea.value = null;
-						altBtn.removeAttribute("style");
-					}
-					newAltDiv.style.display = "flex";
-					newAltDiv.style.left = `-${div.offsetLeft}px`;
-					newAltDiv.scrollIntoView();
-					altTextArea.focus();
+					altTextArea.value = null;
 				}
+				altCounter.textContent = `${altTextArea.value.length}/${altLimit}`;
+				const newImgThumbnail =
+					newAltDialog.querySelector('.img-thumbnail');
+				newImgThumbnail.innerHTML = '';
+				const altPreview = previewElt.cloneNode(true);
+				newImgThumbnail.appendChild(altPreview);
+				altTextArea.focus();
+				newAltDialog.showModal();
 			});
-			altSaveBtn.addEventListener("click", async (e) => {
+			altSaveBtn.addEventListener('click', async (e) => {
 				e.stopPropagation();
 				const altText = altTextArea.value;
 				if (altText && altText.length > 0) {
@@ -2825,54 +3001,54 @@ document.addEventListener("DOMContentLoaded", async function () {
 						previewElt.title = altText;
 					}
 					mediaFile.description = altText;
-					altBtn.style.color = "#009900";
+					setAltBtn();
 				} else if (!altText || altText.length === 0) {
 					if (previewElt) {
-						previewElt.removeAttribute("alt");
-						previewElt.removeAttribute("title");
+						previewElt.removeAttribute('alt');
+						previewElt.removeAttribute('title');
 					}
 					delete mediaFile.description;
-					altBtn.removeAttribute("style");
+					unsetAltBtn();
 				}
-				newAltDiv.style.display = "none";
+				newAltDialog.close();
 			});
-			altCancelBtn.addEventListener("click", async (e) => {
+			altCancelBtn.addEventListener('click', async (e) => {
 				e.stopPropagation();
-				newAltDiv.style.display = "none";
+				newAltDialog.close();
 			});
 
 			div.appendChild(altBtn);
-			div.appendChild(newAltDiv);
+			div.appendChild(newAltDialog);
 		}
 
 		// Handle post deletion
-		const deletePostBtn = newPost.querySelector(".delete-post-btn");
-		deletePostBtn.addEventListener("click", () => {
+		const deletePostBtn = newPost.querySelector('.delete-post-btn');
+		deletePostBtn.addEventListener('click', () => {
 			const index = postItems.indexOf(newPost);
 			if (postItems.length > 1) {
-				const id = newPost.id.split("-")[1];
+				const id = newPost.id.split('-')[1];
 				oldPosts = postItems.map(function (p) {
-					return p.getAttribute("counter");
+					return p.getAttribute('counter');
 				});
 				postItems.splice(index, 1);
 				let nbOfPosts = updatePostCount();
 				newPost.remove();
 				delete mediaFiles[`mediaFiles${id}`];
 				oldPosts.splice(index, 1);
-				let message = "Updating list of posts after delete";
+				let message = 'Updating list of posts after delete';
 				updatePostList(message, oldPosts, nbOfPosts);
 				if (postItems.length === 1) {
 					const post = postItems[0];
-					const delBtn = post.querySelector(".delete-post-btn");
-					delBtn.style.display = "none";
+					const delBtn = post.querySelector('.delete-post-btn');
+					delBtn.style.display = 'none';
 				}
 			}
 			const firstPost = postItems[0];
 			if (originalUser) {
-				const textarea = firstPost.querySelector(".post-text");
+				const textarea = firstPost.querySelector('.post-text');
 				updateCharCount(firstPost, textarea.value);
 			}
-			const firstVizSelect = firstPost.querySelector(".viz-select");
+			const firstVizSelect = firstPost.querySelector('.viz-select');
 			firstVizSelect.value = defaultViz;
 		});
 		updatePostList(message, oldPosts);
@@ -2894,7 +3070,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 		let remainingChunks;
 		for (let i = 0; i < chunks.length; i += 2) {
 			let chunk1 = chunks[i];
-			let chunk2 = chunks[i + 1] || "";
+			let chunk2 = chunks[i + 1] || '';
 			let chunk = chunk1 + chunk2;
 			if (textarea.value.length + chunk.length < maxChars) {
 				textarea.value += chunk;
@@ -2905,30 +3081,30 @@ document.addEventListener("DOMContentLoaded", async function () {
 			}
 		}
 		textarea.focus();
-		let flowText = "";
+		let flowText = '';
 		if (remainingChunks && remainingChunks.length > 0) {
 			for (let c of remainingChunks) {
 				flowText += c;
 			}
 			if (postItems.length > 0) {
-				const addPostBtn = newPost.querySelector(".add-post-btn");
-				currentPost = addPostBtn.parentElement;
+				const addPostBtn = newPost.querySelector('.add-post-btn');
+				currentPost = addPostBtn.closest('.post-item');
 			}
 			if (flowText) {
 				createNewPost(flowText.trim()).then((newPost) => {
 					splitIntoToots(
 						newPost,
 						flowText.trim(),
-						newPost.querySelector(".post-text")
+						newPost.querySelector('.post-text')
 					);
 				});
 			}
 		} else {
 			let postCounters = postItems.map(function (p) {
-				return p.getAttribute("counter");
+				return p.getAttribute('counter');
 			});
 			updatePostList(
-				"Updating list of posts after splitting",
+				'Updating list of posts after splitting',
 				postCounters
 			);
 			textarea.focus();
@@ -2937,8 +3113,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 	}
 
 	// Functions to react to change in number of posts
-	numberPostsCheckbox.addEventListener("change", async () => {
-		let message = "Updating post list after ticking/unticking checkbox";
+	numberPostsCheckbox.addEventListener('change', async () => {
+		let message = 'Updating post list after ticking/unticking checkbox';
 		await updatePostList(message, oldPosts);
 	});
 
@@ -2946,9 +3122,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 		for (let p of postItems) {
 			const i = postItems.indexOf(p);
 			const pNo = i + 1;
-			const postCount = p.querySelector(".post-count");
-			postCount.textContent = `${locData["toot"]} ${pNo}/${postItems.length}`;
-			p.setAttribute("counter", `${pNo}/${postItems.length}`);
+			const postCount = p.querySelector('.post-count');
+			postCount.textContent = `${locData['toot']} ${pNo}/${postItems.length}`;
+			p.setAttribute('counter', `${pNo}/${postItems.length}`);
 		}
 		return postItems.length;
 	}
@@ -2959,10 +3135,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 		} else {
 		}
 		let numberPosts = numberPostsCheckbox.checked;
-		optionsDiv.style.marginBottom = "10px";
+		optionsDiv.style.marginBottom = '10px';
 		let threadLinks = Array.from(
-			document.querySelectorAll(".thread-link")
-		).filter((t) => t.style.display === "block");
+			document.querySelectorAll('.thread-link')
+		).filter((t) => t.style.display === 'block');
 		threadLinks.forEach((t) => t.remove());
 		let times = 1;
 		for (let p of postItems) {
@@ -2971,19 +3147,19 @@ document.addEventListener("DOMContentLoaded", async function () {
 			if (previousPost) {
 				let replyLink = threadLink.cloneNode(true);
 				p.before(replyLink);
-				previousPost.style.marginBottom = "0";
-				replyLink.style.display = "block";
+				previousPost.style.marginBottom = '0';
+				replyLink.style.display = 'block';
 			} else if (
 				postItems.indexOf(p) === 0 &&
-				previewDiv.style.display === "flex"
+				previewDiv.style.display === 'flex'
 			) {
 				let replyLink = threadLink.cloneNode(true);
 				p.before(replyLink);
-				optionsDiv.style.marginBottom = "0";
-				replyLink.style.display = "block";
+				optionsDiv.style.marginBottom = '0';
+				replyLink.style.display = 'block';
 			}
-			postItems[postItems.length - 1].style.marginBottom = "20px";
-			const textarea = p.querySelector("textarea.post-text");
+			postItems[postItems.length - 1].style.marginBottom = '20px';
+			const textarea = p.querySelector('textarea.post-text');
 			let text = textarea.value;
 			let oldCount;
 			if (oldPosts && oldPosts.length > 0) {
@@ -2994,20 +3170,20 @@ document.addEventListener("DOMContentLoaded", async function () {
 			times++;
 			const postCount = `${i + 1}/${postItems.length}`;
 			if (numberPosts) {
-				if (oldCount && oldCount !== "skip") {
+				if (oldCount && oldCount !== 'skip') {
 					if (text.startsWith(oldCount)) {
 						text = text.replace(oldCount, postCount);
 					} else {
 						text = `${postCount}\n${text}`;
 					}
-				} else if (!oldCount || oldCount === "skip") {
+				} else if (!oldCount || oldCount === 'skip') {
 					text = `${postCount}\n${text}`;
 				}
 				textarea.value = text;
 				updateCharCount(p, textarea.value);
 			} else if (!numberPosts) {
 				if (postCount && text.startsWith(postCount)) {
-					text = text.replace(postCount, "").trim();
+					text = text.replace(postCount, '').trim();
 					textarea.value = text;
 					updateCharCount(p, textarea.value);
 				}
@@ -3015,7 +3191,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 		}
 		updateTime++;
 		postItems.forEach((p) => {
-			const textarea = p.querySelector("textarea.post-text");
+			const textarea = p.querySelector('textarea.post-text');
 			textarea.focus();
 		});
 		return true;
@@ -3023,13 +3199,27 @@ document.addEventListener("DOMContentLoaded", async function () {
 
 	// Functions to upload thread to Mastodon
 	let threadUrl;
-	postThreadBtn.addEventListener("click", async () => {
+	postThreadBtn.addEventListener('click', async () => {
+		let staggerMediaUploads = false;
+		const NbOfMediaFiles = Object.values(mediaFiles).flat().length;
+		if (NbOfMediaFiles > 30) {
+			if (
+				window.confirm(
+					`${locData['stagger-upload-confirm-1']}${NbOfMediaFiles}${locData['stagger-upload-confirm-2']}`
+				)
+			) {
+				window.alert(locData['stagger-upload-alert']);
+				staggerMediaUploads = true;
+			} else {
+				return false;
+			}
+		}
 		for (let key in mediaFiles) {
 			if (mediaFiles[key].length > 0) {
 				for (let media of mediaFiles[key]) {
 					if (!media.description) {
-						if (!window.confirm(locData["media-error-confirm"])) {
-							const number = key.split("mediaFiles")[1];
+						if (!window.confirm(locData['media-error-confirm'])) {
+							const number = key.split('mediaFiles')[1];
 							const post = document.getElementById(
 								`post-${number}`
 							);
@@ -3040,59 +3230,59 @@ document.addEventListener("DOMContentLoaded", async function () {
 				}
 			}
 		}
-		postThreadBtn.style.display = "none";
-		contentContainer.style.display = "none";
-		counter.style.display = "block";
-		counter.style.marginTop = "50px";
-		let ok = await postThread();
+		postThreadBtn.style.display = 'none';
+		contentContainer.style.display = 'none';
+		counter.style.display = 'block';
+		counter.style.marginTop = '50px';
+		let ok = await postThread(staggerMediaUploads);
 		if (!ok) {
-			spinner.style.display = "none";
-			counter.style.display = "none";
-			postThreadBtn.style.display = "flex";
-			contentContainer.style.display = "flex";
+			spinner.style.display = 'none';
+			counter.style.display = 'none';
+			postThreadBtn.style.display = 'flex';
+			contentContainer.style.display = 'flex';
 			return;
 		}
 		spinner.remove();
-		counter.textContent = locData["thread-published"];
-		counter.style.color = "#563acc";
-		const restartBtn = document.createElement("button");
-		restartBtn.textContent = locData["restart"];
-		restartBtn.style.marginTop = "50px";
+		counter.textContent = locData['thread-published'];
+		counter.style.color = '#563acc';
+		const restartBtn = document.createElement('button');
+		restartBtn.textContent = locData['restart'];
+		restartBtn.style.marginTop = '50px';
 		restartBtn.onclick = () => {
-			window.open(window.location.origin, "_self");
+			window.open(window.location.origin, '_self');
 		};
 		counter.after(restartBtn);
-		postThreadBtn.style.display = "none";
+		postThreadBtn.style.display = 'none';
 		if (threadUrl) {
-			window.open(threadUrl, "_blank");
+			window.open(threadUrl, '_blank');
 		}
 	});
 
 	async function uploadMedia(f, d) {
 		const formData = new FormData();
-		formData.append("file", f);
+		formData.append('file', f);
 		if (d) {
-			formData.append("description", d);
+			formData.append('description', d);
 		}
 
 		try {
 			const response = await fetch(`https://${instance}/api/v2/media`, {
-				method: "POST",
+				method: 'POST',
 				headers: {
 					Authorization: `Bearer ${token}`,
-					scope: "write",
+					scope: 'write',
 				},
 				body: formData,
 			});
 			if (!response.ok) {
 				if (response.status === 401) {
-					window.alert(locData["app-warning"]);
+					window.alert(locData['app-warning']);
 					return;
 				}
 				const errorData = await response.json();
-				console.error("Error uploading media: ", errorData);
+				console.error('Error uploading media: ', errorData);
 				window.alert(
-					`${locData["media-error-alert"]} : ${errorData.error}`
+					`${locData['media-error-alert']} : ${errorData.error}`
 				);
 				return;
 			} else if (response.status === 202) {
@@ -3105,13 +3295,13 @@ document.addEventListener("DOMContentLoaded", async function () {
 						{
 							headers: {
 								Authorization: `Bearer ${token}`,
-								scope: "write",
+								scope: 'write',
 							},
 						}
 					);
 					if (res.status === 401) {
 						const errorData = await res.json();
-						console.error("Error checking media: ", errorData);
+						console.error('Error checking media: ', errorData);
 						return;
 					}
 					return res.status;
@@ -3123,7 +3313,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 				if (status === 200) {
 					return id;
 				} else {
-					console.error("Media upload status: ", status);
+					console.error('Media upload status: ', status);
 					return;
 				}
 			} else if (response.status === 200) {
@@ -3132,12 +3322,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 				return id;
 			}
 		} catch (error) {
-			console.error("Fetch error: ", error);
+			console.error('Fetch error: ', error);
 		}
 	}
 
-	async function postThread() {
-		spinner.style.display = "inline-flex";
+	async function postThread(staggerMediaUploads) {
+		spinner.style.display = 'inline-flex';
 		let replyToId;
 		if (originalId) {
 			replyToId = originalId;
@@ -3148,35 +3338,37 @@ document.addEventListener("DOMContentLoaded", async function () {
 		}
 		for (let post of postItems) {
 			const i = postItems.indexOf(post);
-			counter.textContent = `${locData["posting-toot"]} ${i + 1}/${
+			counter.textContent = `${locData['posting-toot']} ${i + 1}/${
 				postItems.length
 			}...`;
 
-			const langSelect = post.querySelector(".lang-select");
+			const langSelect = post.querySelector('.lang-select');
 			const postLang = langSelect.value;
 
-			const vizSelect = post.querySelector(".viz-select");
-			// const visibility = vizSelect.value;
-			const visibility = vizSelect.getAttribute("data-value");
+			const vizSelect = post.querySelector('.viz-select');
+			const visibility = vizSelect.getAttribute('data-value');
 
-			const cwTextArea = post.querySelector(".cw-text");
+			const quoteSelect = post.querySelector('.quote-select');
+			const quoteOption = quoteSelect.getAttribute('data-value');
+
+			const cwTextArea = post.querySelector('.cw-text');
 			let cwText;
 			if (cwTextArea.value) {
 				cwText = cwTextArea.value;
 			}
 
-			const textarea = post.querySelector(".post-text");
+			const textarea = post.querySelector('.post-text');
 			const postText = textarea.value;
 
-			const id = post.id.split("-")[1];
+			const id = post.id.split('-')[1];
 			const postMediaIds = [];
 			const postMedia = mediaFiles[`mediaFiles${id}`];
 			if (postMedia && postMedia.length > 0) {
-				const mediaCounter = document.createElement("div");
-				mediaCounter.classList.add("counter");
+				const mediaCounter = document.createElement('div');
+				mediaCounter.classList.add('counter');
 				counter.appendChild(mediaCounter);
 				for (let media of postMedia) {
-					mediaCounter.textContent = `(${locData["media-upload"]} ${
+					mediaCounter.textContent = `(${locData['media-upload']} ${
 						postMedia.indexOf(media) + 1
 					}/${postMedia.length}...)`;
 					let mediaId = await uploadMedia(
@@ -3184,20 +3376,25 @@ document.addEventListener("DOMContentLoaded", async function () {
 						media.description
 					);
 					if (!mediaId) {
-						window.alert(locData["media-error-alert"]);
+						window.alert(locData['media-error-alert']);
 						return;
 					}
 					postMediaIds.push(mediaId);
+					if (staggerMediaUploads) {
+						await new Promise((resolve) =>
+							setTimeout(resolve, 60000)
+						);
+					}
 				}
 				mediaCounter.remove();
 			}
 			if (!postText && postMedia.length === 0) {
 				if (i === 0) {
 					if (postItems.length === 1) {
-						window.alert(locData["empty-thread"]);
+						window.alert(locData['empty-thread']);
 						return;
 					}
-					window.alert(locData["empty-toot"]);
+					window.alert(locData['empty-toot']);
 					return;
 				}
 				continue;
@@ -3208,6 +3405,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 					media_ids: postMediaIds,
 					spoiler_text: cwText,
 					visibility: visibility,
+					quote_approval_policy: quoteOption,
 					in_reply_to_id: replyToId,
 					language: postLang,
 				};
@@ -3217,11 +3415,11 @@ document.addEventListener("DOMContentLoaded", async function () {
 				const response = await fetch(
 					`https://${instance}/api/v1/statuses`,
 					{
-						method: "POST",
+						method: 'POST',
 						headers: {
 							Authorization: `Bearer ${token}`,
-							"Content-Type": "application/json",
-							scope: "write",
+							'Content-Type': 'application/json',
+							scope: 'write',
 						},
 						body: JSON.stringify(body),
 					}
@@ -3229,13 +3427,13 @@ document.addEventListener("DOMContentLoaded", async function () {
 
 				if (!response.ok) {
 					if (response.status === 401) {
-						window.alert(locData["app-warning"]);
+						window.alert(locData['app-warning']);
 						return;
 					}
 					const errorData = await response.json();
-					console.error("Error posting status: ", errorData);
+					console.error('Error posting status: ', errorData);
 					window.alert(
-						`${locData["posting-error-1"]}${id} ${locData["posting-error-2"]}\n${errorData.error}`
+						`${locData['posting-error-1']}${id} ${locData['posting-error-2']}\n${errorData.error}`
 					);
 					return;
 				}
@@ -3252,7 +3450,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 				}
 				await new Promise((resolve) => setTimeout(resolve, 1000));
 			} catch (error) {
-				console.error("Fetch error: ", error);
+				console.error('Fetch error: ', error);
 			}
 		}
 		if (scheduledAt) {

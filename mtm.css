@@ -34,18 +34,31 @@ svg#svg846 {
 	width: 300px;
 }
 
+.masto-head {
+	fill: #563acc;
+}
 .masto-path {
 	fill: rgb(31, 18, 18);
 }
 
+.threader-path {
+	fill: #563acc;
+}
+
 @media (prefers-color-scheme: dark) {
+	.masto-head {
+		fill: #6147e6;
+	}
 	.masto-path {
 		fill: #d9d9e8;
+	}
+	.threader-path {
+		fill: #6147e6;
 	}
 }
 
 *:focus-visible {
-	outline: 2px solid #6364ff;
+	outline: 2px solid #6147e6;
 }
 
 div#plugin-info {
@@ -89,7 +102,7 @@ div#instructions {
 	background-color: light-dark(white, black);
 	color: light-dark(black, #ddd9e8);
 	border-radius: 10px;
-	width: 50%;
+	width: 550px;
 	padding: 10px;
 	margin: 10px 0;
 }
@@ -98,7 +111,7 @@ div#instructions-btn {
 	font-weight: bold;
 	text-decoration: underline;
 	cursor: pointer;
-	color: light-dark(#563acc, #6364ff);
+	color: light-dark(#563acc, #8886ff);
 }
 
 #instance-div {
@@ -134,7 +147,7 @@ div#instructions-btn {
 	font-size: small;
 	margin-top: 10px;
 	margin-bottom: 10px;
-	color:  #aaa;
+	color: #aaa;
 	background-color: light-dark(#f9f9fb, #292938);
 	height: 20px;
 	padding: 5px;
@@ -167,7 +180,7 @@ input.schedule-input {
 	font-weight: bold;
 	text-decoration: underline;
 	cursor: pointer;
-	color: light-dark(#563acc, #6364ff);
+	color: light-dark(#563acc, #8886ff);
 	margin: 10px 0;
 	display: none;
 }
@@ -214,7 +227,7 @@ button {
 	height: 30px;
 	padding: 5px;
 	color: light-dark(white, #d9d9e8);
-	background-color: #6364ff;
+	background-color: #6147e6;
 	border: none;
 	border-radius: 4px;
 	cursor: pointer;
@@ -281,22 +294,28 @@ div.header-1 {
 	display: inline-flex;
 	height: 28px;
 	align-items: center;
-	color: light-dark(gray, #d9d9e8);
+	color: light-dark(gray, #9c9cc9);
 }
 
 .cw-btn,
 .viz-select,
+.quote-select,
 .lang-select {
 	height: 30px;
 	width: auto;
-	color: light-dark(black, #9c9cc9);
+	color: light-dark(#563acc, #8886ff);
 	display: inline-flex;
 	margin-top: 10px;
+	margin-left: 0px;
 	float: right;
-	border: solid 1px light-dark(#d9d9e8, #313144);
+	border: solid 1px light-dark(#563acc, #8886ff);
 	border-radius: 4px;
 	background-color: light-dark(#f9f9fb, #292938);
 	display: inline;
+}
+
+.viz-select {
+	font-family: Arial, Helvetica, sans-serif !important;
 }
 
 .lang-select {
@@ -311,27 +330,43 @@ div.header-1 {
 
 .cw-btn:hover,
 .viz-select:hover,
+.quote-select:hover,
 select:hover {
-	background-color: light-dark(#dadade, #292938);
+	background-color: light-dark(rgba(97, 71, 230, 0.08), #292938);
 }
 
-.viz-list {
+.viz-list,
+.quote-list {
 	position: absolute;
 	top: 100%;
 	border: 1px solid light-dark(#d9d9e8, #313144);
 	border-radius: 4px;
 	background-color: light-dark(#f9f9fb, #292938);
-	color: light-dark(#563acc, #6364ff);
+	color: light-dark(#563acc, #9c9cc9);
 	text-overflow: ellipsis;
 	z-index: 100;
 	display: none;
 	flex-direction: column;
 }
 
-.viz-item {
+.viz-head,
+.quote-head {
+	height: 28px;
+	background-color: light-dark(#d9d9e8, #313144);
+	color: light-dark(#563acc, #9c9cc9);
+	font-weight: bold;
+	font-size: small;
+	justify-content: space-around;
+	padding: 5px;
+	display: flex;
+	align-items: center;
+}
+
+.viz-item,
+.quote-item {
 	font-size: small;
 	height: 24px;
-	color: light-dark(black, #d9d9e8);
+	color: light-dark(black, #9c9cc9);
 	cursor: pointer;
 	text-align: left;
 	padding: 5px;
@@ -339,8 +374,23 @@ select:hover {
 	align-items: center;
 }
 
-.viz-item:hover {
-	background-color: light-dark(#dadade, #313144);
+.viz-item:hover,
+.quote-item:hover {
+	background-color: light-dark(#d9d9e8, #313144);
+}
+
+.quote-item.disabled {
+	color: gray;
+	font-weight: normal;
+	cursor: not-allowed;
+}
+
+.quote-item.disabled:hover {
+	background-color: #ddd;
+}
+
+i {
+	color: light-dark(#563acc, #8886ff);
 }
 
 .cw-div {
@@ -366,12 +416,18 @@ textarea {
 }
 
 textarea.cw-text {
-	border: solid 2px orange;
+	border-left: solid 0.5rem orange;
+	border-right: solid 0.5rem orange;
 	width: 100%;
+	border-radius: 0px;
+	background-color: light-dark(#eae8f6, #3a2f1c);
+	color: light-dark(#563acc, #d9d9e8);
 }
 
 textarea.cw-text:focus-visible {
-	outline: 2px solid orange;
+	outline: none;
+	border-top: solid 1px orange;
+	border-bottom: solid 1px orange;
 }
 
 .textarea,
@@ -415,6 +471,7 @@ textarea.cw-text:focus-visible {
 	position: absolute;
 	bottom: 0px;
 	right: 5px;
+	border: solid 1px light-dark(#d9d9e8, #313144);
 }
 
 #page-title {
@@ -461,7 +518,7 @@ div#dl-msg {
 	position: relative;
 	width: 500px;
 	height: 100px;
-	border: 2px dashed light-dark(#d9d9e8, #9c9cc9);
+	border: 2px dashed light-dark(#d9d9e8, #8886ff);
 	border-radius: 4px;
 	background-color: light-dark(#f9f9fb, #292938);
 	color: light-dark(gray, #9c9cc9);
@@ -496,7 +553,7 @@ div#dl-msg {
 	width: 20px;
 	height: 20px;
 	border-radius: 4px;
-	color: #6364ff;
+	color: light-dark(#563acc, #8886ff);
 	cursor: pointer;
 	padding: 2px;
 }
@@ -597,7 +654,7 @@ button:disabled {
 	display: flex;
 	flex-direction: row;
 	justify-content: flex-end;
-	color: light-dark(gray, #d9d9e8);
+	color: light-dark(gray, #9c9cc9);
 	margin-top: 10px;
 	width: 500px;
 }
@@ -627,15 +684,15 @@ button:disabled {
 
 .alt-btn {
 	position: absolute;
-	bottom: 2px;
+	bottom: 5px;
 	right: 2px;
-	background: rgba(255, 255, 255, 0.8);
-	color: rgba(255, 102, 0, 0.8);
+	background-color: rgb(255, 102, 0);
+	color: white;
 	border: none;
 	border-radius: 4px;
 	cursor: pointer;
-	width: 30px;
-	height: 30px;
+	width: 50px;
+	height: 24px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -644,38 +701,62 @@ button:disabled {
 }
 
 .alt-btn:hover {
-	background: white;
-	color: rgb(255, 102, 0);
-	font-weight: bold;
+	background-color: rgb(255, 102, 0);
+	color: white;
+}
+
+.alt-btn.alt-set {
+	background-color: white;
+	color: #009900;
+}
+
+.alt-btn.alt-set:hover {
+	background-color: white;
+	color: #009900;
+}
+
+.alt-dialog {
+	cursor: auto !important;
+	padding: 10px 5px 0 5px;
+}
+
+.img-thumbnail,
+.img-thumbnail img {
+	cursor: auto !important;
+	width: auto !important;
 }
 
 .alt-div {
-	position: absolute !important;
-	/* left: 50%;
-	transform: translateX(-50%); */
-	z-index: 1;
+	display: flex;
+	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	padding: 0;
 	margin: 0 !important;
 	width: 500px;
 	height: 200px;
 	border-radius: 4px;
-	box-shadow: 0 0 5px gray;
 	background-color: light-dark(white, black);
 	cursor: auto !important;
 }
 
+.alt-footer {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	width: 98%;
+	margin: 0;
+	cursor: auto !important;
+}
+
 .alt-btn-div {
-	position: absolute !important;
-	bottom: 0;
-	right: 2px;
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-end;
+	align-items: center;
 }
 
 .alt-counter {
-	position: absolute !important;
-	bottom: 2px;
-	left: 4px;
 	color: light-dark(gray, #d9d9e8);
 	font-size: small;
 }
@@ -685,10 +766,14 @@ button:disabled {
 	box-sizing: border-box;
 	width: 98%;
 	height: 150px;
-	position: absolute;
-	top: 1%;
-	border: none;
+	border: solid 1px light-dark(#d9d9e8, #313144);
+	background-color: light-dark(#f9f9fb, #292938);
 	cursor: text;
+}
+
+.alt-save-btn,
+.alt-cancel-btn {
+	margin: 5px;
 }
 
 .img-spinner-div {
@@ -888,7 +973,7 @@ div.number-posts {
 	cursor: pointer;
 }
 
-input[type="checkbox"] {
+input[type='checkbox'] {
 	width: auto;
 	margin-right: 5px;
 	border: solid 1px light-dark(#d9d9e8, #313144);
@@ -1170,8 +1255,8 @@ input#gif-search {
 	aspect-ratio: 1 / 1;
 	font-weight: bold;
 	font-size: x-large;
-	background-color: #cc0000;
-	color: white;
+	/* background-color: white; */
+	color: #cc0000;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -1227,6 +1312,7 @@ input#gif-search {
 	select,
 	select.import,
 	.viz-select,
+	.quote-select,
 	.lang-select,
 	.cw-btn {
 		height: 2.5rem;
@@ -1240,7 +1326,8 @@ input#gif-search {
 		width: 3rem;
 	}
 
-	.viz-item {
+	.viz-item,
+	.quote-item {
 		font-size: 100%;
 	}
 
@@ -1296,7 +1383,8 @@ input#gif-search {
 	}
 
 	textarea.cw-text {
-		border: solid 2px orange;
+		border-left: solid 0.5rem orange;
+		border-right: solid 0.5rem orange;
 		width: 100%;
 	}
 
@@ -1390,8 +1478,7 @@ input#gif-search {
 		aspect-ratio: 1 / 1;
 		font-weight: bold;
 		font-size: x-large;
-		background-color: #cc0000;
-		color: white;
+		color: #cc0000;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -1421,7 +1508,7 @@ input#gif-search {
 		width: 100%;
 	}
 
-	input[type="checkbox"] {
+	input[type='checkbox'] {
 		width: 1rem;
 	}
 
@@ -1441,7 +1528,10 @@ input#gif-search {
 	}
 
 	.alt-div {
-		width: 95vw;
 		height: 220px;
+	}
+
+	.alt-dialog {
+		width: 100%;
 	}
 }
