@@ -206,18 +206,6 @@
 					données.
 				</p>
 			</div>
-			<div>
-				<span data-lang="legacy" style="font-size: small"
-					>En cas de problème, une ancienne version de MastoThreader
-					est accessible
-				</span>
-				<a
-					data-lang="legacy-link"
-					style="font-size: small"
-					href="https://mastothreader.prendrelangue.fr/legacy/index.html"
-					>ici</a
-				>
-			</div>
 			<div id="instance-input-div">
 				<div
 					id="instance-text-input"
@@ -237,7 +225,7 @@
 						placeholder-lang="instance-placeholder" />
 					<div id="instance-list" class="instance-list"></div>
 				</div>
-				<div id="logged-in-as"></div>
+				<div id="logged-in-as" class="logged-in-as"></div>
 				<button id="instance-btn" data-lang="instance-btn">
 					Valider
 				</button>
@@ -434,14 +422,6 @@
 						placeholder="Tapez votre texte ici"
 						placeholder-lang="textarea-placeholder"></textarea>
 					<div class="emoji-btn">
-						<!-- <svg
-							xmlns="http://www.w3.org/2000/svg"
-							height="20"
-							viewBox="0 -960 960 960"
-							width="20">
-							<path
-								d="M612-516q25 0 42.5-17.5T672-576q0-25-17.5-42.5T612-636q-25 0-42.5 17.5T552-576q0 25 17.5 42.5T612-516Zm-264 0q25 0 42.5-17.5T408-576q0-25-17.5-42.5T348-636q-25 0-42.5 17.5T288-576q0 25 17.5 42.5T348-516Zm132 228q60 0 110.5-31t79.5-84H290q29 53 79.5 84T480-288Zm.28 192Q401-96 331-126t-122.5-82.5Q156-261 126-330.96t-30-149.5Q96-560 126-629.5q30-69.5 82.5-122T330.96-834q69.96-30 149.5-30t149.04 30q69.5 30 122 82.5T834-629.28q30 69.73 30 149Q864-401 834-331t-82.5 122.5Q699-156 629.28-126q-69.73 30-149 30ZM480-480Zm0 312q130 0 221-91t91-221q0-130-91-221t-221-91q-130 0-221 91t-91 221q0 130 91 221t221 91Z"></path>
-						</svg> -->
 						<i class="fa-regular fa-face-laugh"></i>
 					</div>
 				</div>
@@ -449,21 +429,13 @@
 					<div class="char-count"></div>
 				</div>
 				<div class="dropzone">
-					<div class="img-spinner-div" style="display: none">
-						<div class="img-spinner"></div>
-					</div>
-					<div class="dz-inst" for="img-upload">
-						<input
-							type="file"
-							id="img-upload"
-							name="img-upload"
-							class="img-upload"
-							multiple
-							accept="image/*, audio/*, video/*" /><span
-							data-lang="img-upload"
-							>Glissez-déposez vos médias ici</span
-						>
-					</div>
+					<input
+						type="file"
+						id="img-upload"
+						name="img-upload"
+						class="img-upload"
+						multiple
+						accept="image/*, audio/*, video/*" />
 					<div class="img-preview">
 						<dialog class="alt-dialog">
 							<div class="img-thumbnail"></div>
@@ -490,21 +462,82 @@
 							</div>
 						</dialog>
 					</div>
-					<div class="add-gif"><span>GIF</span></div>
-					<div class="add-img">
-						<!-- <svg
-							xmlns="http://www.w3.org/2000/svg"
-							height="20"
-							viewBox="0 -960 960 960"
-							width="20">
-							<path
-								d="M360-384h384L618-552l-90 120-66-88-102 136Zm-48 144q-29.7 0-50.85-21.15Q240-282.3 240-312v-480q0-29.7 21.15-50.85Q282.3-864 312-864h480q29.7 0 50.85 21.15Q864-821.7 864-792v480q0 29.7-21.15 50.85Q821.7-240 792-240H312Zm0-72h480v-480H312v480ZM168-96q-29.7 0-50.85-21.15Q96-138.3 96-168v-552h72v552h552v72H168Zm144-696v480-480Z"></path>
-						</svg> -->
-						<i class="fa-regular fa-images"></i>
+					<div class="count">
+						<div class="img-count"></div>
 					</div>
 				</div>
-				<div class="count">
-					<div class="img-count"></div>
+				<div class="poll-container">
+					<div class="poll-options-div">
+						<div class="poll-option">
+							<div class="poll-radio"></div>
+							<input
+								type="text"
+								class="poll-text"
+								placeholder="Option de sondage"
+								placeholder-lang="poll-option-placeholder" />
+						</div>
+					</div>
+					<div class="poll-settings">
+						<div class="poll-duration">
+							<label
+								for="poll-duration-select"
+								data-lang="poll-duration"
+								>Durée du sondage :</label
+							>
+							<select
+								id="poll-duration-select"
+								class="poll-duration-select">
+								<option value="300" data-lang="poll-5min">
+									5 minutes
+								</option>
+								<option value="1800" data-lang="poll-30min">
+									30 minutes
+								</option>
+								<option value="3600" data-lang="poll-1hr">
+									1 heure
+								</option>
+								<option value="21600" data-lang="poll-6hr">
+									6 heures
+								</option>
+								<option value="43200" data-lang="poll-12hr">
+									12 heures
+								</option>
+								<option
+									value="86400"
+									data-lang="poll-1day"
+									selected>
+									1 jour
+								</option>
+								<option value="259200" data-lang="poll-3day">
+									3 jours
+								</option>
+								<option value="604800" data-lang="poll-7day">
+									7 jours
+								</option>
+							</select>
+						</div>
+						<div class="poll-multiple">
+							<input
+								type="checkbox"
+								id="poll-multiple-input"
+								class="poll-multiple-input"
+								checked="false" />
+							<label
+								for="poll-multiple-input"
+								data-lang="poll-multiple"
+								>Autoriser plusieurs choix :</label
+							>
+						</div>
+					</div>
+				</div>
+				<div class="addons-btn-div">
+					<button class="add-poll">
+						<i class="fa-solid fa-square-poll-vertical"></i>
+					</button>
+					<button class="add-img">
+						<i class="fa-regular fa-images"></i>
+					</button>
+					<button class="add-gif">GIF</button>
 				</div>
 				<div class="toot-btns">
 					<button class="add-post-btn" data-lang="add-post-btn">

@@ -107,5 +107,17 @@
 	"quote-followers": "&nbsp;Followers only",
 	"quote-nobody": "&nbsp;Just me",
 	"visibility": "&nbsp;Visibility",
-	"quote": "&nbsp;Who can quote"
+	"quote": "&nbsp;Who can quote",
+	"poll-option-placeholder": "Poll option",
+	"poll-duration": "Poll duration",
+	"poll-multiple": "Allow multiple choices",
+	"poll-5min": "5 minutes",
+	"poll-30min": "30 minutes",
+	"poll-1hr": "1 hour",
+	"poll-6hr": "6 hours",
+	"poll-12hr": "12 hours",
+	"poll-1day": "1 day",
+	"poll-3day": "3 days",
+	"poll-7day": "7 days",
+	"poll-option-alert": "Please provide at least two options for the poll."
 }

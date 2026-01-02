@@ -84,6 +84,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 	let mediaConfig = {};
 	let maxChars;
 	let maxMedia;
+	let pollOptions;
 	let lang;
 	let customEmoji;
 	let userAvatarSrc;
@@ -99,6 +100,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 	let updateTime = 1;
 	let currentPost;
 	let mediaFiles = {};
+	let polls = {};
 	let oldPosts = [];
 	let i = 0;
 
@@ -140,6 +142,56 @@ document.addEventListener('DOMContentLoaded', async function () {
 	}
 	localStorage.removeItem('mastothreadtoken');
 	await checkToken();
+
+	// Function to handle replied-to post
+	const getRepliedToPost = debounce(async (e) => {
+		try {
+			const inReplyToUrl = e
+				? e.target.value.trim()
+				: inReplyToInput.value.trim();
+			if (inReplyToInput.value.trim() === '') {
+				previewDiv.style.display = 'none';
+				originalId = null;
+				const firstPostItem = postItems[0];
+				const textarea = firstPostItem.querySelector('.post-text');
+				const text = textarea.value;
+				if (originalUser && text.startsWith(originalUser)) {
+					textarea.value = text.replace(originalUser, '').trim();
+				}
+				originalUser = null;
+				updateCharCount(firstPostItem, textarea.value);
+				let message = 'Updating post list after clearing in-reply-to';
+				updatePostList(message);
+				return;
+			}
+			if (!inReplyToUrl.startsWith('http')) {
+				return;
+			}
+			const res = await fetch(
+				`https://${instance}/api/v2/search?q=${inReplyToUrl}&resolve=true`,
+				{
+					headers: {
+						Authorization: `Bearer ${token}`,
+					},
+				}
+			);
+			if (res.ok) {
+				const data = await res.json();
+				if (data.statuses.length === 0) {
+					return;
+				}
+				originalId = data.statuses[0].id;
+				originalUser = `@${data.statuses[0].account.acct}`;
+				const firstPostItem = postItems[0];
+				const textarea = firstPostItem.querySelector('.post-text');
+				updateCharCount(firstPostItem, textarea.value);
+				createRepliedPostPreview(data.statuses[0]);
+				textarea.focus();
+			}
+		} catch (error) {
+			console.error(error);
+		}
+	}, 200);
 
 	// Checking for URL search parameters
 	const urlParams = new URLSearchParams(window.location.search);
@@ -197,14 +249,21 @@ document.addEventListener('DOMContentLoaded', async function () {
 			token = await exchangeCodeForToken(code);
 			if (token) {
 				localStorage.setItem('mastothreadtoken-v2', token);
+				await checkToken();
 				bskyLink = sessionStorage.getItem('bsky_url') || null;
 				WPUrl = sessionStorage.getItem('wp_url') || null;
 				mastoText = sessionStorage.getItem('text') || null;
 				inReplyUrl = sessionStorage.getItem('reply_to') || null;
 				userId = sessionStorage.getItem('user_id') || null;
+				const newParams = new URLSearchParams();
+				bskyLink ? newParams.append('bsky_url', bskyLink) : null;
+				WPUrl ? newParams.append('wp_url', WPUrl) : null;
+				mastoText ? newParams.append('text', mastoText) : null;
+				inReplyUrl ? newParams.append('reply_to', inReplyUrl) : null;
+				userId ? newParams.append('user_id', userId) : null;
+				const newUrl = `${redirectUri}?${newParams.toString()}`;
 				sessionStorage.clear();
-				await checkToken();
-				// await checkApp();
+				window.location.replace(newUrl);
 				await checkScheduledPosts();
 				customEmoji = await getCustomEmoji(instance);
 				if (bskyLink || inReplyUrl || WPUrl) {
@@ -236,7 +295,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 		window.alert(locData['instance-warning']);
 		instanceInput.focus();
 	} else if (token) {
-		// await checkApp();
 		await checkScheduledPosts();
 		customEmoji = await getCustomEmoji(instance);
 		if (bskyUrl) {
@@ -254,7 +312,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 			}
 		}
 		if (inReplyUrl) {
-			await checkToken();
 			inReplyToInput.value = inReplyUrl;
 			getRepliedToPost();
 		}
@@ -717,6 +774,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 		const data = await response.json();
 		maxChars = Number(data.configuration.statuses.max_characters);
 		maxMedia = Number(data.configuration.statuses.max_media_attachments);
+		pollOptions = data.configuration.polls;
 		lang = data.languages[0];
 		mediaConfig = data.configuration.media_attachments;
 	}
@@ -883,56 +941,9 @@ document.addEventListener('DOMContentLoaded', async function () {
 	}
 
 	// Handle post creation in reply to another post
-	inReplyToInput.addEventListener('input', async () => {
-		getRepliedToPost();
+	inReplyToInput.addEventListener('input', async (e) => {
+		getRepliedToPost(e);
 	});
-
-	async function getRepliedToPost() {
-		try {
-			const inReplyToUrl = inReplyToInput.value.trim();
-			if (inReplyToInput.value.trim() === '') {
-				previewDiv.style.display = 'none';
-				originalId = null;
-				const firstPostItem = postItems[0];
-				const textarea = firstPostItem.querySelector('.post-text');
-				const text = textarea.value;
-				if (originalUser && text.startsWith(originalUser)) {
-					textarea.value = text.replace(originalUser, '').trim();
-				}
-				originalUser = null;
-				updateCharCount(firstPostItem, textarea.value);
-				let message = 'Updating post list after clearing in-reply-to';
-				updatePostList(message);
-				return;
-			}
-			if (!inReplyToUrl.startsWith('http')) {
-				return;
-			}
-			const res = await fetch(
-				`https://${instance}/api/v2/search?q=${inReplyToUrl}&resolve=true`,
-				{
-					headers: {
-						Authorization: `Bearer ${token}`,
-					},
-				}
-			);
-			if (res.ok) {
-				const data = await res.json();
-				if (data.statuses.length === 0) {
-					return;
-				}
-				originalId = data.statuses[0].id;
-				originalUser = `@${data.statuses[0].account.acct}`;
-				const firstPostItem = postItems[0];
-				const textarea = firstPostItem.querySelector('.post-text');
-				updateCharCount(firstPostItem, textarea.value);
-				createRepliedPostPreview(data.statuses[0]);
-				textarea.focus();
-			}
-		} catch (error) {
-			console.error(error);
-		}
-	}
 
 	function createRepliedPostPreview(status) {
 		const previewAvatar = document.getElementById('replied-post-avatar');
@@ -2313,12 +2324,10 @@ document.addEventListener('DOMContentLoaded', async function () {
 		imgCount.textContent = `0/${maxMedia}`;
 
 		const dropzone = newPost.querySelector('.dropzone');
-		const dzInst = dropzone.querySelector('.dz-inst');
 		const imgPreview = dropzone.querySelector('.img-preview');
 
 		// Get Bluesky embedded media
 		if (fromBsky && imgs && imgs.length > 0) {
-			dzInst.style.display = 'none';
 			for (let img of imgs) {
 				if (img.type === 'video') {
 					let mediaFile = {};
@@ -2406,7 +2415,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 					mediaFile.thumbnail = img.thumbnail;
 					mediaFile.description = img.alt;
 					files.push(mediaFile);
-					displayThumbnail(mediaFile, imgPreview, imgCount, dzInst);
+					displayThumbnail(mediaFile, imgPreview, imgCount);
 				} else if (img.type === 'image') {
 					const form = new FormData();
 					form.append('url', img.url);
@@ -2425,12 +2434,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 								mediaFile.description = img.alt;
 							}
 							files.push(mediaFile);
-							displayThumbnail(
-								mediaFile,
-								imgPreview,
-								imgCount,
-								dzInst
-							);
+							displayThumbnail(mediaFile, imgPreview, imgCount);
 						})
 						.catch((error) =>
 							console.error('Error fetching image:', error)
@@ -2441,7 +2445,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 		// Get WP media
 		if (fromWP && imgs && imgs.length > 0) {
-			dzInst.style.display = 'none';
 			for (let img of imgs) {
 				if (img.type === 'img') {
 					let res = await getWPMedia(img);
@@ -2458,7 +2461,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 						mediaFile.description = img.alt;
 					}
 					files.push(mediaFile);
-					displayThumbnail(mediaFile, imgPreview, imgCount, dzInst);
+					displayThumbnail(mediaFile, imgPreview, imgCount);
 				} else if (img.type === 'video') {
 					let mediaFile = {};
 					mediaFile.url = img.url;
@@ -2474,7 +2477,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 					});
 					mediaFile.file = file;
 					files.push(mediaFile);
-					displayThumbnail(mediaFile, imgPreview, imgCount, dzInst);
+					displayThumbnail(mediaFile, imgPreview, imgCount);
 				}
 			}
 		}
@@ -2523,9 +2526,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 		newPost.addEventListener('drop', async (e) => {
 			e.preventDefault();
-			dropzone.classList.remove('dz-active');
 			overlay.style.display = 'none';
-			dzInst.style.display = 'none';
 			const newFiles = e.dataTransfer.items;
 			if (files.length >= maxMedia) {
 				window.alert(locData['media-alert']);
@@ -2538,12 +2539,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 							f = f.getAsFile();
 							mediaFile.file = f;
 							files.push(mediaFile);
-							displayThumbnail(
-								mediaFile,
-								imgPreview,
-								imgCount,
-								dzInst
-							);
+							displayThumbnail(mediaFile, imgPreview, imgCount);
 						} else if (
 							f.kind === 'string' &&
 							f.type === 'text/uri-list'
@@ -2562,8 +2558,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 										displayThumbnail(
 											mediaFile,
 											imgPreview,
-											imgCount,
-											dzInst
+											imgCount
 										);
 									})
 									.catch((error) =>
@@ -2582,13 +2577,14 @@ document.addEventListener('DOMContentLoaded', async function () {
 			}
 		});
 
+		const addPoll = newPost.querySelector('.add-poll');
+		const pollContainer = newPost.querySelector('.poll-container');
 		const imgUpload = newPost.querySelector('input.img-upload');
-		const addImg = newPost.querySelector('div.add-img');
+		const addImg = newPost.querySelector('button.add-img');
 		addImg.onclick = () => {
 			imgUpload.click();
 		};
 		imgUpload.addEventListener('change', async (e) => {
-			dzInst.style.display = 'none';
 			const newFiles = e.target.files;
 			if (files.length >= maxMedia) {
 				window.alert(locData['media-alert']);
@@ -2599,12 +2595,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 						let mediaFile = {};
 						mediaFile.file = f;
 						files.push(mediaFile);
-						displayThumbnail(
-							mediaFile,
-							imgPreview,
-							imgCount,
-							dzInst
-						);
+						displayThumbnail(mediaFile, imgPreview, imgCount);
 					} else {
 						window.alert(locData['media-alert']);
 						break;
@@ -2613,7 +2604,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 			}
 		});
 
-		const addGif = newPost.querySelector('div.add-gif');
+		const addGif = newPost.querySelector('button.add-gif');
 		const gifDialog = document.getElementById('gif-dialog');
 		const gifResults = document.getElementById('gif-results');
 		const gifCancelBtn = document.getElementById('gif-cancel-btn');
@@ -2699,14 +2690,12 @@ document.addEventListener('DOMContentLoaded', async function () {
 							});
 							mediaFile.file = file;
 							mediaFile.description = g.alt;
-							dzInst.style.display = 'none';
 							if (files.length < maxMedia) {
 								files.push(mediaFile);
 								displayThumbnail(
 									mediaFile,
 									imgPreview,
-									imgCount,
-									dzInst
+									imgCount
 								);
 								gifDialog.close();
 							} else {
@@ -2750,9 +2739,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 		};
 
 		textarea.addEventListener('paste', (e) => {
-			dropzone.classList.remove('dz-active');
 			overlay.style.display = 'none';
-			dzInst.style.display = 'none';
 			const items = (e.clipboardData || e.originalEvent.clipboardData)
 				.items;
 			for (let item of items) {
@@ -2762,12 +2749,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 					if (files.length < maxMedia) {
 						mediaFile.file = file;
 						files.push(mediaFile);
-						displayThumbnail(
-							mediaFile,
-							imgPreview,
-							imgCount,
-							dzInst
-						);
+						displayThumbnail(mediaFile, imgPreview, imgCount);
 					} else {
 						window.alert(locData['media-alert']);
 						break;
@@ -2776,7 +2758,10 @@ document.addEventListener('DOMContentLoaded', async function () {
 			}
 		});
 
-		function displayThumbnail(mediaFile, imgPreview, imgCount, dzInst) {
+		function displayThumbnail(mediaFile, imgPreview, imgCount) {
+			console.log('displayThumbnail called');
+			dropzone.style.display = 'flex';
+			addPoll.disabled = true;
 			imgCount.textContent = `${files.length}/${maxMedia}`;
 			const div = document.createElement('div');
 			const removeBtn = document.createElement('button');
@@ -2795,9 +2780,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 				}
 				div.remove();
 				imgCount.textContent = `${files.length}/${maxMedia}`;
-				if (files.length === 0) {
-					dzInst.style.display = 'block';
-				}
 				return;
 			}
 
@@ -2812,9 +2794,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 					}
 					div.remove();
 					imgCount.textContent = `${files.length}/${maxMedia}`;
-					if (files.length === 0) {
-						dzInst.style.display = 'block';
-					}
 					return;
 				}
 				const video = document.createElement('video');
@@ -2843,9 +2822,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 					}
 					div.remove();
 					imgCount.textContent = `${files.length}/${maxMedia}`;
-					if (files.length === 0) {
-						dzInst.style.display = 'block';
-					}
 					return;
 				}
 				const image = mediaFile.file;
@@ -2890,7 +2866,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 				div.remove();
 				imgCount.textContent = `${files.length}/${maxMedia}`;
 				if (files.length === 0) {
-					dzInst.style.display = 'block';
+					dropzone.style.display = 'none';
+					addPoll.disabled = false;
 				}
 			});
 
@@ -3029,6 +3006,114 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 			div.appendChild(altBtn);
 			div.appendChild(newAltDialog);
+		}
+
+		// Handle poll creation
+		addPoll.addEventListener('click', () => {
+			if (pollContainer.style.display === 'flex') {
+				addImg.disabled = false;
+				addGif.disabled = false;
+				pollContainer.style.display = 'none';
+				handlePollOptions(true);
+			} else {
+				addImg.disabled = true;
+				addGif.disabled = true;
+				pollContainer.style.display = 'flex';
+				handlePollOptions(false);
+			}
+		});
+
+		function handlePollOptions(clear) {
+			const id = newPost.id.split('-')[1];
+			const poll = polls[`polls${id}`] || {};
+			if (clear) {
+				delete polls[`polls${id}`];
+				const pollAnswers = Array.from(
+					pollContainer.querySelectorAll('.poll-option')
+				);
+				pollAnswers.forEach((answer) => {
+					const index = pollAnswers.indexOf(answer);
+					if (index > 0) {
+						answer.remove();
+					}
+				});
+				return;
+			}
+			const maxOptions = pollOptions.max_options || 4;
+			const maxOptionChars = pollOptions.max_characters_per_option || 50;
+			const minExp = pollOptions.min_expiration || 300;
+			const maxExp = pollOptions.max_expiration || 2629746;
+			polls[`polls${id}`] = poll;
+			const expSelect = pollContainer.querySelector(
+				'.poll-duration-select'
+			);
+			const expOptions = expSelect.querySelectorAll('option');
+			expOptions.forEach((option) => {
+				let value = parseInt(option.value);
+				if (value < minExp || value > maxExp) {
+					option.remove();
+				}
+			});
+			poll.expires_in = expSelect.value;
+			expSelect.addEventListener('change', (e) => {
+				poll.expires_in = e.target.value;
+			});
+			const multipleChoiceCheckbox = pollContainer.querySelector(
+				'.poll-multiple-input'
+			);
+			multipleChoiceCheckbox.checked = poll.multiple || false;
+			poll.multiple = multipleChoiceCheckbox.checked;
+			multipleChoiceCheckbox.addEventListener('change', (e) => {
+				poll.multiple = e.target.checked;
+			});
+			poll.options = [];
+			const pollOptionsDiv =
+				pollContainer.querySelector('.poll-options-div');
+			const pollOptionTemplate =
+				pollOptionsDiv.querySelector('.poll-option');
+			for (let i = 1; i <= maxOptions; i++) {
+				const pollAnswer = pollOptionTemplate.cloneNode(true);
+				pollOptionsDiv.appendChild(pollAnswer);
+				if (i < 3) {
+					pollAnswer.style.display = 'flex';
+				}
+				const answerInput = pollAnswer.querySelector('.poll-text');
+				if (i === 1) {
+					answerInput.focus();
+				}
+				answerInput.maxLength = maxOptionChars;
+				answerInput.setAttribute(
+					'placeholder',
+					`${locData['poll-option-placeholder']} ${i}`
+				);
+				answerInput.addEventListener('input', (e) => {
+					const optionText = e.target.value.trim();
+					if (optionText.length > maxOptionChars) {
+						answerInput.value = optionText.slice(0, maxOptionChars);
+					}
+					if (optionText.length > 0) {
+						const nextAnswer = pollAnswer.nextElementSibling;
+						if (nextAnswer && i + 1 <= maxOptions) {
+							nextAnswer.style.display = 'flex';
+						}
+					} else if (optionText.length === 0) {
+						const nextAnswer = pollAnswer.nextElementSibling;
+						if (nextAnswer && i + 1 <= maxOptions) {
+							const nextInput =
+								nextAnswer.querySelector('.poll-text');
+							if (nextInput.value.length === 0) {
+								nextAnswer.style.display = 'none';
+								nextInput.value = null;
+							}
+						}
+					}
+					if (optionText.length) {
+						poll.options[i - 1] = optionText.trim();
+					} else {
+						poll.options.splice(i - 1, 1);
+					}
+				});
+			}
 		}
 
 		// Handle post deletion
@@ -3409,6 +3494,16 @@ document.addEventListener('DOMContentLoaded', async function () {
 				}
 				continue;
 			}
+			const postPoll = polls[`polls${id}`];
+			if (postPoll) {
+				postPoll.options = postPoll.options.filter(
+					(option) => option && option.length > 0
+				);
+				if (postPoll.options.length < 2) {
+					window.alert(locData['poll-option-alert']);
+					return;
+				}
+			}
 			try {
 				const body = {
 					status: postText,
@@ -3424,6 +3519,9 @@ document.addEventListener('DOMContentLoaded', async function () {
 				}
 				if (scheduledAt) {
 					body.scheduled_at = scheduledAt.toISOString();
+				}
+				if (postPoll) {
+					body.poll = postPoll;
 				}
 				const response = await fetch(
 					`https://${instance}/api/v1/statuses`,

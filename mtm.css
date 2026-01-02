@@ -200,6 +200,9 @@ input.schedule-input {
 }
 
 .options-container div.options-div {
+	display: flex;
+	align-items: center;
+	width: 100%;
 	margin-bottom: 10px;
 }
 
@@ -300,7 +303,11 @@ div.header-1 {
 .cw-btn,
 .viz-select,
 .quote-select,
-.lang-select {
+.lang-select,
+.add-img,
+.add-gif,
+.add-poll,
+.poll-duration-select {
 	height: 30px;
 	width: auto;
 	color: light-dark(#563acc, #8886ff);
@@ -312,6 +319,10 @@ div.header-1 {
 	border-radius: 4px;
 	background-color: light-dark(#f9f9fb, #292938);
 	display: inline;
+}
+
+.poll-duration-select {
+	margin-top: 0;
 }
 
 .viz-select {
@@ -331,8 +342,25 @@ div.header-1 {
 .cw-btn:hover,
 .viz-select:hover,
 .quote-select:hover,
-select:hover {
+select:hover,
+.add-img:hover,
+.add-gif:hover,
+.add-poll:hover {
 	background-color: light-dark(rgba(97, 71, 230, 0.08), #292938);
+}
+
+.addons-btn-div {
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-end;
+	align-items: center;
+	width: 500px;
+	gap: 10px;
+	margin-top: 10px;
+}
+
+.addons-btn-div button {
+	margin: 0;
 }
 
 .viz-list,
@@ -515,9 +543,14 @@ div#dl-msg {
 }
 
 .dropzone {
+	display: none;
+	flex-direction: column;
+}
+
+.img-preview {
 	position: relative;
 	width: 500px;
-	height: 100px;
+	min-height: 100px;
 	border: 2px dashed light-dark(#d9d9e8, #8886ff);
 	border-radius: 4px;
 	background-color: light-dark(#f9f9fb, #292938);
@@ -527,46 +560,56 @@ div#dl-msg {
 	justify-content: center;
 	text-align: center;
 	margin: 10px auto 0 auto;
-	flex-direction: column;
+	flex-direction: row;
 }
 
-.add-img {
-	position: absolute;
+.poll-container {
+	color: light-dark(black, #9c9cc9);
+	display: none;
+	flex-direction: column;
+	width: 500px;
+	margin-top: 10px;
+	border: none;
+}
+
+.poll-option {
+	display: none;
+	flex-direction: row;
+	align-items: center;
+	margin-bottom: 5px;
+}
+
+.poll-radio {
+	height: 16px;
+	width: 16px;
+	margin-right: 10px;
+	border: solid 1px light-dark(#d9d9e8, #313144);
+	border-radius: 50%;
+}
+
+.poll-settings {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	margin-top: 10px;
+	gap: 10px;
+	justify-content: space-between;
+	font-size: small;
+}
+
+.poll-duration,
+.poll-multiple {
 	display: flex;
 	align-items: center;
-	right: 5px;
-	bottom: 5px;
-	width: 20px;
-	height: 20px;
-	border-radius: 4px;
-	color: #6364ff;
-	cursor: pointer;
-	padding: 2px;
+	gap: 10px;
 }
 
 .add-gif {
-	position: absolute;
-	display: flex;
-	align-items: center;
-	right: 35px;
-	bottom: 5px;
-	width: 20px;
-	height: 20px;
-	border-radius: 4px;
-	color: light-dark(#563acc, #8886ff);
-	cursor: pointer;
-	padding: 2px;
-}
-
-.add-gif span {
 	font-weight: bold;
-	width: 100%;
 	font-size: xx-small;
 	text-align: center;
 }
 
-.add-img:hover,
-.add-gif:hover,
 .emoji-btn:hover {
 	background-color: light-dark(#dadade, rgba(96, 96, 133, 0.15));
 }
@@ -620,8 +663,14 @@ div.gif-cancel {
 }
 
 button:disabled {
-	background-color: #ddd;
+	border: solid 1px gray;
 	cursor: not-allowed;
+	color: gray;
+	background-color: light-dark(#f2f2f2, #292938);
+}
+
+button:disabled i {
+	color: gray;
 }
 
 .img-upload {
@@ -631,6 +680,7 @@ button:disabled {
 .img-preview {
 	display: flex;
 	flex-wrap: wrap;
+	align-content: center;
 }
 
 .img-preview div {
@@ -898,6 +948,7 @@ div#replied-post-preview {
 	color: light-dark(black, #d9d9e8);
 	box-sizing: border-box;
 	margin-top: 10px;
+	width: 100%;
 }
 
 div#replied-post-header {
@@ -1255,7 +1306,6 @@ input#gif-search {
 	aspect-ratio: 1 / 1;
 	font-weight: bold;
 	font-size: x-large;
-	/* background-color: white; */
 	color: #cc0000;
 	display: flex;
 	align-items: center;
@@ -1288,7 +1338,14 @@ input#gif-search {
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		width: 95%;
+		width: 95vw;
+	}
+
+	#logged-in-as,
+	#instance-btn {
+		width: 100%;
+		height: auto;
+		margin: 5px auto;
 	}
 
 	input {
@@ -1314,7 +1371,11 @@ input#gif-search {
 	.viz-select,
 	.quote-select,
 	.lang-select,
-	.cw-btn {
+	.cw-btn,
+	.add-img,
+	.add-gif,
+	.add-poll,
+	.poll-duration-select {
 		height: 2.5rem;
 		padding: 0.5rem;
 		margin: 0.5rem 0 0.5rem 0;
@@ -1378,7 +1439,10 @@ input#gif-search {
 	.dropzone,
 	.cw-div,
 	.alt-div,
-	textarea {
+	textarea,
+	.addons-btn-div,
+	.img-preview,
+	.poll-container {
 		width: 100%;
 	}
 

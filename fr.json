@@ -107,5 +107,17 @@
 	"quote-followers": "&nbsp;Abonné·e·s seulement",
 	"quote-nobody": "&nbsp;Juste moi",
 	"visibility": "&nbsp;Visibilité",
-	"quote": "&nbsp;Autoriser les citations pour"
+	"quote": "&nbsp;Autoriser les citations pour",
+	"poll-option-placeholder": "Option de sondage",
+	"poll-duration": "Durée du sondage",
+	"poll-multiple": "Autoriser plusieurs choix",
+	"poll-5min": "5 minutes",
+	"poll-30min": "30 minutes",
+	"poll-1hr": "1 heure",
+	"poll-6hr": "6 heures",
+	"poll-12hr": "12 heures",
+	"poll-1day": "1 jour",
+	"poll-3day": "3 jours",
+	"poll-7day": "7 jours",
+	"poll-option-alert": "Un sondage doit comporter au moins deux options."
 }
