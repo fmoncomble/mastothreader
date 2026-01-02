@@ -290,15 +290,19 @@ document.addEventListener('DOMContentLoaded', async function () {
 	// Functions to gather instance information
 	let instanceList = document.getElementById('instance-list');
 	instanceList.style.left = `${instanceInput.offsetLeft}px`;
-	async function buildInstList(input) {
+
+	instanceInput.addEventListener('input', async (e) => {
+		e.preventDefault();
+		let input = e.target.value;
+		buildInstList(input.toLowerCase());
+	});
+
+	const buildInstList = debounce(async (input) => {
 		if (!input) {
 			instanceList.style.display = 'none';
 			return;
 		}
-		let matches;
-		if (!searching) {
-			matches = await searchInstance(input);
-		}
+		const matches = await searchInstance(input);
 		if (matches && matches.length > 0) {
 			instanceList.innerHTML = null;
 			instanceList.style.display = 'block';
@@ -322,11 +326,17 @@ document.addEventListener('DOMContentLoaded', async function () {
 			instanceList.innerHTML = null;
 			instanceList.style.display = 'none';
 		}
+	}, 200);
+
+	function debounce(callback, delay) {
+		let timer;
+		return function (...args) {
+			clearTimeout(timer);
+			timer = setTimeout(() => callback(...args), delay);
+		};
 	}
 
-	let searching = false;
 	async function searchInstance(input) {
-		searching = true;
 		try {
 			let res = await fetch('inst.php?input=' + input);
 			if (res.ok) {
@@ -339,19 +349,12 @@ document.addEventListener('DOMContentLoaded', async function () {
 				for (let r of results) {
 					matches.push(r.name);
 				}
-				searching = false;
 				return matches;
 			}
 		} catch (error) {
 			console.error('Error fetching instances: ', error);
 		}
 	}
-
-	instanceInput.addEventListener('input', async (e) => {
-		e.preventDefault();
-		let input = e.target.value;
-		buildInstList(input.toLowerCase());
-	});
 	let instIndex = 0;
 	instanceInput.addEventListener('keydown', (e) => {
 		let instanceItems = instanceList.querySelectorAll('.instance-item');
@@ -3403,12 +3406,15 @@ document.addEventListener('DOMContentLoaded', async function () {
 				const body = {
 					status: postText,
 					media_ids: postMediaIds,
-					spoiler_text: cwText,
 					visibility: visibility,
 					quote_approval_policy: quoteOption,
 					in_reply_to_id: replyToId,
 					language: postLang,
 				};
+				if (cwText) {
+					body.spoiler_text = cwText;
+					body.sensitive = true;
+				}
 				if (scheduledAt) {
 					body.scheduled_at = scheduledAt.toISOString();
 				}
