@@ -204,6 +204,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 				userId = sessionStorage.getItem('user_id') || null;
 				sessionStorage.clear();
 				await checkToken();
+				// await checkApp();
 				await checkScheduledPosts();
 				customEmoji = await getCustomEmoji(instance);
 				if (bskyLink || inReplyUrl || WPUrl) {
@@ -235,7 +236,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 		window.alert(locData['instance-warning']);
 		instanceInput.focus();
 	} else if (token) {
-		await checkApp();
+		// await checkApp();
 		await checkScheduledPosts();
 		customEmoji = await getCustomEmoji(instance);
 		if (bskyUrl) {
@@ -481,19 +482,21 @@ document.addEventListener('DOMContentLoaded', async function () {
 	};
 
 	async function checkApp() {
-		let res = fetch(`https://${instance}/api/v1/apps/verify_credentials`, {
-			headers: { Authorization: `Bearer ${token}` },
-		});
-		res.then(async (res) => {
-			if (!res.ok) {
-				const error = await res.json();
-				window.alert(locData['app-warning'] + `\n` + error.error + '.');
-				await removeToken();
-				window.location.reload();
-			} else {
-				await getUserId();
+		let res = await fetch(
+			`https://${instance}/api/v1/apps/verify_credentials`,
+			{
+				headers: { Authorization: `Bearer ${token}` },
 			}
-		});
+		);
+		if (!res.ok) {
+			const error = await res.json();
+			window.alert(locData['app-warning'] + `\n` + error.error + '.');
+			await removeToken();
+			window.location.reload();
+			return false;
+		} else {
+			return true;
+		}
 	}
 
 	async function getUserId() {
@@ -549,6 +552,10 @@ document.addEventListener('DOMContentLoaded', async function () {
 			instructionsBtn.textContent = locData['instructions-btn'];
 			openOptionsBtn.style.display = 'flex';
 			clearStorage.style.display = 'none';
+			const ok = await checkApp();
+			if (!ok) {
+				return;
+			}
 			await getUserId();
 			document.getElementById('instance-text-input').style.display =
 				'none';
