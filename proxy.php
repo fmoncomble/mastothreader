@@ -2,42 +2,46 @@
 
 function fetchMedia()
 {
-    // Check if the 'url' parameter is set in the POST request
     if (isset($_POST['url'])) {
         $url = $_POST['url'];
-        error_log('Fetching media from URL: ' . $url);
 
-        // Validate the URL
+        $host = parse_url($url, PHP_URL_HOST);
+        $referrer = parse_url($url, PHP_URL_SCHEME) . '://' . $host;
+
+        $headers = [
+            'Referer: ' . $referrer,
+            'Host: ' . $host,
+            'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
+        ];
+
         if (filter_var($url, FILTER_VALIDATE_URL)) {
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $url);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Disable SSL verification for simplicity
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 
             $response = curl_exec($ch);
 
-            // Get the HTTP code and content type after executing the request
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
             curl_close($ch);
 
-            if ($httpCode == 200) {
-                header('Content-Type: ' . $contentType);
-                echo $response;
+            http_response_code($httpCode);
+            header('Content-Type: ' . $contentType);
+            if ($httpCode != 200) {
+                error_log('Error fetching WP URL. HTTP Code: ' . $httpCode);
+                echo 'Error fetching WP URL. HTTP Code: ' . $httpCode;
             } else {
-                echo 'Error ' . $httpCode;
+                error_log('Successfully fetched WP URL.');
+                echo $response;
             }
         } else {
-            // Invalid URL
             echo 'Invalid URL';
         }
     } else {
-        // URL parameter not set
         echo 'URL parameter is required';
     }
 }
 
-// Call the function to handle the request
 fetchMedia();
-?>

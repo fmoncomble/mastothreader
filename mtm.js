@@ -46,6 +46,11 @@ document.addEventListener('DOMContentLoaded', async function () {
 	const bskyThreadOk = document.getElementById('bsky-thread-ok');
 	const bskyThreadCancel = document.getElementById('bsky-thread-cancel');
 	const convertHandlesCheckbox = document.getElementById('convert-handles');
+	const wpImportDialog = document.getElementById('wp-import-dialog');
+	const wpUrlInput = document.getElementById('wp-url-input');
+	wpUrlInput.value = null;
+	const wpImportOk = document.getElementById('wp-import-ok');
+	const wpImportCancel = document.getElementById('wp-import-cancel');
 	const bskyLoadingSpinner = document.getElementById('bsky-loading-dialog');
 	const waitingDialog = document.getElementById('waiting_dialog');
 	const waitingSpinner = waitingDialog.querySelector('div.spinner');
@@ -1016,6 +1021,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 		}
 	}
 
+	// Handle imports
 	bskyResetBtn.addEventListener('click', () => {
 		bskyDid = null;
 		bskyHandle = null;
@@ -1118,11 +1124,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 		bskyThreadDialog.close();
 	});
 
-	const wpImportDialog = document.getElementById('wp-import-dialog');
-	const wpUrlInput = document.getElementById('wp-url-input');
-	wpUrlInput.value = null;
-	const wpImportOk = document.getElementById('wp-import-ok');
-	const wpImportCancel = document.getElementById('wp-import-cancel');
 	wpImportOk.addEventListener('click', async () => {
 		let url = wpUrlInput.value;
 		WPUrl = await resolveWPUrl(url);
@@ -1136,65 +1137,55 @@ document.addEventListener('DOMContentLoaded', async function () {
 			wpImportDialog.close();
 		}
 	});
-	wpUrlInput.addEventListener('keydown', async (event) => {
-		if (event.key === 'Enter') {
-			let url = wpUrlInput.value;
-			WPUrl = await resolveWPUrl(url);
-			if (WPUrl) {
-				getWPPost(WPUrl);
-				wpImportDialog.close();
-			} else {
-				window.alert(locData['wp-invalid']);
-				wpImportDialog.close();
-			}
-		} else if (event.key === 'Escape') {
-			importSelect.value = '0';
-			WPUrl = null;
-			wpUrlInput.value = null;
-			wpImportDialog.close();
-		}
-	});
 	wpImportCancel.addEventListener('click', () => {
 		importSelect.value = '0';
 		WPUrl = null;
 		wpUrlInput.value = null;
 		wpImportDialog.close();
 	});
+	wpUrlInput.addEventListener('keydown', async (event) => {
+		if (event.key === 'Enter') {
+			wpImportOk.click();
+		} else if (event.key === 'Escape') {
+			wpImportCancel.click();
+		}
+	});
 
 	async function resolveWPUrl(WPUrl) {
 		if (!WPUrl.startsWith('http')) {
 			return;
 		}
-		let form = new FormData();
-		form.append('url', WPUrl);
-		let response = await fetch('proxy.php', {
-			method: 'POST',
-			body: form,
-		});
-		if (response.ok) {
-			const html = await response.text();
-			const parser = new DOMParser();
-			const doc = parser.parseFromString(html, 'text/html');
-			const head = doc.head;
-			const apiLink = head.querySelector(
-				'link[rel="alternate"][type="application/json"]'
-			);
-			if (apiLink) {
-				return apiLink.href;
+		try {
+			const url = new URL(WPUrl);
+			const domain = url.hostname;
+			const path = url.pathname.replace(/\/$/, '');
+			const pathSegments = path.split('/');
+			const slug = pathSegments.pop();
+			const apiLink = `https://public-api.wordpress.com/rest/v1.1/sites/${domain}/posts/slug:${slug}`;
+			const res = await fetch(apiLink);
+			if (res.ok) {
+				return apiLink;
 			} else {
-				const url = new URL(WPUrl);
-				const domain = url.hostname;
-				const path = url.pathname.replace(/\/$/, '');
-				const pathSegments = path.split('/');
-				const slug = pathSegments.pop();
-				const apiLink = `https://public-api.wordpress.com/rest/v1.1/sites/${domain}/posts/slug:${slug}`;
-				const res = await fetch(apiLink);
+				const searchTerm = encodeURIComponent(
+					slug.replaceAll('-', ' ')
+				);
+				const searchUrl = `https://${domain}/wp-json/wp/v2/search?search=${searchTerm}&type=post`;
+				const res = await fetch(searchUrl);
 				if (res.ok) {
-					return apiLink;
+					const data = await res.json();
+					if (data.length > 0) {
+						const postId = data[0].id;
+						const postApiLink = `https://${domain}/wp-json/wp/v2/posts/${postId}`;
+						return postApiLink;
+					} else {
+						return null;
+					}
 				} else {
 					return null;
 				}
 			}
+		} catch (error) {
+			return null;
 		}
 	}
 
@@ -1223,6 +1214,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 		}
 	});
 
+	// Handle import of Bluesky thread
 	async function getBskyThread() {
 		if (!bskyDid || !bskyHandle) {
 			if (window.confirm(locData['bsky-warning'])) {
@@ -1535,7 +1527,11 @@ document.addEventListener('DOMContentLoaded', async function () {
 				if (links.length > 0) {
 					for (let l of links) {
 						const url = l.getAttribute('href');
-						if (url.startsWith('http') && url !== l.textContent) {
+						if (
+							url &&
+							url.startsWith('http') &&
+							url !== l.textContent
+						) {
 							l.textContent += ` (${url})`;
 						}
 					}
@@ -1563,7 +1559,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 					let media = {
 						type: e.tagName.toLowerCase(),
 						url: e.src,
-						alt: e.alt || null,
+						alt:
+							e.alt || e.getAttribute('data-image-title') || null,
 					};
 					chunk.media.push(media);
 				} else {
@@ -1702,6 +1699,11 @@ document.addEventListener('DOMContentLoaded', async function () {
 		} else {
 			avatar.src = 'icons/generic_avatar.png';
 		}
+
+		const addPoll = newPost.querySelector('.add-poll');
+		const pollContainer = newPost.querySelector('.poll-container');
+		const imgUpload = newPost.querySelector('input.img-upload');
+		const addImg = newPost.querySelector('button.add-img');
 
 		const vizSelect = newPost.querySelector('.viz-select');
 		const vizList = newPost.querySelector('.viz-list');
@@ -2448,6 +2450,9 @@ document.addEventListener('DOMContentLoaded', async function () {
 			for (let img of imgs) {
 				if (img.type === 'img') {
 					let res = await getWPMedia(img);
+					if (!res[0]) {
+						continue;
+					}
 					let blob = await res[0].blob();
 					const file = new File([blob], 'image.jpg', {
 						type: blob.type,
@@ -2468,6 +2473,9 @@ document.addEventListener('DOMContentLoaded', async function () {
 					mediaFile.type = img.type;
 					mediaFile.description = img.alt;
 					let res = await getWPMedia(img);
+					if (!res[0]) {
+						continue;
+					}
 					let blob = await res[0].blob();
 					if (!img.alt) {
 						mediaFile.description = res[1];
@@ -2500,15 +2508,41 @@ document.addEventListener('DOMContentLoaded', async function () {
 						}
 					}
 				}
-				let form = new FormData();
-				form.append('url', img.url);
-				let response = await fetch('proxy.php', {
-					method: 'POST',
-					body: form,
-				});
-				if (!response.ok) {
-					throw new Error(`HTTP error! status: ${response.status}`);
+				let z = 0;
+				async function fetchImg() {
+					let form = new FormData();
+					if (WPUrl.includes('public-api.wordpress.com')) {
+						form.append('url', img.url);
+					} else {
+						let parsedUrl = new URL(img.url);
+						form.append(
+							'url',
+							`https://i${z}.wp.com/${parsedUrl.hostname}${parsedUrl.pathname}`
+						);
+					}
+					try {
+						let response = await fetch('proxy.php', {
+							method: 'POST',
+							body: form,
+						});
+						if (!response.ok && z < 3) {
+							z++;
+							fetchImg();
+						} else if (!response.ok && z >= 3) {
+							return null;
+						} else {
+							return response;
+						}
+					} catch (error) {
+						if (z < 3) {
+							z++;
+							fetchImg();
+						} else {
+							return null;
+						}
+					}
 				}
+				let response = await fetchImg();
 				resolve([response, mediaAlt]);
 			});
 		}
@@ -2577,10 +2611,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 			}
 		});
 
-		const addPoll = newPost.querySelector('.add-poll');
-		const pollContainer = newPost.querySelector('.poll-container');
-		const imgUpload = newPost.querySelector('input.img-upload');
-		const addImg = newPost.querySelector('button.add-img');
 		addImg.onclick = () => {
 			imgUpload.click();
 		};
@@ -2759,7 +2789,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 		});
 
 		function displayThumbnail(mediaFile, imgPreview, imgCount) {
-			console.log('displayThumbnail called');
 			dropzone.style.display = 'flex';
 			addPoll.disabled = true;
 			imgCount.textContent = `${files.length}/${maxMedia}`;
@@ -3011,11 +3040,15 @@ document.addEventListener('DOMContentLoaded', async function () {
 		// Handle poll creation
 		addPoll.addEventListener('click', () => {
 			if (pollContainer.style.display === 'flex') {
+				addPoll.removeAttribute('style');
+				addPoll.innerHTML = `<i class="fa-solid fa-square-poll-vertical"></i>`;
 				addImg.disabled = false;
 				addGif.disabled = false;
 				pollContainer.style.display = 'none';
 				handlePollOptions(true);
 			} else {
+				addPoll.style.backgroundColor = '#563acc';
+				addPoll.innerHTML = `<i class="fa-solid fa-square-poll-vertical" style="color: #ffffff;"></i>`;
 				addImg.disabled = true;
 				addGif.disabled = true;
 				pollContainer.style.display = 'flex';
