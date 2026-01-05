@@ -3,6 +3,12 @@ import { iso6393 } from 'https://esm.sh/iso-639-3@3?bundle';
 import { getNativeName } from 'https://esm.sh/iso-639-1@3?bundle';
 import muxjs from 'https://esm.sh/mux.js@6.3.0';
 
+const waitingDialog = document.getElementById('waiting_dialog');
+const waitingSpinner = waitingDialog.querySelector('div.spinner');
+waitingSpinner.style.display = 'flex';
+
+waitingDialog.showModal();
+
 document.addEventListener('DOMContentLoaded', async function () {
 	// Declare page elements
 	const instructionsBtn = document.getElementById('instructions-btn');
@@ -52,11 +58,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 	const wpImportOk = document.getElementById('wp-import-ok');
 	const wpImportCancel = document.getElementById('wp-import-cancel');
 	const bskyLoadingSpinner = document.getElementById('bsky-loading-dialog');
-	const waitingDialog = document.getElementById('waiting_dialog');
-	const waitingSpinner = waitingDialog.querySelector('div.spinner');
-	waitingSpinner.style.display = 'flex';
-
-	waitingDialog.showModal();
 
 	const yearSpan = document.querySelector('span#year');
 	yearSpan.textContent = new Date().toISOString().split('-')[0];
@@ -269,9 +270,14 @@ document.addEventListener('DOMContentLoaded', async function () {
 				userId ? newParams.append('user_id', userId) : null;
 				const newUrl = `${redirectUri}?${newParams.toString()}`;
 				sessionStorage.clear();
-				window.location.replace(newUrl);
+				if (newParams.toString()) {
+					window.location.replace(newUrl);
+				} else {
+					window.location.replace(redirectUri);
+				}
 				await checkScheduledPosts();
 				customEmoji = await getCustomEmoji(instance);
+				waitingDialog.close();
 				if (bskyLink || inReplyUrl || WPUrl) {
 					optionsDiv.style.display = 'flex';
 				}
@@ -303,6 +309,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 	} else if (token) {
 		await checkScheduledPosts();
 		customEmoji = await getCustomEmoji(instance);
+		waitingDialog.close();
 		if (bskyUrl) {
 			if (window.confirm(locData['bsky-confirm'])) {
 				if (window.confirm(locData['convert-handles-confirm'])) {
@@ -633,7 +640,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 				);
 				createNewPost(mastoText ? mastoText : null);
 				postThreadBtn.style.display = 'flex';
-				waitingDialog.close();
+				// waitingDialog.close();
 			}
 		} else if (!token) {
 			instructionsDiv.style.display = 'flex';
@@ -2864,6 +2871,10 @@ document.addEventListener('DOMContentLoaded', async function () {
 					}
 					div.remove();
 					imgCount.textContent = `${files.length}/${maxMedia}`;
+					if (files.length === 0) {
+						dropzone.style.display = 'none';
+						addPoll.disabled = false;
+					}
 					return;
 				}
 				const video = document.createElement('video');
@@ -2892,6 +2903,10 @@ document.addEventListener('DOMContentLoaded', async function () {
 					}
 					div.remove();
 					imgCount.textContent = `${files.length}/${maxMedia}`;
+					if (files.length === 0) {
+						dropzone.style.display = 'none';
+						addPoll.disabled = false;
+					}
 					return;
 				}
 				const image = mediaFile.file;
