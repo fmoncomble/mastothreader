@@ -90,6 +90,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 	let maxChars;
 	let maxMedia;
 	let pollOptions;
+	let reservedChars;
 	let lang;
 	let customEmoji;
 	let userAvatarSrc;
@@ -164,7 +165,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 					textarea.value = text.replace(originalUser, '').trim();
 				}
 				originalUser = null;
-				updateCharCount(firstPostItem, textarea.value);
+				updateCharCount(firstPostItem, textarea.value, textarea);
 				let message = 'Updating post list after clearing in-reply-to';
 				updatePostList(message);
 				return;
@@ -189,7 +190,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 				originalUser = `@${data.statuses[0].account.acct}`;
 				const firstPostItem = postItems[0];
 				const textarea = firstPostItem.querySelector('.post-text');
-				updateCharCount(firstPostItem, textarea.value);
+				updateCharCount(firstPostItem, textarea.value, textarea);
 				createRepliedPostPreview(data.statuses[0]);
 				textarea.focus();
 			}
@@ -779,6 +780,9 @@ document.addEventListener('DOMContentLoaded', async function () {
 		const data = await response.json();
 		maxChars = Number(data.configuration.statuses.max_characters);
 		maxMedia = Number(data.configuration.statuses.max_media_attachments);
+		reservedChars = Number(
+			data.configuration.statuses.characters_reserved_per_url
+		);
 		pollOptions = data.configuration.polls;
 		lang = data.languages[0];
 		mediaConfig = data.configuration.media_attachments;
@@ -997,7 +1001,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 			originalUser = null;
 			const firstPostItem = postItems[0];
 			const textarea = firstPostItem.querySelector('.post-text');
-			updateCharCount(firstPostItem, textarea.value);
+			updateCharCount(firstPostItem, textarea.value, textarea);
 			let message = 'Updating post list after clearing in-reply-to';
 			updatePostList(message);
 		};
@@ -1009,13 +1013,33 @@ document.addEventListener('DOMContentLoaded', async function () {
 		updatePostList(message);
 	}
 
-	function updateCharCount(post, postText) {
+	function updateCharCount(post, postText, textarea) {
 		const charCount = post.querySelector('.char-count');
-		charCount.textContent = `${postText.length}/${maxChars}`;
-		if (postText.length > maxChars) {
-			postText = postText.trim();
+		let postLength = postText.trim().length;
+		const handleRegexp = /@([a-zA-Z0-9_]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
+		const handleMatches = postText.match(handleRegexp);
+		if (handleMatches && handleMatches.length) {
+			for (let handle of handleMatches) {
+				let index = handle.lastIndexOf('@');
+				postLength -= handle.length - index;
+			}
+		}
+		const urlRegexp = /https?:\/\/[^\s]+/g;
+		const urlMatches = postText.match(urlRegexp);
+		if (urlMatches && urlMatches.length) {
+			for (let url of urlMatches) {
+				postLength -= url.length - reservedChars;
+			}
+		}
+		charCount.textContent = `${postLength}/${maxChars}`;
+		if (postLength >= maxChars - 20 && postLength < maxChars) {
+			charCount.removeAttribute('style');
+			charCount.style.color = '#ff9900';
+			charCount.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="color: #ff9900;"></i> ${postLength}/${maxChars}`;
+		} else if (postLength >= maxChars) {
 			charCount.style.color = '#cc0000';
-			charCount.style.fontWeight = 'bold';
+			charCount.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="color: #cc0000;"></i> ${postLength}/${maxChars}`;
+			splitIntoToots(post, postText, textarea);
 		} else {
 			charCount.removeAttribute('style');
 		}
@@ -1594,20 +1618,35 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 		async function splitText(chunk) {
 			return new Promise(async (resolve) => {
-				let text = chunk.text;
+				let text = chunk.text.trim();
 				let newChunk = { text: '', media: [] };
 				let segments = [];
 				if (text) {
-					const regex = /([,.;:!?\n])/gu;
+					const regex = /([,.;:!?"”»]\s)/gu;
 					segments = text.split(regex);
 				}
 				let oldText = '';
 				for (let i = 0; i < segments.length; i += 1) {
 					let segment = segments[i];
-					if (oldText.length + segment.length < maxChars) {
+					let oldTextLength = oldText.length;
+					let segmentLength = segment.trim().length;
+					const urlRegexp = /https?:\/\/[^\s]+/g;
+					const urlMatchesInOldText = segment.match(urlRegexp);
+					if (urlMatchesInOldText && urlMatchesInOldText.length > 0) {
+						for (let url of urlMatchesInOldText) {
+							oldTextLength -= url.length - reservedChars;
+						}
+					}
+					const urlMatchesInSegment = segment.match(urlRegexp);
+					if (urlMatchesInSegment && urlMatchesInSegment.length > 0) {
+						for (let url of urlMatchesInSegment) {
+							segmentLength -= url.length - reservedChars;
+						}
+					}
+					if (oldTextLength + segmentLength <= maxChars) {
 						oldText += segment;
 					} else {
-						chunk.text = oldText;
+						chunk.text = oldText.trim();
 						let remainingSegments = segments.slice(i);
 						let remainingText = remainingSegments.join('');
 						if (remainingText) {
@@ -1631,8 +1670,19 @@ document.addEventListener('DOMContentLoaded', async function () {
 		}
 
 		for (let p of wpChunks) {
-			if (p.text && p.text.length > maxChars) {
-				await splitText(p);
+			if (p.text) {
+				p.text = p.text.trim();
+				let pTextLength = p.text.length;
+				const urlRegexp = /https?:\/\/[^\s]+/g;
+				const urlMatches = p.text.match(urlRegexp);
+				if (urlMatches && urlMatches.length > 0) {
+					for (let url of urlMatches) {
+						pTextLength -= url.length - reservedChars;
+					}
+				}
+				if (pTextLength > maxChars) {
+					await splitText(p);
+				}
 			}
 		}
 
@@ -1985,25 +2035,22 @@ document.addEventListener('DOMContentLoaded', async function () {
 		textarea.style.minHeight = Number((maxChars / 50) * 16.8) + 'px';
 		if (text) {
 			text = text.trim();
-			if (text.length > maxChars) {
-				await splitIntoToots(newPost, text, textarea);
-			} else {
-				textarea.value = text;
-				if (text.length > 30) {
-					let language = franc(text);
-					if (language === 'und') {
-						language = lang;
-					} else {
-						let guess = iso6393.find(
-							(l) => l.iso6393 === language
-						).iso6391;
-						if (guess) {
-							lang = guess;
-							langSelect.value = lang;
-						}
+			textarea.value = text;
+			if (text.length > 30) {
+				let language = franc(text);
+				if (language === 'und') {
+					language = lang;
+				} else {
+					let guess = iso6393.find(
+						(l) => l.iso6393 === language
+					).iso6391;
+					if (guess) {
+						lang = guess;
+						langSelect.value = lang;
 					}
 				}
-				updateCharCount(newPost, text);
+				// }
+				updateCharCount(newPost, text, textarea);
 				textarea.focus();
 			}
 		} else {
@@ -2011,7 +2058,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 			textarea.focus();
 		}
 		if (originalUser && postItems.indexOf(newPost) === 0) {
-			updateCharCount(newPost, textarea.value);
+			updateCharCount(newPost, textarea.value, textarea);
 		}
 
 		const emojiBtn = newPost.querySelector('.emoji-btn');
@@ -2039,7 +2086,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 					textarea.value =
 						text.slice(0, curPos) + e + text.slice(curPos);
 					textarea.focus();
-					updateCharCount(newPost, textarea.value);
+					updateCharCount(newPost, textarea.value, textarea);
 					picker.remove();
 				},
 				onClickOutside: function (e) {
@@ -2116,7 +2163,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 					textarea.removeEventListener('input', buildMention);
 					textarea.removeEventListener('keydown', keyDown);
 					textarea.addEventListener('input', getInput);
-					updateCharCount(newPost, textarea.value);
+					updateCharCount(newPost, textarea.value, textarea);
 					textarea.focus();
 				}
 			}
@@ -2236,7 +2283,11 @@ document.addEventListener('DOMContentLoaded', async function () {
 										'input',
 										getInput
 									);
-									updateCharCount(newPost, textarea.value);
+									updateCharCount(
+										newPost,
+										textarea.value,
+										textarea
+									);
 									textarea.focus();
 								};
 							}
@@ -2281,22 +2332,12 @@ document.addEventListener('DOMContentLoaded', async function () {
 					}
 				}
 			}
-			updateCharCount(newPost, postText);
-			if (postText.length > maxChars) {
-				await splitIntoToots(newPost, postText, textarea);
-			} else {
-				charCount.removeAttribute('style');
-			}
+			updateCharCount(newPost, postText, textarea);
 		}
 
 		textarea.addEventListener('focus', async () => {
 			let postText = textarea.value;
-			updateCharCount(newPost, postText);
-			if (postText.length > maxChars) {
-				await splitIntoToots(newPost, postText, textarea);
-			} else {
-				charCount.removeAttribute('style');
-			}
+			updateCharCount(newPost, postText, textarea);
 		});
 
 		const cwDiv = newPost.querySelector('.cw-div');
@@ -3174,7 +3215,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 			const firstPost = postItems[0];
 			if (originalUser) {
 				const textarea = firstPost.querySelector('.post-text');
-				updateCharCount(firstPost, textarea.value);
+				updateCharCount(firstPost, textarea.value, textarea);
 			}
 			const firstVizSelect = firstPost.querySelector('.viz-select');
 			firstVizSelect.value = defaultViz;
@@ -3193,24 +3234,25 @@ document.addEventListener('DOMContentLoaded', async function () {
 		splitNb++;
 		textarea.value = null;
 		postText = postText.trim();
-		const regex = /([,.;:!?])/gu;
+		const regex = /([,.;:!?”"»]\s)/gu;
 		const chunks = postText.split(regex);
 		let remainingChunks;
 		for (let i = 0; i < chunks.length; i += 2) {
 			let chunk1 = chunks[i];
 			let chunk2 = chunks[i + 1] || '';
 			let chunk = chunk1 + chunk2;
-			if (textarea.value.length + chunk.length < maxChars) {
+			if (textarea.value.length + chunk.trim().length <= maxChars) {
 				textarea.value += chunk;
-				updateCharCount(newPost, textarea.value);
 			} else {
 				remainingChunks = chunks.slice(i);
 				break;
 			}
 		}
+		updateCharCount(newPost, textarea.value, textarea);
 		textarea.focus();
 		let flowText = '';
 		if (remainingChunks && remainingChunks.length > 0) {
+			textarea.value = textarea.value.trim();
 			for (let c of remainingChunks) {
 				flowText += c;
 			}
@@ -3308,12 +3350,12 @@ document.addEventListener('DOMContentLoaded', async function () {
 					text = `${postCount}\n${text}`;
 				}
 				textarea.value = text;
-				updateCharCount(p, textarea.value);
+				updateCharCount(p, textarea.value, textarea);
 			} else if (!numberPosts) {
 				if (postCount && text.startsWith(postCount)) {
 					text = text.replace(postCount, '').trim();
 					textarea.value = text;
-					updateCharCount(p, textarea.value);
+					updateCharCount(p, textarea.value, textarea);
 				}
 			}
 		}
