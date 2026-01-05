@@ -439,13 +439,18 @@ textarea {
 	resize: none;
 }
 
+textarea:focus-visible {
+	outline: none;
+}
+
 .cw-text {
 	height: 50px;
 }
 
 textarea.cw-text {
-	border-left: solid 0.5rem orange;
-	border-right: solid 0.5rem orange;
+	border-color: #ff9900;
+	border-style: dashed solid;
+	border-width: 1px 0.5rem;
 	width: 100%;
 	border-radius: 0px;
 	background-color: light-dark(#eae8f6, #3a2f1c);
@@ -454,8 +459,7 @@ textarea.cw-text {
 
 textarea.cw-text:focus-visible {
 	outline: none;
-	border-top: solid 1px orange;
-	border-bottom: solid 1px orange;
+	border-style: solid;
 }
 
 .textarea,
@@ -1444,16 +1448,6 @@ input#gif-search {
 	.img-preview,
 	.poll-container {
 		width: 100%;
-	}
-
-	textarea.cw-text {
-		border-left: solid 0.5rem orange;
-		border-right: solid 0.5rem orange;
-		width: 100%;
-	}
-
-	textarea.cw-text:focus-visible {
-		outline: 2px solid orange;
 	}
 
 	.in-reply-to {
