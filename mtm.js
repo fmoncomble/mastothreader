@@ -108,6 +108,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 	let currentPost;
 	let mediaFiles = {};
 	let polls = {};
+	let quotedStatuses = {};
 	let oldPosts = [];
 	let i = 0;
 
@@ -1023,7 +1024,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 	function updateCharCount(post, postText, textarea) {
 		const charCount = post.querySelector('.char-count');
 		let postLength = postText.trim().length;
-		const handleRegexp = /@([a-zA-Z0-9_]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
+		const handleRegexp =
+			/(^|\s)@([a-zA-Z0-9_]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
 		const handleMatches = postText.match(handleRegexp);
 		if (handleMatches && handleMatches.length) {
 			for (let handle of handleMatches) {
@@ -2039,7 +2041,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 		charCount.textContent = `0/${maxChars}`;
 
 		const textarea = newPost.querySelector('.post-text');
-		textarea.style.minHeight = Number((maxChars / 50) * 16.8) + 'px';
+		textarea.style.minHeight = Number((maxChars / 50) * 20) + 'px';
 		if (text) {
 			text = text.trim();
 			textarea.value = text;
@@ -2056,7 +2058,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 						langSelect.value = lang;
 					}
 				}
-				// }
 				updateCharCount(newPost, text, textarea);
 				textarea.focus();
 			}
@@ -2119,7 +2120,12 @@ document.addEventListener('DOMContentLoaded', async function () {
 			let suggestions = [];
 			textarea.removeEventListener('input', getInput);
 			textarea.addEventListener('keydown', keyDown);
-			let followingList = document.createElement('div');
+			let followingList;
+			if (!document.getElementById('following-list')) {
+				followingList = document.createElement('div');
+			} else {
+				followingList = document.getElementById('following-list');
+			}
 			followingList.id = 'following-list';
 			followingList.classList.add('following-list');
 			let choices;
@@ -2319,6 +2325,9 @@ document.addEventListener('DOMContentLoaded', async function () {
 				}
 			}
 		}
+		let quote = false;
+		let quoteUrls = new Set();
+		let quoteUrl = null;
 		textarea.addEventListener('input', getInput);
 		async function getInput(e) {
 			if (e.data === '@') {
@@ -2339,7 +2348,176 @@ document.addEventListener('DOMContentLoaded', async function () {
 					}
 				}
 			}
+			if (quoteUrl && !postText.includes(quoteUrl)) {
+				quoteUrls.delete(quoteUrl);
+				quoteUrl = null;
+			}
+			const id = newPost.id.split('-')[1];
+			if (
+				!quoteUrl &&
+				!quote &&
+				!mediaFiles[`mediaFiles${id}`].length &&
+				!polls[`polls${id}`]
+			) {
+				const urlRegexp = /https?:\/\/[^\s]+/g;
+				const urlMatches = postText.match(urlRegexp);
+				if (urlMatches && urlMatches.length > 0) {
+					let thisUrl = urlMatches[urlMatches.length - 1];
+					if (quoteUrls.has(thisUrl)) {
+						return;
+					}
+					const quotePreview =
+						newPost.querySelector('.quote-preview');
+					quotePreview.style.backgroundColor = 'rgba(0, 0, 0, 0.05)';
+					quotePreview.style.height = '200px';
+					quotePreview.style.display = 'flex';
+					const quoteSpinner =
+						quotePreview.querySelector('.quote-spinner');
+					quoteSpinner.style.display = 'flex';
+					let quotedStatus = await getQuoteStatus(thisUrl);
+					quotedStatus ? (quote = true) : (quote = false);
+					if (quotedStatus) {
+						quote = true;
+						quoteUrl = thisUrl;
+						quoteUrls.add(quoteUrl);
+						let quotedStatusApproval =
+							quotedStatus.quote_approval.current_user;
+						if (quotedStatusApproval === 'automatic') {
+							quotedStatusApproval =
+								quotedStatus.quote_approval.automatic[0];
+						}
+						if (
+							quotedStatusApproval === 'denied' ||
+							quotedStatusApproval === 'manual' ||
+							quotedStatusApproval === 'unknown'
+						) {
+							quote = false;
+							quoteSpinner.style.display = 'none';
+							quotePreview.style.backgroundColor = 'transparent';
+							quotePreview.style.height = 'auto';
+							quotePreview.style.display = 'none';
+							return;
+						} else if (quotedStatusApproval === 'followers') {
+							try {
+								let res = await fetch(
+									`https://${instance}/api/v1/accounts/relationships?id[]=${quotedStatus.account.id}`,
+									{
+										headers: {
+											Authorization: `Bearer ${token}`,
+										},
+									}
+								);
+								if (res.ok) {
+									let data = await res.json();
+									if (!data[0].following) {
+										quote = false;
+										quoteSpinner.style.display = 'none';
+										quotePreview.style.backgroundColor =
+											'transparent';
+										quotePreview.style.height = 'auto';
+										quotePreview.style.display = 'none';
+										return;
+									}
+								}
+							} catch (error) {
+								console.error(
+									'Error checking followers: ',
+									error
+								);
+								quote = false;
+								return;
+							}
+						}
+						const quotedStatusId = quotedStatus.id;
+						quotedStatuses[`quotedStatuses${id}`] = quotedStatusId;
+						addImg.disabled = true;
+						addGif.disabled = true;
+						addPoll.disabled = true;
+						const quotePostPreview = quotePreview.querySelector(
+							'.quote-post-preview'
+						);
+						const quotePostAvatar =
+							quotePreview.querySelector('.quote-post-avatar');
+						const quotePostDisplayName = quotePreview.querySelector(
+							'.quote-post-display-name'
+						);
+						const quotePostTime =
+							quotePreview.querySelector('.quote-post-time');
+						const quotePostText =
+							quotePreview.querySelector('.quote-post-text');
+						const quotePostMedia =
+							quotePreview.querySelector('.quote-post-media');
+						const avatar = document.createElement('img');
+						avatar.src = quotedStatus.account.avatar;
+						avatar.alt = quotedStatus.account.display_name;
+						quotePostAvatar.innerHTML = '';
+						quotePostAvatar.appendChild(avatar);
+						const name = document.createElement('span');
+						name.textContent = quotedStatus.account.display_name;
+						quotePostDisplayName.innerHTML = '';
+						quotePostDisplayName.appendChild(name);
+						const time = document.createElement('time');
+						time.textContent = new Date(
+							quotedStatus.created_at
+						).toLocaleString();
+						quotePostTime.innerHTML = '';
+						quotePostTime.appendChild(time);
+						const quoteText = quotedStatus.content;
+						quotePostText.innerHTML = quoteText;
+						const media = quotedStatus.media_attachments;
+						quotePostMedia.innerHTML = '';
+						for (let m of media) {
+							const img = document.createElement('img');
+							img.src = m.preview_url;
+							img.alt = m.description ? m.description : '';
+							quotePostMedia.appendChild(img);
+						}
+						quoteSpinner.style.display = 'none';
+						quotePreview.style.backgroundColor = 'transparent';
+						quotePreview.style.height = 'auto';
+						quotePostPreview.style.display = 'flex';
+						const quoteCloseBtn = quotePreview.querySelector(
+							'.quote-preview-close'
+						);
+						quoteCloseBtn.onclick = () => {
+							quotePreview.style.display = 'none';
+							quotePostPreview.style.display = 'none';
+							quote = false;
+							delete quotedStatuses[`quotedStatuses${id}`];
+							addImg.disabled = false;
+							addGif.disabled = false;
+							addPoll.disabled = false;
+						};
+					}
+				}
+			}
 			updateCharCount(newPost, postText, textarea);
+		}
+
+		async function getQuoteStatus(url) {
+			let searchUrl = `https://${instance}/api/v2/search?q=${encodeURIComponent(
+				url
+			)}&type=statuses&resolve=true&limit=2`;
+			try {
+				let res = await fetch(searchUrl, {
+					headers: { Authorization: `Bearer ${token}` },
+				});
+				if (!res.ok) {
+					return null;
+				}
+				let data = await res.json();
+				if (data.statuses && data.statuses.length > 0) {
+					let status = data.statuses[0];
+					if (status) {
+						return status;
+					}
+				} else {
+					return null;
+				}
+			} catch (error) {
+				console.error('Error fetching quote status: ', error);
+				return null;
+			}
 		}
 
 		textarea.addEventListener('focus', async () => {
@@ -2838,6 +3016,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 		function displayThumbnail(mediaFile, imgPreview, imgCount) {
 			dropzone.style.display = 'flex';
+			imgPreview.style.display = 'flex';
+			imgCount.style.display = 'flex';
 			addPoll.disabled = true;
 			imgCount.textContent = `${files.length}/${maxMedia}`;
 			const div = document.createElement('div');
@@ -2873,6 +3053,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 					imgCount.textContent = `${files.length}/${maxMedia}`;
 					if (files.length === 0) {
 						dropzone.style.display = 'none';
+						imgPreview.style.display = 'none';
+						imgCount.style.display = 'none';
 						addPoll.disabled = false;
 					}
 					return;
@@ -2905,6 +3087,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 					imgCount.textContent = `${files.length}/${maxMedia}`;
 					if (files.length === 0) {
 						dropzone.style.display = 'none';
+						imgPreview.style.display = 'none';
+						imgCount.style.display = 'none';
 						addPoll.disabled = false;
 					}
 					return;
@@ -2952,6 +3136,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 				imgCount.textContent = `${files.length}/${maxMedia}`;
 				if (files.length === 0) {
 					dropzone.style.display = 'none';
+					imgPreview.style.display = 'none';
+					imgCount.style.display = 'none';
 					addPoll.disabled = false;
 				}
 			});
@@ -3594,6 +3780,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 					return;
 				}
 			}
+			const quotedStatusId = quotedStatuses[`quotedStatus${id}`];
 			try {
 				const body = {
 					status: postText,
@@ -3612,6 +3799,9 @@ document.addEventListener('DOMContentLoaded', async function () {
 				}
 				if (postPoll) {
 					body.poll = postPoll;
+				}
+				if (quotedStatusId) {
+					body.quoted_status_id = quotedStatusId;
 				}
 				const response = await fetch(
 					`https://${instance}/api/v1/statuses`,

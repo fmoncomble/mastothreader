@@ -307,6 +307,7 @@ div.header-1 {
 .add-img,
 .add-gif,
 .add-poll,
+.emoji-btn,
 .poll-duration-select {
 	height: 30px;
 	width: auto;
@@ -345,7 +346,8 @@ div.header-1 {
 select:hover,
 .add-img:hover,
 .add-gif:hover,
-.add-poll:hover {
+.add-poll:hover,
+.emoji-btn:hover {
 	background-color: light-dark(rgba(97, 71, 230, 0.08), #292938);
 }
 
@@ -427,16 +429,17 @@ i {
 }
 
 textarea {
-	border: solid 1px light-dark(#d9d9e8, #313144);
 	background-color: light-dark(#f9f9fb, #292938);
+	border: none;
 	color: light-dark(black, #d9d9e8);
 	border-radius: 4px;
-	width: 500px;
+	width: 100%;
 	height: auto;
 	padding: 10px;
 	font-family: Arial, Helvetica, sans-serif;
 	font-size: small;
 	resize: none;
+	box-sizing: border-box;
 }
 
 textarea:focus-visible {
@@ -477,21 +480,11 @@ textarea.cw-text:focus-visible {
 	margin: 10px auto 0 auto;
 	width: 500px;
 	position: relative;
-}
-
-.emoji-btn {
-	height: 20px;
-	width: 20px;
-	position: absolute;
-	right: 5px;
-	bottom: 5px;
-	border-radius: 4px;
-	cursor: pointer;
 	display: flex;
 	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	padding: 2px;
+	border: solid 1px light-dark(#d9d9e8, #313144);
+	background-color: light-dark(#f9f9fb, #292938);
+	border-radius: 4px;
 }
 
 .emoji-btn svg path,
@@ -559,12 +552,22 @@ div#dl-msg {
 	border-radius: 4px;
 	background-color: light-dark(#f9f9fb, #292938);
 	color: light-dark(gray, #9c9cc9);
-	display: flex;
+	display: none;
 	align-items: center;
 	justify-content: center;
 	text-align: center;
 	margin: 10px auto 0 auto;
 	flex-direction: row;
+}
+
+.quote-preview {
+	width: 100%;
+	padding: 10px;
+	box-sizing: border-box;
+	display: none;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
 }
 
 .poll-container {
@@ -612,10 +615,6 @@ div#dl-msg {
 	font-weight: bold;
 	font-size: xx-small;
 	text-align: center;
-}
-
-.emoji-btn:hover {
-	background-color: light-dark(#dadade, rgba(96, 96, 133, 0.15));
 }
 
 .add-img span {
@@ -682,7 +681,7 @@ button:disabled i {
 }
 
 .img-preview {
-	display: flex;
+	/* display: flex; */
 	flex-wrap: wrap;
 	align-content: center;
 }
@@ -711,6 +710,10 @@ button:disabled i {
 	color: light-dark(gray, #9c9cc9);
 	margin-top: 10px;
 	width: 500px;
+}
+
+.img-count {
+	display: none;
 }
 
 .remove-btn {
@@ -894,6 +897,10 @@ div.btn-div {
 	margin-bottom: 20px;
 }
 
+.quote-spinner {
+	margin: 0;
+}
+
 @keyframes spin {
 	0% {
 		transform: rotate(0deg);
@@ -942,7 +949,8 @@ div.footer div a img {
 	height: 10px;
 }
 
-div#replied-post-preview {
+div#replied-post-preview,
+div.quote-post-preview {
 	flex-direction: column;
 	border: solid 1px light-dark(#d9d9e8, black);
 	border-radius: 4px;
@@ -955,7 +963,13 @@ div#replied-post-preview {
 	width: 100%;
 }
 
-div#replied-post-header {
+div.quote-post-preview {
+	display: none;
+	margin: 0;
+}
+
+div#replied-post-header,
+div.quote-post-header {
 	display: flex;
 	flex-direction: row;
 	justify-content: left;
@@ -964,7 +978,8 @@ div#replied-post-header {
 	position: relative;
 }
 
-div#replied-post-header img {
+div#replied-post-header img,
+div.quote-post-header img {
 	width: 30px;
 	height: 30px;
 	object-fit: cover;
@@ -973,16 +988,20 @@ div#replied-post-header img {
 }
 
 div#replied-post-display-name,
-div#replied-post-time {
+div#replied-post-time,
+div.quote-post-display-name,
+div.quote-post-time {
 	margin-right: 10px;
 	font-size: small;
 }
 
-div#replied-post-display-name {
+div#replied-post-display-name,
+div.quote-post-display-name {
 	font-weight: bold;
 }
 
-div#replied-post-content {
+div#replied-post-content,
+div.quote-post-content {
 	border: solid 1px light-dark(#d9d9e8, #292938);
 	padding: 10px;
 	margin: 0 14px 14px 14px;
@@ -991,20 +1010,23 @@ div#replied-post-content {
 	border-radius: 4px;
 }
 
-div#replied-post-text {
+div#replied-post-text,
+div.quote-post-text {
 	text-align: left;
 	font-size: small;
 }
 
-div#replied-post-media {
+div#replied-post-media,
+div.quote-post-media {
 	display: flex;
 	flex-direction: row;
 	justify-content: center;
 	flex-wrap: wrap;
 }
 
-div#replied-post-media img {
-	width: 200px;
+div#replied-post-media img,
+div.quote-post-media img {
+	width: 85px;
 	object-fit: cover;
 	margin-right: 10px;
 	margin: 0 5px;
@@ -1126,7 +1148,8 @@ button.cancel:hover {
 	margin: 0;
 }
 
-div#reply-preview-close {
+div#reply-preview-close,
+div.quote-preview-close {
 	font-weight: bold;
 	font-size: x-large;
 	position: absolute;
@@ -1137,7 +1160,8 @@ div#reply-preview-close {
 	height: 28px;
 }
 
-div#reply-preview-close:hover {
+div#reply-preview-close:hover,
+div.quote-preview-close:hover {
 	background-color: light-dark(#dadade, rgba(96, 96, 133, 0.15));
 	border: none;
 	border-radius: 4px;
@@ -1379,6 +1403,7 @@ input#gif-search {
 	.add-img,
 	.add-gif,
 	.add-poll,
+	.emoji-btn,
 	.poll-duration-select {
 		height: 2.5rem;
 		padding: 0.5rem;

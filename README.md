@@ -30,6 +30,7 @@ Le site ne collecte aucune de vos données. Les identifiants sont stockés local
 -   [x] Banque d'émojis.
 -   [x] Localisation.
 -   [x] Sondages.
+-   [x] Citation de pouet avec aperçu.
 
 ### Extension pour navigateur
 
