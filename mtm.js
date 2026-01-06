@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 		: null;
 
 	if (bskyDid && bskyHandle) {
-		bskyResetBtn.style.display = 'inline-block';
+		bskyResetBtn.style.display = 'flex';
 	} else {
 		bskyResetBtn.style.display = 'none';
 	}
@@ -1064,6 +1064,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 		localStorage.removeItem('bsky-handle');
 		bskyLink = null;
 		bskyThreadInput.value = null;
+		window.alert(locData['bsky-reset']);
 		bskyResetBtn.style.display = 'none';
 	});
 
@@ -1092,7 +1093,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 			localStorage.setItem('bsky-did', bskyDid);
 			bskyHandle = data.handle;
 			localStorage.setItem('bsky-handle', bskyHandle);
-			bskyResetBtn.style.display = 'inline-block';
+			bskyResetBtn.style.display = 'flex';
 			idInput.value = null;
 			pwdInput.value = null;
 			await new Promise((resolve) => setTimeout(resolve, 0));

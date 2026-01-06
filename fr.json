@@ -69,6 +69,7 @@
 	"bsky-author-warning": "Vous n'êtes pas l'auteur·e de ce fil. Voulez-vous vous connecter à un autre compte ?",
 	"convert-handles-confirm": "Voulez-vous tenter de convertir les pseudos ?",
 	"bsky-link": "🔗 Fil Bluesky",
+	"bsky-reset": "Connexion Bluesky réinitialisée.",
 	"wp-url": "Entrez l'URL du billet Wordpress :",
 	"wp-invalid": "URL Wordpress invalide",
 	"wp-import-cancel": "Annuler",

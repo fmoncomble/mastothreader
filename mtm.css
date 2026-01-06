@@ -204,6 +204,7 @@ input.schedule-input {
 	align-items: center;
 	width: 100%;
 	margin-bottom: 10px;
+	gap: 10px;
 }
 
 label.schedule-label,
@@ -213,17 +214,7 @@ label.cancel-schedule {
 	display: flex;
 	align-items: center;
 	font-size: small;
-}
-
-select.cancel-schedule {
-	margin-left: 5px;
-	width: auto;
-	height: 28px;
-	color: light-dark(black, #9c9cc9);
-	border: solid 1px light-dark(#d9d9e8, #313144);
-	border-radius: 4px;
-	background-color: light-dark(#f9f9fb, #292938);
-	display: inline;
+	gap: 10px;
 }
 
 button {
@@ -244,16 +235,6 @@ button#cancel-schedule-btn {
 
 button:hover {
 	background-color: #563acc;
-}
-
-select.import {
-	width: auto;
-	height: 28px;
-	color: light-dark(black, #9c9cc9);
-	border: solid 1px light-dark(#d9d9e8, #313144);
-	border-radius: 4px;
-	background-color: light-dark(#f9f9fb, #292938);
-	display: inline;
 }
 
 .content-container {
@@ -304,24 +285,34 @@ div.header-1 {
 .viz-select,
 .quote-select,
 .lang-select,
+select.import,
+select.cancel-schedule,
 .add-img,
 .add-gif,
 .add-poll,
 .emoji-btn,
 .poll-duration-select,
 .add-post-btn,
-.delete-post-btn {
+.delete-post-btn,
+button.bsky-reset {
 	height: 30px;
 	width: auto;
 	color: light-dark(#563acc, #8886ff);
-	margin-top: 10px;
-	margin-left: 0px;
+	margin: 10px 0 0 0;
 	border: solid 1px light-dark(#563acc, #8886ff);
 	border-radius: 4px;
 	background-color: light-dark(#f9f9fb, #292938);
 	display: flex;
 	align-items: center;
 	justify-content: center;
+}
+
+button.bsky-reset {
+	background-color: #cc0000;
+}
+
+select.cancel-schedule {
+	margin: 0;
 }
 
 .poll-duration-select {
@@ -1123,7 +1114,9 @@ img.avatar {
 }
 
 button.cancel {
-	background-color: red;
+	background-color: #cc0000;
+	border-color: #cc0000;
+	color: white;
 }
 
 button.cancel:hover {
@@ -1205,11 +1198,6 @@ dialog:focus-visible,
 	outline: none;
 }
 
-.bsky-reset {
-	height: 20px;
-	font-size: x-small;
-}
-
 .following-list,
 .instance-list {
 	border: 1px solid light-dark(#d9d9e8, #9c9cc9);
@@ -1288,6 +1276,7 @@ dialog:focus-visible,
 div.header-2 {
 	display: flex;
 	position: relative;
+	gap: 10px;
 }
 
 div.toot-btns {
@@ -1626,9 +1615,20 @@ input#gif-search {
 		align-items: center;
 	}
 
-	.bsky-reset {
-		height: 2.5rem;
+	div#schedule-thread {
+		flex-direction: column;
+	}
+
+	button.bsky-reset {
 		font-size: 100%;
+		margin: 0px;
+	}
+
+	button#cancel-schedule-btn {
+		margin: 0px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 	}
 
 	.alt-div {
