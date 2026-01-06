@@ -639,9 +639,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 				mastoText = new URLSearchParams(window.location.search).get(
 					'text'
 				);
-				createNewPost(mastoText ? mastoText : null);
+				createNewPost(mastoText ? mastoText : null, null, 'initial');
 				postThreadBtn.style.display = 'flex';
-				// waitingDialog.close();
 			}
 		} else if (!token) {
 			instructionsDiv.style.display = 'flex';
@@ -1021,25 +1020,18 @@ document.addEventListener('DOMContentLoaded', async function () {
 		updatePostList(message);
 	}
 
-	function updateCharCount(post, postText, textarea) {
+	async function updateCharCount(
+		post,
+		postText,
+		textarea,
+		quoteUrl,
+		quote,
+		quoteUrls,
+		reason
+	) {
+		const postId = post.id.split('-')[1];
 		const charCount = post.querySelector('.char-count');
-		let postLength = postText.trim().length;
-		const handleRegexp =
-			/(^|\s)@([a-zA-Z0-9_]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
-		const handleMatches = postText.match(handleRegexp);
-		if (handleMatches && handleMatches.length) {
-			for (let handle of handleMatches) {
-				let index = handle.lastIndexOf('@');
-				postLength -= handle.length - index;
-			}
-		}
-		const urlRegexp = /https?:\/\/[^\s]+/g;
-		const urlMatches = postText.match(urlRegexp);
-		if (urlMatches && urlMatches.length) {
-			for (let url of urlMatches) {
-				postLength -= url.length - reservedChars;
-			}
-		}
+		let postLength = adjustCount(postText.trim());
 		charCount.textContent = `${postLength}/${maxChars}`;
 		if (postLength >= maxChars - 20 && postLength < maxChars) {
 			charCount.removeAttribute('style');
@@ -1048,7 +1040,17 @@ document.addEventListener('DOMContentLoaded', async function () {
 		} else if (postLength >= maxChars) {
 			charCount.style.color = '#cc0000';
 			charCount.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="color: #cc0000;"></i> ${postLength}/${maxChars}`;
-			splitIntoToots(post, postText, textarea);
+			if (postLength > maxChars) {
+				await splitIntoToots(
+					post,
+					postText,
+					textarea,
+					quoteUrl,
+					quote,
+					quoteUrls,
+					'update'
+				);
+			}
 		} else {
 			charCount.removeAttribute('style');
 		}
@@ -1140,14 +1142,9 @@ document.addEventListener('DOMContentLoaded', async function () {
 	});
 	bskyThreadInput.addEventListener('keydown', (event) => {
 		if (event.key === 'Enter') {
-			bskyLink = bskyThreadInput.value;
-			getBskyThread();
-			bskyThreadDialog.close();
+			bskyThreadOk.click();
 		} else if (event.key === 'Escape') {
-			importSelect.value = '0';
-			bskyLink = null;
-			bskyThreadInput.value = null;
-			bskyThreadDialog.close();
+			bskyThreadCancel.click();
 		}
 	});
 	bskyThreadCancel.addEventListener('click', () => {
@@ -1423,11 +1420,15 @@ document.addEventListener('DOMContentLoaded', async function () {
 									p.embed.images &&
 									p.embed.images.length > 0
 								) {
-									images.push(...p.embed.images);
+									for (let i of p.embed.images) {
+										images.push(i);
+									}
 								}
 								if (p.embed.media) {
 									if (p.embed.media.images) {
-										images.push(...p.embed.media.images);
+										for (let i of p.embed.media.images) {
+											images.push(i);
+										}
 									}
 								}
 								if (images && images.length > 0) {
@@ -1479,7 +1480,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 								}
 							}
 							fromBsky = true;
-							await createNewPost(text, imgs);
+							await createNewPost(text, imgs, 'bsky-import');
 							currentPost = postItems[bskyPosts.indexOf(p)];
 						} catch (error) {
 							console.error(
@@ -1627,34 +1628,28 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 		async function splitText(chunk) {
 			return new Promise(async (resolve) => {
-				let text = chunk.text.trim();
+				let text = chunk.text;
 				let newChunk = { text: '', media: [] };
 				let segments = [];
+				const regex = /([,.;:!?"”»][\s])/gu;
 				if (text) {
-					const regex = /([,.;:!?"”»]\s)/gu;
 					segments = text.split(regex);
 				}
 				let oldText = '';
 				for (let i = 0; i < segments.length; i += 1) {
 					let segment = segments[i];
-					let oldTextLength = oldText.length;
-					let segmentLength = segment.trim().length;
-					const urlRegexp = /https?:\/\/[^\s]+/g;
-					const urlMatchesInOldText = segment.match(urlRegexp);
-					if (urlMatchesInOldText && urlMatchesInOldText.length > 0) {
-						for (let url of urlMatchesInOldText) {
-							oldTextLength -= url.length - reservedChars;
-						}
+					if (segment.endsWith('.')) {
+						segment = segment.substring(0, segment.length - 1);
+						segments.splice(i, 1, segment, '. ');
 					}
-					const urlMatchesInSegment = segment.match(urlRegexp);
-					if (urlMatchesInSegment && urlMatchesInSegment.length > 0) {
-						for (let url of urlMatchesInSegment) {
-							segmentLength -= url.length - reservedChars;
-						}
-					}
-					if (oldTextLength + segmentLength <= maxChars) {
+					let oldTextLength = adjustCount(oldText);
+					let segmentLength = adjustCount(segment.trim());
+					if (oldTextLength + segmentLength < maxChars) {
 						oldText += segment;
 					} else {
+						if (regex.test(segment)) {
+							continue;
+						}
 						chunk.text = oldText.trim();
 						let remainingSegments = segments.slice(i);
 						let remainingText = remainingSegments.join('');
@@ -1680,15 +1675,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 		for (let p of wpChunks) {
 			if (p.text) {
-				p.text = p.text.trim();
-				let pTextLength = p.text.length;
-				const urlRegexp = /https?:\/\/[^\s]+/g;
-				const urlMatches = p.text.match(urlRegexp);
-				if (urlMatches && urlMatches.length > 0) {
-					for (let url of urlMatches) {
-						pTextLength -= url.length - reservedChars;
-					}
-				}
+				let pTextLength = adjustCount(p.text.trim());
 				if (pTextLength > maxChars) {
 					await splitText(p);
 				}
@@ -1700,6 +1687,15 @@ document.addEventListener('DOMContentLoaded', async function () {
 		}
 		postItems = [];
 		for (let p of wpChunks) {
+			let newChunkLength = adjustCount(p.text.trim());
+			if (newChunkLength > maxChars) {
+				console.error(
+					`'Processing chunk #${
+						wpChunks.indexOf(p) + 1
+					} with length '`,
+					newChunkLength
+				);
+			}
 			try {
 				WPloadingText.textContent = `${locData['creating-toot']} ${
 					wpChunks.indexOf(p) + 1
@@ -1710,7 +1706,11 @@ document.addEventListener('DOMContentLoaded', async function () {
 					mediaCounter.textContent = `${locData['wp-media']}: ${p.media.length}`;
 					WPloadingText.appendChild(mediaCounter);
 				}
-				await createNewPost(p.text, p.media);
+				await createNewPost(
+					p.text,
+					p.media,
+					`wp-import-chunk-${wpChunks.indexOf(p)}`
+				);
 				currentPost = postItems[wpChunks.indexOf(p)];
 			} catch (error) {
 				console.error(
@@ -1720,7 +1720,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 			}
 		}
 		let finalPostText = `${locData['final-post-text']} ${postLink}`;
-		createNewPost(finalPostText);
+		createNewPost(finalPostText, null, 'final-wp-post');
 		bskyLoadingSpinner.close();
 		postItems[0].querySelector('.post-text').focus();
 		window.scrollTo(0, 0);
@@ -1729,13 +1729,13 @@ document.addEventListener('DOMContentLoaded', async function () {
 	}
 
 	// Create new post
-	async function createNewPost(text, imgs) {
+	async function createNewPost(text, imgs, reason) {
 		oldPosts = postItems.map(function (p) {
 			return p.getAttribute('counter');
 		});
 		const newPost = postItem.cloneNode(true);
 		const addPostBtn = newPost.querySelector('.add-post-btn');
-		if (postItems.length === 0) {
+		if (postItems.length === 0 || reason === 'wp-import') {
 			contentContainer.appendChild(newPost);
 			postItems.push(newPost);
 		} else if (currentPost) {
@@ -1763,6 +1763,11 @@ document.addEventListener('DOMContentLoaded', async function () {
 		const pollContainer = newPost.querySelector('.poll-container');
 		const imgUpload = newPost.querySelector('input.img-upload');
 		const addImg = newPost.querySelector('button.add-img');
+		const addGif = newPost.querySelector('button.add-gif');
+		const gifDialog = document.getElementById('gif-dialog');
+		const gifResults = document.getElementById('gif-results');
+		const gifCancelBtn = document.getElementById('gif-cancel-btn');
+		const gifSearch = document.getElementById('gif-search');
 
 		const vizSelect = newPost.querySelector('.viz-select');
 		const vizList = newPost.querySelector('.viz-list');
@@ -2040,25 +2045,55 @@ document.addEventListener('DOMContentLoaded', async function () {
 		const charCount = newPost.querySelector('.char-count');
 		charCount.textContent = `0/${maxChars}`;
 
+		let quote = false;
+		let quoteUrls = new Set();
+		let quoteUrl = null;
+
 		const textarea = newPost.querySelector('.post-text');
 		textarea.style.minHeight = Number((maxChars / 50) * 20) + 'px';
 		if (text) {
 			text = text.trim();
 			textarea.value = text;
 			if (text.length > 30) {
-				let language = franc(text);
-				if (language === 'und') {
-					language = lang;
-				} else {
-					let guess = iso6393.find(
-						(l) => l.iso6393 === language
-					).iso6391;
-					if (guess) {
-						lang = guess;
-						langSelect.value = lang;
+				identifyLanguage(text);
+			}
+			if (
+				!quoteUrl &&
+				!quote &&
+				(!mediaFiles[`mediaFiles${i}`] ||
+					!mediaFiles[`mediaFiles${i}`].length) &&
+				!polls[`polls${i}`]
+			) {
+				const urlRegexp = /https?:\/\/[^\s]+/g;
+				const urlMatches = textarea.value.match(urlRegexp);
+				if (urlMatches && urlMatches.length > 0) {
+					let thisUrl = urlMatches[0];
+					if (thisUrl.includes('@') && !quoteUrls.has(thisUrl)) {
+						const data = await processQuotedToot(
+							thisUrl,
+							i,
+							newPost,
+							quoteUrl,
+							quote,
+							quoteUrls,
+							`newpost`
+						);
+						quoteUrl = data.quoteUrl;
+						quote = data.quote;
+						quoteUrls = data.quoteUrls;
 					}
 				}
-				updateCharCount(newPost, text, textarea);
+			}
+			if (reason !== 'overflow') {
+				await updateCharCount(
+					newPost,
+					text,
+					textarea,
+					quoteUrl,
+					quote,
+					quoteUrls,
+					'newpost'
+				);
 				textarea.focus();
 			}
 		} else {
@@ -2325,205 +2360,32 @@ document.addEventListener('DOMContentLoaded', async function () {
 				}
 			}
 		}
-		let quote = false;
-		let quoteUrls = new Set();
-		let quoteUrl = null;
+		textarea.addEventListener('paste', getPaste);
 		textarea.addEventListener('input', getInput);
 		async function getInput(e) {
+			textarea.removeEventListener('paste', getPaste);
 			if (e.data === '@') {
 				await getMention(getInput);
 			}
 			let postText = textarea.value;
 			if (postText.length > 30) {
-				let language = franc(postText);
-				if (language === 'und') {
-					language = lang;
-				} else {
-					let guess = iso6393.find(
-						(l) => l.iso6393 === language
-					).iso6391;
-					if (guess) {
-						lang = guess;
-						langSelect.value = lang;
-					}
-				}
+				identifyLanguage(postText);
 			}
 			if (quoteUrl && !postText.includes(quoteUrl)) {
 				quoteUrls.delete(quoteUrl);
 				quoteUrl = null;
 			}
-			const id = newPost.id.split('-')[1];
-			if (
-				!quoteUrl &&
-				!quote &&
-				!mediaFiles[`mediaFiles${id}`].length &&
-				!polls[`polls${id}`]
-			) {
-				const urlRegexp = /https?:\/\/[^\s]+/g;
-				const urlMatches = postText.match(urlRegexp);
-				if (urlMatches && urlMatches.length > 0) {
-					let thisUrl = urlMatches[urlMatches.length - 1];
-					if (quoteUrls.has(thisUrl)) {
-						return;
-					}
-					const quotePreview =
-						newPost.querySelector('.quote-preview');
-					quotePreview.style.backgroundColor = 'rgba(0, 0, 0, 0.05)';
-					quotePreview.style.height = '200px';
-					quotePreview.style.display = 'flex';
-					const quoteSpinner =
-						quotePreview.querySelector('.quote-spinner');
-					quoteSpinner.style.display = 'flex';
-					let quotedStatus = await getQuoteStatus(thisUrl);
-					quotedStatus ? (quote = true) : (quote = false);
-					if (quotedStatus) {
-						quote = true;
-						quoteUrl = thisUrl;
-						quoteUrls.add(quoteUrl);
-						let quotedStatusApproval =
-							quotedStatus.quote_approval.current_user;
-						if (quotedStatusApproval === 'automatic') {
-							quotedStatusApproval =
-								quotedStatus.quote_approval.automatic[0];
-						}
-						if (
-							quotedStatusApproval === 'denied' ||
-							quotedStatusApproval === 'manual' ||
-							quotedStatusApproval === 'unknown'
-						) {
-							quote = false;
-							quoteSpinner.style.display = 'none';
-							quotePreview.style.backgroundColor = 'transparent';
-							quotePreview.style.height = 'auto';
-							quotePreview.style.display = 'none';
-							return;
-						} else if (quotedStatusApproval === 'followers') {
-							try {
-								let res = await fetch(
-									`https://${instance}/api/v1/accounts/relationships?id[]=${quotedStatus.account.id}`,
-									{
-										headers: {
-											Authorization: `Bearer ${token}`,
-										},
-									}
-								);
-								if (res.ok) {
-									let data = await res.json();
-									if (!data[0].following) {
-										quote = false;
-										quoteSpinner.style.display = 'none';
-										quotePreview.style.backgroundColor =
-											'transparent';
-										quotePreview.style.height = 'auto';
-										quotePreview.style.display = 'none';
-										return;
-									}
-								}
-							} catch (error) {
-								console.error(
-									'Error checking followers: ',
-									error
-								);
-								quote = false;
-								return;
-							}
-						}
-						const quotedStatusId = quotedStatus.id;
-						quotedStatuses[`quotedStatuses${id}`] = quotedStatusId;
-						addImg.disabled = true;
-						addGif.disabled = true;
-						addPoll.disabled = true;
-						const quotePostPreview = quotePreview.querySelector(
-							'.quote-post-preview'
-						);
-						const quotePostAvatar =
-							quotePreview.querySelector('.quote-post-avatar');
-						const quotePostDisplayName = quotePreview.querySelector(
-							'.quote-post-display-name'
-						);
-						const quotePostTime =
-							quotePreview.querySelector('.quote-post-time');
-						const quotePostText =
-							quotePreview.querySelector('.quote-post-text');
-						const quotePostMedia =
-							quotePreview.querySelector('.quote-post-media');
-						const avatar = document.createElement('img');
-						avatar.src = quotedStatus.account.avatar;
-						avatar.alt = quotedStatus.account.display_name;
-						quotePostAvatar.innerHTML = '';
-						quotePostAvatar.appendChild(avatar);
-						const name = document.createElement('span');
-						name.textContent = quotedStatus.account.display_name;
-						quotePostDisplayName.innerHTML = '';
-						quotePostDisplayName.appendChild(name);
-						const time = document.createElement('time');
-						time.textContent = new Date(
-							quotedStatus.created_at
-						).toLocaleString();
-						quotePostTime.innerHTML = '';
-						quotePostTime.appendChild(time);
-						const quoteText = quotedStatus.content;
-						quotePostText.innerHTML = quoteText;
-						const media = quotedStatus.media_attachments;
-						quotePostMedia.innerHTML = '';
-						for (let m of media) {
-							const img = document.createElement('img');
-							img.src = m.preview_url;
-							img.alt = m.description ? m.description : '';
-							quotePostMedia.appendChild(img);
-						}
-						quoteSpinner.style.display = 'none';
-						quotePreview.style.backgroundColor = 'transparent';
-						quotePreview.style.height = 'auto';
-						quotePostPreview.style.display = 'flex';
-						const quoteCloseBtn = quotePreview.querySelector(
-							'.quote-preview-close'
-						);
-						quoteCloseBtn.onclick = () => {
-							quotePreview.style.display = 'none';
-							quotePostPreview.style.display = 'none';
-							quote = false;
-							delete quotedStatuses[`quotedStatuses${id}`];
-							addImg.disabled = false;
-							addGif.disabled = false;
-							addPoll.disabled = false;
-						};
-					}
-				}
-			}
-			updateCharCount(newPost, postText, textarea);
+			await updateCharCount(
+				newPost,
+				postText,
+				textarea,
+				quoteUrl,
+				quote,
+				quoteUrls,
+				'input'
+			);
+			textarea.addEventListener('paste', getPaste);
 		}
-
-		async function getQuoteStatus(url) {
-			let searchUrl = `https://${instance}/api/v2/search?q=${encodeURIComponent(
-				url
-			)}&type=statuses&resolve=true&limit=2`;
-			try {
-				let res = await fetch(searchUrl, {
-					headers: { Authorization: `Bearer ${token}` },
-				});
-				if (!res.ok) {
-					return null;
-				}
-				let data = await res.json();
-				if (data.statuses && data.statuses.length > 0) {
-					let status = data.statuses[0];
-					if (status) {
-						return status;
-					}
-				} else {
-					return null;
-				}
-			} catch (error) {
-				console.error('Error fetching quote status: ', error);
-				return null;
-			}
-		}
-
-		textarea.addEventListener('focus', async () => {
-			let postText = textarea.value;
-			updateCharCount(newPost, postText, textarea);
-		});
 
 		const cwDiv = newPost.querySelector('.cw-div');
 		const cwText = newPost.querySelector('.cw-text');
@@ -2647,26 +2509,21 @@ document.addEventListener('DOMContentLoaded', async function () {
 				} else if (img.type === 'image') {
 					const form = new FormData();
 					form.append('url', img.url);
-					fetch('proxy.php', {
+					let response = await fetch('proxy.php', {
 						method: 'POST',
 						body: form,
-					})
-						.then((response) => response.blob())
-						.then((blob) => {
-							const file = new File([blob], 'image.jpg', {
-								type: blob.type,
-							});
-							let mediaFile = {};
-							mediaFile.file = file;
-							if (img.alt) {
-								mediaFile.description = img.alt;
-							}
-							files.push(mediaFile);
-							displayThumbnail(mediaFile, imgPreview, imgCount);
-						})
-						.catch((error) =>
-							console.error('Error fetching image:', error)
-						);
+					});
+					let blob = await response.blob();
+					const file = new File([blob], 'image.jpg', {
+						type: blob.type,
+					});
+					let mediaFile = {};
+					mediaFile.file = file;
+					if (img.alt) {
+						mediaFile.description = img.alt;
+					}
+					files.push(mediaFile);
+					displayThumbnail(mediaFile, imgPreview, imgCount);
 				}
 			}
 		}
@@ -2860,11 +2717,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 			}
 		});
 
-		const addGif = newPost.querySelector('button.add-gif');
-		const gifDialog = document.getElementById('gif-dialog');
-		const gifResults = document.getElementById('gif-results');
-		const gifCancelBtn = document.getElementById('gif-cancel-btn');
-		const gifSearch = document.getElementById('gif-search');
 		addGif.onclick = async () => {
 			let query = null;
 			let fresh = true;
@@ -2994,12 +2846,13 @@ document.addEventListener('DOMContentLoaded', async function () {
 			}
 		};
 
-		textarea.addEventListener('paste', (e) => {
+		async function getPaste(e) {
 			overlay.style.display = 'none';
 			const items = (e.clipboardData || e.originalEvent.clipboardData)
 				.items;
 			for (let item of items) {
 				if (item.kind === 'file') {
+					e.preventDefault();
 					let mediaFile = {};
 					const file = item.getAsFile();
 					if (files.length < maxMedia) {
@@ -3010,9 +2863,76 @@ document.addEventListener('DOMContentLoaded', async function () {
 						window.alert(locData['media-alert']);
 						break;
 					}
+				} else if (
+					item.kind === 'string' &&
+					item.type === 'text/plain'
+				) {
+					e.preventDefault();
+					const text = await new Promise((resolve) => {
+						item.getAsString((s) => {
+							resolve(s);
+						});
+					});
+					textarea.value += text;
+					identifyLanguage(textarea.value);
+					const id = newPost.id.split('-')[1];
+					if (
+						!quoteUrl &&
+						!quote &&
+						(!mediaFiles[`mediaFiles${id}`] ||
+							!mediaFiles[`mediaFiles${id}`].length) &&
+						!polls[`polls${id}`] &&
+						textarea.value.length + text.length <= maxChars
+					) {
+						const urlRegexp = /https?:\/\/[^\s]+/g;
+						const urlMatches = text.match(urlRegexp);
+						if (urlMatches && urlMatches.length > 0) {
+							let thisUrl = urlMatches[urlMatches.length - 1];
+							if (
+								thisUrl.includes('@') &&
+								!quoteUrls.has(thisUrl)
+							) {
+								await processQuotedToot(
+									thisUrl,
+									id,
+									newPost,
+									quoteUrl,
+									quote,
+									quoteUrls,
+									'paste'
+								);
+							}
+						}
+					}
+					updateCharCount(
+						newPost,
+						textarea.value,
+						textarea,
+						quoteUrl,
+						quote,
+						quoteUrls,
+						'paste'
+					);
 				}
 			}
-		});
+		}
+
+		function identifyLanguage(text) {
+			if (text.length > 30) {
+				let language = franc(text);
+				if (language === 'und') {
+					language = lang;
+				} else {
+					let guess = iso6393.find(
+						(l) => l.iso6393 === language
+					).iso6391;
+					if (guess) {
+						lang = guess;
+						langSelect.value = lang;
+					}
+				}
+			}
+		}
 
 		function displayThumbnail(mediaFile, imgPreview, imgCount) {
 			dropzone.style.display = 'flex';
@@ -3426,8 +3346,39 @@ document.addEventListener('DOMContentLoaded', async function () {
 		return newPost;
 	}
 
+	// Function to adjust charcount for handles and urls
+	function adjustCount(text) {
+		let textLength = text.length;
+		const handleRegexp =
+			/(^|\s)@([a-zA-Z0-9_]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
+		const handleMatches = text.match(handleRegexp);
+		if (handleMatches && handleMatches.length) {
+			for (let handle of handleMatches) {
+				let index = handle.lastIndexOf('@');
+				textLength -= handle.length - index;
+			}
+		}
+		const urlRegexp = /https?:\/\/[^\s]+/g;
+		const urlMatches = text.match(urlRegexp);
+		if (urlMatches && urlMatches.length) {
+			for (let url of urlMatches) {
+				if (url.length > reservedChars)
+					textLength -= url.length - reservedChars - 1;
+			}
+		}
+		return textLength;
+	}
+
 	// Function to split long text into separate toots
-	async function splitIntoToots(newPost, postText, textarea) {
+	async function splitIntoToots(
+		newPost,
+		postText,
+		textarea,
+		quoteUrl,
+		quote,
+		quoteUrls,
+		reason
+	) {
 		if (isSplitting) {
 			return;
 		}
@@ -3442,14 +3393,58 @@ document.addEventListener('DOMContentLoaded', async function () {
 			let chunk1 = chunks[i];
 			let chunk2 = chunks[i + 1] || '';
 			let chunk = chunk1 + chunk2;
-			if (textarea.value.length + chunk.trim().length <= maxChars) {
+			const textLength = adjustCount(textarea.value + chunk.trim());
+			if (textLength < maxChars) {
 				textarea.value += chunk;
 			} else {
 				remainingChunks = chunks.slice(i);
 				break;
 			}
 		}
-		updateCharCount(newPost, textarea.value, textarea);
+		updateCharCount(
+			newPost,
+			textarea.value,
+			textarea,
+			quoteUrl,
+			quote,
+			quoteUrls,
+			'aftersplit'
+		);
+
+		if (
+			!quoteUrl &&
+			!quote &&
+			(!mediaFiles[`mediaFiles${i}`] ||
+				!mediaFiles[`mediaFiles${i}`].length) &&
+			!polls[`polls${i}`]
+		) {
+			const urlRegexp = /https?:\/\/[^\s]+/g;
+			const urlMatches = textarea.value.match(urlRegexp);
+			if (urlMatches && urlMatches.length > 0) {
+				for (let thisUrl of urlMatches) {
+					if (!thisUrl.includes('@')) {
+						continue;
+					}
+					if (
+						thisUrl.includes('@') &&
+						(!quoteUrls || !quoteUrls.has(thisUrl))
+					) {
+						let ok = await processQuotedToot(
+							thisUrl,
+							i,
+							newPost,
+							quoteUrl,
+							quote,
+							quoteUrls,
+							reason
+						);
+						if (ok) {
+							break;
+						}
+					}
+				}
+			}
+		}
 		textarea.focus();
 		let flowText = '';
 		if (remainingChunks && remainingChunks.length > 0) {
@@ -3462,13 +3457,19 @@ document.addEventListener('DOMContentLoaded', async function () {
 				currentPost = addPostBtn.closest('.post-item');
 			}
 			if (flowText) {
-				createNewPost(flowText.trim()).then((newPost) => {
-					splitIntoToots(
-						newPost,
-						flowText.trim(),
-						newPost.querySelector('.post-text')
-					);
-				});
+				createNewPost(flowText.trim(), null, 'overflow').then(
+					async (newPost) => {
+						await updateCharCount(
+							newPost,
+							flowText.trim(),
+							newPost.querySelector('.post-text'),
+							quoteUrl,
+							quote,
+							quoteUrls,
+							`overflow`
+						);
+					}
+				);
 			}
 		} else {
 			let postCounters = postItems.map(function (p) {
@@ -3481,6 +3482,174 @@ document.addEventListener('DOMContentLoaded', async function () {
 			textarea.focus();
 		}
 		isSplitting = false;
+	}
+
+	async function processQuotedToot(
+		thisUrl,
+		id,
+		newPost,
+		quoteUrl,
+		quote,
+		quoteUrls,
+		reason
+	) {
+		const quotePreview = newPost.querySelector('.quote-preview');
+		quotePreview.style.backgroundColor = 'rgba(0, 0, 0, 0.05)';
+		quotePreview.style.height = '200px';
+		quotePreview.style.display = 'flex';
+		const quoteSpinner = quotePreview.querySelector('.quote-spinner');
+		quoteSpinner.style.display = 'flex';
+		let quotedStatus = await getQuoteStatus(thisUrl);
+		quotedStatus ? (quote = true) : (quote = false);
+		if (quotedStatus) {
+			quote = true;
+			quoteUrl = thisUrl;
+			quoteUrls.add(quoteUrl);
+			let quotedStatusApproval = quotedStatus.quote_approval.current_user;
+			if (quotedStatusApproval === 'automatic') {
+				quotedStatusApproval = quotedStatus.quote_approval.automatic[0];
+			}
+			if (
+				quotedStatusApproval === 'denied' ||
+				quotedStatusApproval === 'manual' ||
+				quotedStatusApproval === 'unknown'
+			) {
+				quote = false;
+				quoteSpinner.style.display = 'none';
+				quotePreview.style.backgroundColor = 'transparent';
+				quotePreview.style.height = 'auto';
+				quotePreview.style.display = 'none';
+				return;
+			} else if (quotedStatusApproval === 'followers') {
+				try {
+					let res = await fetch(
+						`https://${instance}/api/v1/accounts/relationships?id[]=${quotedStatus.account.id}`,
+						{
+							headers: {
+								Authorization: `Bearer ${token}`,
+							},
+						}
+					);
+					if (res.ok) {
+						let data = await res.json();
+						if (!data[0].following) {
+							quote = false;
+							quoteSpinner.style.display = 'none';
+							quotePreview.style.backgroundColor = 'transparent';
+							quotePreview.style.height = 'auto';
+							quotePreview.style.display = 'none';
+							return;
+						}
+					}
+				} catch (error) {
+					console.error('Error checking followers: ', error);
+					quote = false;
+					return;
+				}
+			}
+			const quotedStatusId = quotedStatus.id;
+			quotedStatuses[`quotedStatuses${id}`] = quotedStatusId;
+			const addImg = newPost.querySelector('.add-img');
+			const addGif = newPost.querySelector('.add-gif');
+			const addPoll = newPost.querySelector('.add-poll');
+			addImg.disabled = true;
+			addGif.disabled = true;
+			addPoll.disabled = true;
+			const quotePostPreview = quotePreview.querySelector(
+				'.quote-post-preview'
+			);
+			const quotePostAvatar =
+				quotePreview.querySelector('.quote-post-avatar');
+			const quotePostDisplayName = quotePreview.querySelector(
+				'.quote-post-display-name'
+			);
+			const quotePostTime =
+				quotePreview.querySelector('.quote-post-time');
+			const quotePostText =
+				quotePreview.querySelector('.quote-post-text');
+			const quotePostMedia =
+				quotePreview.querySelector('.quote-post-media');
+			const avatar = document.createElement('img');
+			avatar.src = quotedStatus.account.avatar;
+			avatar.alt = quotedStatus.account.display_name;
+			quotePostAvatar.innerHTML = '';
+			quotePostAvatar.appendChild(avatar);
+			const name = document.createElement('span');
+			name.textContent = quotedStatus.account.display_name;
+			quotePostDisplayName.innerHTML = '';
+			quotePostDisplayName.appendChild(name);
+			const time = document.createElement('time');
+			time.textContent = new Date(
+				quotedStatus.created_at
+			).toLocaleString();
+			quotePostTime.innerHTML = '';
+			quotePostTime.appendChild(time);
+			const quoteText = quotedStatus.content;
+			quotePostText.innerHTML = quoteText;
+			const media = quotedStatus.media_attachments;
+			quotePostMedia.innerHTML = '';
+			for (let m of media) {
+				const img = document.createElement('img');
+				img.src = m.preview_url;
+				img.alt = m.description ? m.description : '';
+				quotePostMedia.appendChild(img);
+			}
+			quoteSpinner.style.display = 'none';
+			quotePreview.style.backgroundColor = 'transparent';
+			quotePreview.style.height = 'auto';
+			quotePostPreview.style.display = 'flex';
+			const quoteCloseBtn = quotePreview.querySelector(
+				'.quote-preview-close'
+			);
+			quoteCloseBtn.onclick = () => {
+				quotePreview.style.display = 'none';
+				quotePostPreview.style.display = 'none';
+				quote = false;
+				delete quotedStatuses[`quotedStatuses${id}`];
+				addImg.disabled = false;
+				addGif.disabled = false;
+				addPoll.disabled = false;
+			};
+			const data = {
+				quoteUrl: quoteUrl,
+				quote: quote,
+				quoteUrls: quoteUrls,
+			};
+			return data;
+		} else {
+			quote = false;
+			quoteSpinner.style.display = 'none';
+			quotePreview.style.backgroundColor = 'transparent';
+			quotePreview.style.height = 'auto';
+			quotePreview.style.display = 'none';
+			return false;
+		}
+	}
+
+	async function getQuoteStatus(url) {
+		let searchUrl = `https://${instance}/api/v2/search?q=${encodeURIComponent(
+			url
+		)}&type=statuses&resolve=true&limit=2`;
+		try {
+			let res = await fetch(searchUrl, {
+				headers: { Authorization: `Bearer ${token}` },
+			});
+			if (!res.ok) {
+				return null;
+			}
+			let data = await res.json();
+			if (data.statuses && data.statuses.length > 0) {
+				let status = data.statuses[0];
+				if (status) {
+					return status;
+				}
+			} else {
+				return null;
+			}
+		} catch (error) {
+			console.error('Error fetching quote status: ', error);
+			return null;
+		}
 	}
 
 	// Functions to react to change in number of posts
