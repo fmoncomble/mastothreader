@@ -437,47 +437,6 @@
 						</div>
 					</div>
 				</div>
-				<div class="count">
-					<div class="char-count"></div>
-				</div>
-				<div class="dropzone">
-					<input
-						type="file"
-						id="img-upload"
-						name="img-upload"
-						class="img-upload"
-						multiple
-						accept="image/*, audio/*, video/*" />
-					<div class="img-preview">
-						<dialog class="alt-dialog">
-							<div class="img-thumbnail"></div>
-							<div class="alt-div">
-								<textarea
-									class="alt-text"
-									placeholder="Ajoutez une description à votre média"
-									placeholder-lang="alt-text-placeholder"></textarea>
-								<div class="alt-footer">
-									<div class="alt-counter">0/1500</div>
-									<div class="alt-btn-div">
-										<button
-											class="alt-cancel-btn"
-											data-lang="alt-cancel-btn">
-											Annuler
-										</button>
-										<button
-											class="alt-save-btn"
-											data-lang="alt-save-btn">
-											Valider
-										</button>
-									</div>
-								</div>
-							</div>
-						</dialog>
-					</div>
-					<div class="count">
-						<div class="img-count"></div>
-					</div>
-				</div>
 				<div class="poll-container">
 					<div class="poll-options-div">
 						<div class="poll-option">
@@ -553,17 +512,59 @@
 					<button class="emoji-btn">
 						<i class="fa-regular fa-face-laugh"></i>
 					</button>
+					<div class="count">
+						<div class="char-count"></div>
+					</div>
+					<div class="toot-btns">
+						<button class="delete-post-btn" style="display: none">
+							<i
+								class="fa-solid fa-trash-can"
+								style="color: #ffffff"></i>
+						</button>
+						<button class="add-post-btn">
+							<i
+								class="fa-solid fa-plus"
+								style="color: #ffffff"></i>
+						</button>
+					</div>
 				</div>
-				<div class="toot-btns">
-					<button class="add-post-btn" data-lang="add-post-btn">
-						Ajouter un pouet
-					</button>
-					<button
-						class="delete-post-btn"
-						data-lang="delete-post-btn"
-						style="display: none">
-						Supprimer le pouet
-					</button>
+				<div class="dropzone">
+					<input
+						type="file"
+						id="img-upload"
+						name="img-upload"
+						class="img-upload"
+						multiple
+						accept="image/*, audio/*, video/*" />
+					<div class="img-preview">
+						<dialog class="alt-dialog">
+							<div class="img-thumbnail"></div>
+							<div class="alt-div">
+								<textarea
+									class="alt-text"
+									placeholder="Ajoutez une description à votre média"
+									placeholder-lang="alt-text-placeholder"></textarea>
+								<div class="alt-footer">
+									<div class="alt-counter">0/1500</div>
+									<div class="alt-btn-div">
+										<button
+											class="alt-cancel-btn"
+											data-lang="alt-cancel-btn">
+											Annuler
+										</button>
+										<button
+											class="alt-save-btn"
+											data-lang="alt-save-btn">
+											Valider
+										</button>
+									</div>
+								</div>
+							</div>
+						</dialog>
+					</div>
+					<div class="count">
+						<div class="img-count"></div>
+					</div>
 				</div>
 			</div>
 		</div>

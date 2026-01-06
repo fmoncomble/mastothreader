@@ -2030,7 +2030,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 		for (let p of postItems) {
 			const deletePostBtn = p.querySelector('.delete-post-btn');
 			if (postItems.length > 1) {
-				deletePostBtn.style.display = 'inline-block';
+				deletePostBtn.style.display = 'flex';
 			}
 		}
 
@@ -2104,6 +2104,12 @@ document.addEventListener('DOMContentLoaded', async function () {
 			updateCharCount(newPost, textarea.value, textarea);
 		}
 
+		let activeElement = document.activeElement;
+		for (let input of newPost.querySelectorAll('input, textarea')) {
+			input.onfocus = () => {
+				activeElement = input;
+			};
+		}
 		const emojiBtn = newPost.querySelector('.emoji-btn');
 		emojiBtn.addEventListener('click', async () => {
 			const customCategories = customEmoji.map((c) => c.id);
@@ -2124,12 +2130,12 @@ document.addEventListener('DOMContentLoaded', async function () {
 				categories: categories,
 				onEmojiSelect: function (emoji) {
 					let e = emoji.native ? emoji.native : emoji.shortcodes;
-					let curPos = textarea.selectionStart;
-					let text = textarea.value;
-					textarea.value =
+					let curPos = activeElement.selectionStart;
+					let text = activeElement.value;
+					activeElement.value =
 						text.slice(0, curPos) + e + text.slice(curPos);
-					textarea.focus();
-					updateCharCount(newPost, textarea.value, textarea);
+					activeElement.dispatchEvent(new Event('input'));
+					activeElement.focus();
 					picker.remove();
 				},
 				onClickOutside: function (e) {
@@ -3273,6 +3279,9 @@ document.addEventListener('DOMContentLoaded', async function () {
 					pollAnswer.style.display = 'flex';
 				}
 				const answerInput = pollAnswer.querySelector('.poll-text');
+				answerInput.onfocus = () => {
+					activeElement = answerInput;
+				};
 				if (i === 1) {
 					answerInput.focus();
 				}
@@ -3296,7 +3305,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 						if (nextAnswer && i + 1 <= maxOptions) {
 							const nextInput =
 								nextAnswer.querySelector('.poll-text');
-							if (nextInput.value.length === 0) {
+							if (i > 1 && nextInput.value.length === 0) {
 								nextAnswer.style.display = 'none';
 								nextInput.value = null;
 							}

@@ -308,18 +308,20 @@ div.header-1 {
 .add-gif,
 .add-poll,
 .emoji-btn,
-.poll-duration-select {
+.poll-duration-select,
+.add-post-btn,
+.delete-post-btn {
 	height: 30px;
 	width: auto;
 	color: light-dark(#563acc, #8886ff);
-	display: inline-flex;
 	margin-top: 10px;
 	margin-left: 0px;
-	float: right;
 	border: solid 1px light-dark(#563acc, #8886ff);
 	border-radius: 4px;
 	background-color: light-dark(#f9f9fb, #292938);
-	display: inline;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .poll-duration-select {
@@ -333,11 +335,6 @@ div.header-1 {
 .lang-select {
 	max-width: 200px;
 	text-overflow: ellipsis;
-}
-
-.viz-select,
-.cw-btn {
-	width: 30px;
 }
 
 .cw-btn:hover,
@@ -354,7 +351,7 @@ select:hover,
 .addons-btn-div {
 	display: flex;
 	flex-direction: row;
-	justify-content: flex-end;
+	justify-content: flex-start;
 	align-items: center;
 	width: 500px;
 	gap: 10px;
@@ -526,12 +523,15 @@ div#dl-msg {
 
 .add-post-btn,
 .delete-post-btn {
-	margin-bottom: 20px;
+	background-color: light-dark(#563acc, #6364ff);
+	border-color: light-dark(#563acc, #6364ff);
+	margin: auto 0;
 }
 
 .delete-post-btn,
 .alt-cancel-btn {
-	background-color: red;
+	background-color: #cc0000;
+	border-color: #cc0000;
 }
 
 .delete-post-btn:hover,
@@ -681,7 +681,6 @@ button:disabled i {
 }
 
 .img-preview {
-	/* display: flex; */
 	flex-wrap: wrap;
 	align-content: center;
 }
@@ -708,7 +707,6 @@ button:disabled i {
 	flex-direction: row;
 	justify-content: flex-end;
 	color: light-dark(gray, #9c9cc9);
-	margin-top: 10px;
 	width: 500px;
 }
 
@@ -869,9 +867,10 @@ button:disabled i {
 
 button#post-thread-btn {
 	margin: auto;
-	width: 200px;
+	width: 550px;
 	height: 50px;
 	font-size: large;
+	font-weight: bold;
 }
 
 div.btn-div {
@@ -880,6 +879,7 @@ div.btn-div {
 	justify-content: center;
 	flex-direction: column;
 	margin-bottom: 1rem;
+	width: 100%;
 }
 
 .spinner {
@@ -1292,6 +1292,10 @@ div.header-2 {
 
 div.toot-btns {
 	display: flex;
+	justify-content: flex-end;
+	width: 500px;
+	margin: 10px auto;
+	gap: 1rem;
 }
 
 .gif-dialog {
@@ -1376,6 +1380,10 @@ input#gif-search {
 		margin: 5px auto;
 	}
 
+	#logged-in-as {
+		padding: 0.3rem 0;
+	}
+
 	input {
 		height: 1.5rem;
 		width: 80%;
@@ -1388,7 +1396,7 @@ input#gif-search {
 	}
 
 	button {
-		height: 2.5rem;
+		height: auto;
 		padding: 0.5rem;
 		margin: 1rem;
 		font-size: 100%;
@@ -1396,24 +1404,36 @@ input#gif-search {
 
 	select,
 	select.import,
+	.lang-select,
+	.poll-duration-select {
+		height: 2rem;
+		padding: 0 0.5rem;
+		margin: 0.5rem 0 0.5rem 0;
+		font-size: 100%;
+		display: flex;
+		align-items: center;
+		text-overflow: ellipsis;
+		width: 100%;
+		max-width: none;
+	}
+
 	.viz-select,
 	.quote-select,
-	.lang-select,
 	.cw-btn,
 	.add-img,
 	.add-gif,
 	.add-poll,
 	.emoji-btn,
-	.poll-duration-select {
-		height: 2.5rem;
+	.add-post-btn,
+	.delete-post-btn {
+		height: 2rem;
+		width: 2rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 		padding: 0.5rem;
 		margin: 0.5rem 0 0.5rem 0;
 		font-size: 100%;
-	}
-
-	.viz-select,
-	.cw-btn {
-		width: 3rem;
 	}
 
 	.viz-item,
@@ -1462,6 +1482,7 @@ input#gif-search {
 	div.header-2 {
 		width: 100%;
 		justify-content: space-between;
+		gap: 0.5rem;
 	}
 
 	.textarea,
@@ -1574,7 +1595,7 @@ input#gif-search {
 		width: auto;
 	}
 
-	.add-gif span {
+	.add-gif {
 		font-size: small;
 	}
 
@@ -1616,5 +1637,25 @@ input#gif-search {
 
 	.alt-dialog {
 		width: 100%;
+	}
+
+	button#post-thread-btn {
+		width: 95%;
+		height: auto;
+	}
+
+	div.toot-btns {
+		justify-content: flex-end;
+		gap: 0.5rem;
+		width: 100%;
+	}
+
+	div.toot-btns button {
+		margin: 0;
+	}
+
+	input,
+	textarea {
+		font-size: 100%;
 	}
 }
