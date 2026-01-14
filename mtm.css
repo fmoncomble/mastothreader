@@ -1336,6 +1336,22 @@ input#gif-search {
 	margin-left: 1rem;
 }
 
+#powered-by {
+	width: 100%;
+	display: flex;
+	justify-content: end;
+	margin-top: 0.2rem;
+}
+
+#powered-by svg {
+	height: 1rem;
+	width: auto;
+}
+
+#powered-by svg path {
+	fill: light-dark(#4a4a4a, #f9f9fb);
+}
+
 @media screen and (max-width: 600px) {
 	body {
 		width: auto;
