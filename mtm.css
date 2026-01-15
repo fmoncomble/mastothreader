@@ -615,29 +615,22 @@ div#dl-msg {
 	width: 100%;
 }
 
-#gif-search-div {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	padding: 3%;
-}
-
 .gif-preview {
-	width: 30%;
+	width: calc(97% / 3);
 	aspect-ratio: 1/1;
 	object-fit: cover;
-	margin: 2px;
 	cursor: pointer;
 	border-radius: 4px;
 }
 
 #gif-results {
-	width: 40vw;
+	width: 100%;
 	display: flex;
 	flex-wrap: wrap;
 	justify-content: center;
 	overflow-y: scroll;
 	max-height: 50vh;
+	gap: 1.5%;
 }
 
 div.gif-placeholder {
@@ -1191,6 +1184,7 @@ dialog {
 	border: none;
 	border-radius: 5px;
 	box-shadow: 0 0 5px gray;
+	max-width: 50%;
 }
 
 dialog:focus-visible,
@@ -1291,14 +1285,15 @@ div.toot-btns {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
+	width: 100%;
 }
 
 #gif-search-div {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	padding: 3%;
-	width: 94%;
+	margin: 3% 0;
+	width: 100%;
 }
 
 #gif-search-input-div {
@@ -1340,7 +1335,8 @@ input#gif-search {
 	width: 100%;
 	display: flex;
 	justify-content: end;
-	margin-top: 0.2rem;
+	align-items: start;
+	margin: 0.5rem 0;
 }
 
 #powered-by svg {
@@ -1348,8 +1344,21 @@ input#gif-search {
 	width: auto;
 }
 
-#powered-by svg path {
-	fill: light-dark(#4a4a4a, #f9f9fb);
+#powered-by span {
+	color: gray;
+	font-size: x-small;
+	font-family: 'Nexa-Bold';
+	padding-top: 0.2rem;
+}
+
+#powered-by svg path.giphy-logo-text {
+	fill: light-dark(#000, #fff);
+}
+
+div.gif-cancel-div {
+	display: flex;
+	width: 100%;
+	justify-content: end;
 }
 
 @media screen and (max-width: 600px) {
@@ -1522,7 +1531,7 @@ input#gif-search {
 	}
 
 	#gif-dialog {
-		width: 100%;
+		max-width: 100%;
 	}
 
 	.gif-dialog {
@@ -1531,13 +1540,13 @@ input#gif-search {
 		align-items: center;
 	}
 
-	#gif-search-div {
+	/* #gif-search-div {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
 		padding: 3%;
 		width: 98%;
-	}
+	} */
 
 	#gif-search-input-div {
 		display: flex;
@@ -1559,23 +1568,23 @@ input#gif-search {
 		width: 100%;
 	}
 
-	.gif-preview {
+	/* .gif-preview {
 		width: 32%;
 		aspect-ratio: 1/1;
 		object-fit: cover;
 		margin: 0.5%;
 		cursor: pointer;
 		border-radius: 4px;
-	}
+	} */
 
-	#gif-results {
+	/* #gif-results {
 		width: auto;
 		display: flex;
 		flex-wrap: wrap;
 		justify-content: center;
 		overflow-y: scroll;
 		max-height: 50vh;
-	}
+	} */
 
 	div.gif-cancel {
 		display: flex;

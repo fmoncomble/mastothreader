@@ -84,7 +84,7 @@
 	"creating-toot": "Creating toot",
 	"thread-ready": "The thread is ready, remember to review it before posting!",
 	"gif-search-btn": "Search",
-	"gif-input-placeholder": "Search Tenor",
+	"gif-input-placeholder": "Search Giphy",
 	"no-result": "No result",
 	"gif-error": "Error loading GIFs",
 	"media-alert": "You have reached the maximum number of images.",
@@ -120,5 +120,6 @@
 	"poll-1day": "1 day",
 	"poll-3day": "3 days",
 	"poll-7day": "7 days",
-	"poll-option-alert": "Please provide at least two options for the poll."
+	"poll-option-alert": "Please provide at least two options for the poll.",
+	"powered-by": "POWERED BY"
 }

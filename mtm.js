@@ -2786,9 +2786,9 @@ document.addEventListener('DOMContentLoaded', async function () {
 						gifPreview = document.createElement('img');
 					}
 					gifPreview.classList.add('gif-preview');
-					gifPreview.src = r.media_formats.tinygif.url;
-					gifPreview.alt = r.content_description;
-					gifPreview.setAttribute('ref', r.media_formats.gif.url);
+					gifPreview.src = r.images.fixed_height_small.url;
+					gifPreview.alt = r.alt_text || r.title;
+					gifPreview.setAttribute('ref', r.images.original.url);
 					gifResults.appendChild(gifPreview);
 				}
 				gifPreviews = Array.from(
@@ -2835,9 +2835,11 @@ document.addEventListener('DOMContentLoaded', async function () {
 					let res = await fetch(gifUrl);
 					if (res.ok) {
 						let data = await res.json();
-						if (data.results && data.results.length > 0) {
-							createGifPreviews(data.results, fresh);
-							return data.next;
+						if (data.data && data.data.length > 0) {
+							createGifPreviews(data.data, fresh);
+							return (
+								data.pagination.count + data.pagination.offset
+							);
 						} else {
 							window.alert(locData['no-result']);
 							return pos;

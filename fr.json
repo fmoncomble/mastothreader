@@ -84,7 +84,7 @@
 	"creating-toot": "Création du pouet",
 	"thread-ready": "Le fil est prêt, pensez à le relire avant de publier !",
 	"gif-search-btn": "Rechercher",
-	"gif-input-placeholder": "Rechercher sur Tenor",
+	"gif-input-placeholder": "Rechercher sur Giphy",
 	"no-result": "Aucun résultat.",
 	"gif-error": "Impossible de charger les GIFs.",
 	"media-alert": "Le nombre maximum d'images est atteint.",
@@ -120,5 +120,6 @@
 	"poll-1day": "1 jour",
 	"poll-3day": "3 jours",
 	"poll-7day": "7 jours",
-	"poll-option-alert": "Un sondage doit comporter au moins deux options."
+	"poll-option-alert": "Un sondage doit comporter au moins deux options.",
+	"powered-by": "PROPULSÉ PAR"
 }
