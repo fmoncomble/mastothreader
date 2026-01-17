@@ -2,14 +2,20 @@
 	color-scheme: light dark;
 }
 
+html {
+	display: flex;
+	justify-content: center;
+}
+
 body {
 	position: relative;
 	display: flex;
 	flex-direction: column;
 	font-family: Arial, Helvetica, sans-serif;
-	width: 99%;
+	width: 100%;
 	padding-bottom: 30px;
 	background-color: light-dark(#e3e6e8, #181821);
+	max-width: 550px;
 }
 
 .waiting_dialog {
@@ -93,6 +99,20 @@ img#icon {
 	margin: 0 5px;
 }
 
+div#btn-container {
+	display: flex;
+	flex-direction: row;
+	gap: 0.5rem;
+	align-items: center;
+	justify-content: flex-end;
+	width: 100%;
+	margin: 10px 0;
+}
+
+div#btn-container i {
+	text-align: center;
+}
+
 div#instructions {
 	display: flex;
 	flex-direction: column;
@@ -102,7 +122,7 @@ div#instructions {
 	background-color: light-dark(white, black);
 	color: light-dark(black, #ddd9e8);
 	border-radius: 10px;
-	width: 550px;
+	max-width: 550px;
 	padding: 10px;
 	margin: 10px 0;
 }
@@ -115,6 +135,7 @@ div#instructions-btn {
 }
 
 #instance-div {
+	width: 100%;
 	display: flex;
 	flex-direction: column;
 	text-align: center;
@@ -177,11 +198,6 @@ input.schedule-input {
 }
 
 .open-options {
-	font-weight: bold;
-	text-decoration: underline;
-	cursor: pointer;
-	color: light-dark(#563acc, #8886ff);
-	margin: 10px 0;
 	display: none;
 }
 
@@ -409,6 +425,11 @@ select:hover,
 
 i {
 	color: light-dark(#563acc, #8886ff);
+	cursor: pointer;
+}
+
+#btn-container i:hover {
+	color: light-dark(#6364ff, #dadade);
 }
 
 .cw-div {
@@ -505,6 +526,7 @@ div#dl-msg {
 
 #content-container {
 	flex-direction: column;
+	margin: 0 auto 20px auto;
 }
 
 .post-item {
@@ -630,7 +652,7 @@ div#dl-msg {
 	justify-content: center;
 	overflow-y: scroll;
 	max-height: 50vh;
-	gap: 1.5%;
+	gap: 0.5rem 1.5%;
 }
 
 div.gif-placeholder {
@@ -1394,6 +1416,12 @@ div.gif-cancel-div {
 		margin: 5px auto;
 	}
 
+	#btn-container {
+		padding: 0 1rem;
+		box-sizing: border-box;
+		font-size: large;
+	}
+
 	#logged-in-as {
 		padding: 0.3rem 0;
 	}
@@ -1540,14 +1568,6 @@ div.gif-cancel-div {
 		align-items: center;
 	}
 
-	/* #gif-search-div {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		padding: 3%;
-		width: 98%;
-	} */
-
 	#gif-search-input-div {
 		display: flex;
 		flex-direction: row;
@@ -1567,24 +1587,6 @@ div.gif-cancel-div {
 	input#gif-search {
 		width: 100%;
 	}
-
-	/* .gif-preview {
-		width: 32%;
-		aspect-ratio: 1/1;
-		object-fit: cover;
-		margin: 0.5%;
-		cursor: pointer;
-		border-radius: 4px;
-	} */
-
-	/* #gif-results {
-		width: auto;
-		display: flex;
-		flex-wrap: wrap;
-		justify-content: center;
-		overflow-y: scroll;
-		max-height: 50vh;
-	} */
 
 	div.gif-cancel {
 		display: flex;

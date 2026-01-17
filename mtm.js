@@ -13,13 +13,15 @@ document.addEventListener('DOMContentLoaded', async function () {
 	// Declare page elements
 	const instructionsBtn = document.getElementById('instructions-btn');
 	const instructionsDiv = document.getElementById('instructions');
+	const logOutBtn = document.getElementById('logout-btn');
+	const instanceInputDiv = document.getElementById('instance-input-div');
 	const instanceInput = document.getElementById('instance-input');
 	const instanceBtn = document.getElementById('instance-btn');
 	const clearStorage = document.getElementById('clear-storage');
 	const openOptionsBtn = document.getElementById('open-options');
 	const optionsDiv = document.getElementById('options-container');
 	const scheduleCheckbox = document.getElementById(
-		'schedule-thread-checkbox'
+		'schedule-thread-checkbox',
 	);
 	scheduleCheckbox.checked = false;
 	const scheduleInput = document.getElementById('schedule-input');
@@ -181,7 +183,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 					headers: {
 						Authorization: `Bearer ${token}`,
 					},
-				}
+				},
 			);
 			if (res.ok) {
 				const data = await res.json();
@@ -352,10 +354,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 	instructionsBtn.addEventListener('click', () => {
 		if (instructionsDiv.style.display === 'none') {
 			instructionsDiv.style.display = 'flex';
-			instructionsBtn.textContent = locData['instructions-hide'];
 		} else {
 			instructionsDiv.style.display = 'none';
-			instructionsBtn.textContent = locData['instructions-btn'];
 		}
 	});
 
@@ -557,7 +557,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 			`https://${instance}/api/v1/apps/verify_credentials`,
 			{
 				headers: { Authorization: `Bearer ${token}` },
-			}
+			},
 		);
 		if (!res.ok) {
 			const error = await res.json();
@@ -588,7 +588,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 			userName = data.preferred_username;
 			userAvatarSrc = data.picture;
 			let idRes = await fetch(
-				`https://${instance}/api/v1/accounts/lookup?acct=${data.preferred_username}`
+				`https://${instance}/api/v1/accounts/lookup?acct=${data.preferred_username}`,
 			);
 			if (!idRes.ok) {
 				console.error('Error fetching user ID');
@@ -618,9 +618,9 @@ document.addEventListener('DOMContentLoaded', async function () {
 		if (token) {
 			instanceInput.value = instance + ' ✅';
 			instanceInput.disabled = true;
-			instanceBtn.textContent = locData['instance-reset'];
 			instructionsDiv.style.display = 'none';
-			instructionsBtn.textContent = locData['instructions-btn'];
+			instanceInputDiv.style.display = 'none';
+			logOutBtn.style.display = 'flex';
 			openOptionsBtn.style.display = 'flex';
 			clearStorage.style.display = 'none';
 			const ok = await checkApp();
@@ -637,14 +637,15 @@ document.addEventListener('DOMContentLoaded', async function () {
 				await getMax();
 				await buildLangList();
 				mastoText = new URLSearchParams(window.location.search).get(
-					'text'
+					'text',
 				);
 				createNewPost(mastoText ? mastoText : null, null, 'initial');
 				postThreadBtn.style.display = 'flex';
 			}
 		} else if (!token) {
 			instructionsDiv.style.display = 'flex';
-			instructionsBtn.textContent = locData['instructions-hide'];
+			instanceInputDiv.style.display = 'flex';
+			logOutBtn.style.display = 'none';
 			instanceBtn.textContent = locData['instance-btn'];
 			clearStorage.style.display = 'block';
 			openOptionsBtn.style.display = 'none';
@@ -667,7 +668,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 			const error = await response.json();
 			console.error('Token could not be revoked: ', error);
 			window.alert(
-				locData['reset-warning'] + `\n` + error.error_description
+				locData['reset-warning'] + `\n` + error.error_description,
 			);
 		}
 	}
@@ -689,31 +690,31 @@ document.addEventListener('DOMContentLoaded', async function () {
 	});
 
 	instanceBtn.addEventListener('click', async () => {
-		if (instanceInput.disabled) {
-			instanceInput.value = null;
-			instanceInput.disabled = false;
-			instanceBtn.textContent = locData['instance-btn'];
-			localStorage.removeItem('mastothreadinstance');
-			instanceInput.value = null;
-			counter.style.display = 'none';
-			await removeToken();
-			window.location.href = window.location.href.split('?')[0];
-		} else {
-			instance = instanceInput.value;
-			if (!instance) {
-				window.alert(locData['instance-empty']);
-				return;
-			}
-			if (instance.includes('@')) {
-				instance = instance.split('@')[1];
-			}
-			localStorage.setItem('mastothreadinstance', instance);
-			checkCredentials();
-			if (!clientId && !clientSecret) {
-				await createMastoApp();
-			}
-			redirectToAuthServer();
+		instance = instanceInput.value;
+		if (!instance) {
+			window.alert(locData['instance-empty']);
+			return;
 		}
+		if (instance.includes('@')) {
+			instance = instance.split('@')[1];
+		}
+		localStorage.setItem('mastothreadinstance', instance);
+		checkCredentials();
+		if (!clientId && !clientSecret) {
+			await createMastoApp();
+		}
+		redirectToAuthServer();
+	});
+
+	logOutBtn.addEventListener('click', async () => {
+		instanceInput.value = null;
+		instanceInput.disabled = false;
+		instanceBtn.textContent = locData['instance-btn'];
+		localStorage.removeItem('mastothreadinstance');
+		instanceInput.value = null;
+		counter.style.display = 'none';
+		await removeToken();
+		window.location.href = window.location.href.split('?')[0];
 	});
 
 	async function createMastoApp() {
@@ -752,7 +753,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 	function redirectToAuthServer() {
 		const scope = 'profile read write';
 		const authUrl = `https://${instance}/oauth/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(
-			redirectUri
+			redirectUri,
 		)}&scope=${encodeURIComponent(scope)}`;
 		window.location.href = authUrl;
 	}
@@ -788,7 +789,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 		maxChars = Number(data.configuration.statuses.max_characters);
 		maxMedia = Number(data.configuration.statuses.max_media_attachments);
 		reservedChars = Number(
-			data.configuration.statuses.characters_reserved_per_url
+			data.configuration.statuses.characters_reserved_per_url,
 		);
 		pollOptions = data.configuration.polls;
 		lang = data.languages[0];
@@ -796,7 +797,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 	}
 	async function getCustomEmoji(instance) {
 		const response = await fetch(
-			`https://${instance}/api/v1/custom_emojis`
+			`https://${instance}/api/v1/custom_emojis`,
 		);
 		if (!response.ok) {
 			console.error('Could not fetch custom emojis');
@@ -836,10 +837,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 	openOptionsBtn.addEventListener('click', () => {
 		if (optionsDiv.style.display !== 'flex') {
 			optionsDiv.style.display = 'flex';
-			openOptionsBtn.textContent = locData['close-options'];
 		} else {
 			optionsDiv.style.display = 'none';
-			openOptionsBtn.textContent = locData['open-options'];
 		}
 	});
 
@@ -849,11 +848,11 @@ document.addEventListener('DOMContentLoaded', async function () {
 			const now = new Date();
 			const offset = now.getTimezoneOffset();
 			const minDate = new Date(
-				now.setMinutes(now.getMinutes() - offset + 5)
+				now.setMinutes(now.getMinutes() - offset + 5),
 			);
 			scheduleInput.setAttribute(
 				'min',
-				minDate.toISOString().slice(0, 16)
+				minDate.toISOString().slice(0, 16),
 			);
 			scheduleInput.value = minDate.toISOString().slice(0, 16);
 			scheduleInput.style.display = 'flex';
@@ -866,7 +865,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 		if (scheduleInput.value) {
 			console.log(
 				'Schedule date: ',
-				new Date(scheduleInput.value).toISOString()
+				new Date(scheduleInput.value).toISOString(),
 			);
 		} else {
 			console.log('No schedule date selected');
@@ -882,7 +881,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 					headers: {
 						Authorization: `Bearer ${token}`,
 					},
-				}
+				},
 			);
 			if (!res.ok) {
 				console.error('Error fetching scheduled posts: ', res.status);
@@ -899,7 +898,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 					scheduledList.appendChild(option);
 				}
 				const cancelScheduleBtn = document.getElementById(
-					'cancel-schedule-btn'
+					'cancel-schedule-btn',
 				);
 				cancelScheduleBtn.addEventListener('click', async () => {
 					const selectedOption =
@@ -909,7 +908,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 						await cancelScheduledPost(
 							statusId,
 							selectedOption,
-							cancelScheduleBtn
+							cancelScheduleBtn,
 						);
 					}
 				});
@@ -931,7 +930,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 					headers: {
 						Authorization: `Bearer ${token}`,
 					},
-				}
+				},
 			);
 			if (!res.ok) {
 				console.error('Error cancelling scheduled post: ', res.status);
@@ -965,7 +964,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 		const previewAvatar = document.getElementById('replied-post-avatar');
 		previewAvatar.innerHTML = null;
 		const previewName = document.getElementById(
-			'replied-post-display-name'
+			'replied-post-display-name',
 		);
 		previewName.innerHTML = null;
 		const previewTime = document.getElementById('replied-post-time');
@@ -1027,7 +1026,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 		quoteUrl,
 		quote,
 		quoteUrls,
-		reason
+		reason,
 	) {
 		const postId = post.id.split('-')[1];
 		const charCount = post.querySelector('.char-count');
@@ -1048,7 +1047,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 					quoteUrl,
 					quote,
 					quoteUrls,
-					'update'
+					'update',
 				);
 			}
 		} else {
@@ -1084,7 +1083,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 					'Content-Type': 'application/json',
 				},
 				body: JSON.stringify(form),
-			}
+			},
 		);
 		if (res.ok) {
 			const data = await res.json();
@@ -1198,7 +1197,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 				return apiLink;
 			} else {
 				const searchTerm = encodeURIComponent(
-					slug.replaceAll('-', ' ')
+					slug.replaceAll('-', ' '),
 				);
 				const searchUrl = `https://${domain}/wp-json/wp/v2/search?search=${searchTerm}&type=post`;
 				const res = await fetch(searchUrl);
@@ -1300,7 +1299,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 			if (rkey) {
 				let uri = `at://${bskyDid}/app.bsky.feed.post/${rkey}`;
 				let res = await fetch(
-					`https://public.api.bsky.app/xrpc/app.bsky.feed.getPostThread?uri=${uri}&depth=1000`
+					`https://public.api.bsky.app/xrpc/app.bsky.feed.getPostThread?uri=${uri}&depth=1000`,
 				);
 				if (res.ok) {
 					bskyThreadInput.value = null;
@@ -1322,7 +1321,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 						if (post.replies) {
 							let selfReply = post.replies.find(
 								(r) =>
-									r.post.author.did === post.post.author.did
+									r.post.author.did === post.post.author.did,
 							);
 							if (selfReply) {
 								bskyPosts.push(selfReply.post);
@@ -1366,7 +1365,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 												let acct = account.acct;
 												text = text.replaceAll(
 													m,
-													`@${acct} `
+													`@${acct} `,
 												);
 											} else {
 												continue;
@@ -1382,7 +1381,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 								const links = facets.filter(
 									(f) =>
 										f.features[0].$type ===
-										'app.bsky.richtext.facet#link'
+										'app.bsky.richtext.facet#link',
 								);
 								for (let l of links) {
 									const uri = l.features[0].uri;
@@ -1392,24 +1391,24 @@ document.addEventListener('DOMContentLoaded', async function () {
 									const textBytes = encoder.encode(text);
 									const link = textBytes.slice(
 										startIndex,
-										endIndex
+										endIndex,
 									);
 									const uriBytes = encoder.encode(uri);
 									const newTextBytes = new Uint8Array(
 										textBytes.length -
 											link.length +
-											uriBytes.length
+											uriBytes.length,
 									);
 									newTextBytes.set(
-										textBytes.slice(0, startIndex)
+										textBytes.slice(0, startIndex),
 									);
 									newTextBytes.set(uriBytes, startIndex);
 									newTextBytes.set(
 										textBytes.slice(endIndex),
-										startIndex + uriBytes.length
+										startIndex + uriBytes.length,
 									);
 									const newText = new TextDecoder().decode(
-										newTextBytes
+										newTextBytes,
 									);
 									text = newText;
 								}
@@ -1488,7 +1487,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 								`Error creating post ${
 									bskyPosts.indexOf(p) + 1
 								}: `,
-								error
+								error,
 							);
 						}
 					}
@@ -1542,8 +1541,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 		const body = doc.body;
 		const elements = Array.from(
 			body.querySelectorAll(
-				'h1, h2, h3, h4, h5, h6, p, li, img, video, iframe'
-			)
+				'h1, h2, h3, h4, h5, h6, p, li, img, video, iframe',
+			),
 		);
 
 		let index = 0;
@@ -1615,7 +1614,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 				if (embed) {
 					const ytID =
 						ytEmbedElts[ytEmbedElts.indexOf(embed) + 1].split(
-							'?'
+							'?',
 						)[0];
 					const ytLink = `https://www.youtube.com/watch?v=${ytID}`;
 					chunk.text += `\n\n${ytLink}`;
@@ -1663,7 +1662,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 							wpChunks.splice(
 								wpChunks.indexOf(chunk) + 1,
 								0,
-								newChunk
+								newChunk,
 							);
 							break;
 						}
@@ -1694,7 +1693,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 					`'Processing chunk #${
 						wpChunks.indexOf(p) + 1
 					} with length '`,
-					newChunkLength
+					newChunkLength,
 				);
 			}
 			try {
@@ -1710,13 +1709,13 @@ document.addEventListener('DOMContentLoaded', async function () {
 				await createNewPost(
 					p.text,
 					p.media,
-					`wp-import-chunk-${wpChunks.indexOf(p)}`
+					`wp-import-chunk-${wpChunks.indexOf(p)}`,
 				);
 				currentPost = postItems[wpChunks.indexOf(p)];
 			} catch (error) {
 				console.error(
 					`Error creating post ${wpChunks.indexOf(p) + 1}: `,
-					error
+					error,
 				);
 			}
 		}
@@ -1934,10 +1933,10 @@ document.addEventListener('DOMContentLoaded', async function () {
 						quoteList.style.display = 'none';
 						document.removeEventListener(
 							'click',
-							outsideQuoteClick
+							outsideQuoteClick,
 						);
 					}
-				}
+				},
 			);
 		});
 		quoteSelect.addEventListener('keydown', (e) => {
@@ -2077,7 +2076,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 							quoteUrl,
 							quote,
 							quoteUrls,
-							`newpost`
+							`newpost`,
 						);
 						quoteUrl = data.quoteUrl;
 						quote = data.quote;
@@ -2093,7 +2092,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 					quoteUrl,
 					quote,
 					quoteUrls,
-					'newpost'
+					'newpost',
 				);
 				textarea.focus();
 			}
@@ -2229,7 +2228,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 				i = 0;
 				let AtMention = textarea.value.slice(
 					start,
-					textarea.selectionStart
+					textarea.selectionStart,
 				);
 				if (e.data !== null) {
 					mention += e.data;
@@ -2270,7 +2269,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 					fetching = true;
 					let res = await fetch(
 						`https://${instance}/api/v1/accounts/search?q=${mention}&type=accounts&limit=4`,
-						{ headers: { Authorization: `Bearer ${token}` } }
+						{ headers: { Authorization: `Bearer ${token}` } },
 					);
 					if (res.ok) {
 						let accounts = await res.json();
@@ -2309,46 +2308,46 @@ document.addEventListener('DOMContentLoaded', async function () {
 							followingList.style.display = 'block';
 							textarea.after(followingList);
 							let listDivs = Array.from(
-								followingList.querySelectorAll('div')
+								followingList.querySelectorAll('div'),
 							);
 							for (let d of listDivs) {
 								d.onclick = () => {
 									let acct =
 										d.querySelector(
-											'span.acct'
+											'span.acct',
 										).textContent;
 									textarea.value =
 										textarea.value.slice(0, start) +
 										acct +
 										textarea.value.slice(
-											textarea.selectionEnd
+											textarea.selectionEnd,
 										) +
 										' ';
 									followingList.remove();
 									mention = '';
 									textarea.removeEventListener(
 										'input',
-										buildMention
+										buildMention,
 									);
 									textarea.removeEventListener(
 										'keydown',
-										keyDown
+										keyDown,
 									);
 									textarea.addEventListener(
 										'input',
-										getInput
+										getInput,
 									);
 									updateCharCount(
 										newPost,
 										textarea.value,
-										textarea
+										textarea,
 									);
 									textarea.focus();
 								};
 							}
 							choices =
 								followingList.querySelectorAll(
-									'div.following-item'
+									'div.following-item',
 								);
 							if (choices.length > 0) {
 								choices.forEach((c) => {
@@ -2389,7 +2388,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 				quoteUrl,
 				quote,
 				quoteUrls,
-				'input'
+				'input',
 			);
 			textarea.addEventListener('paste', getPaste);
 		}
@@ -2402,6 +2401,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 				cwDiv.style.display = 'inline-flex';
 				cwBtn.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="color: #ffffff;"></i>`;
 				cwBtn.style.backgroundColor = '#563acc';
+				cwBtn.style.borderColor = '#563acc';
 				cwBtn.title = "Supprimer l'avertissement";
 				cwText.focus();
 			} else {
@@ -2451,7 +2451,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 								}
 							}
 							return lines.find((l) =>
-								l.startsWith(maxRes.toString())
+								l.startsWith(maxRes.toString()),
 							);
 						}
 						const playlistUrl = baseUrl + getMaxRes();
@@ -2479,12 +2479,12 @@ document.addEventListener('DOMContentLoaded', async function () {
 								transmuxer.on('data', function (segment) {
 									let data = new Uint8Array(
 										segment.initSegment.byteLength +
-											segment.data.byteLength
+											segment.data.byteLength,
 									);
 									data.set(segment.initSegment, 0);
 									data.set(
 										segment.data,
-										segment.initSegment.byteLength
+										segment.initSegment.byteLength,
 									);
 									segments.push(data);
 								});
@@ -2607,7 +2607,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 						let parsedUrl = new URL(img.url);
 						form.append(
 							'url',
-							`https://i${z}.wp.com/${parsedUrl.hostname}${parsedUrl.pathname}`
+							`https://i${z}.wp.com/${parsedUrl.hostname}${parsedUrl.pathname}`,
 						);
 					}
 					try {
@@ -2675,21 +2675,21 @@ document.addEventListener('DOMContentLoaded', async function () {
 										const file = new File(
 											[blob],
 											'image.jpg',
-											{ type: blob.type }
+											{ type: blob.type },
 										);
 										mediaFile.file = file;
 										files.push(mediaFile);
 										displayThumbnail(
 											mediaFile,
 											imgPreview,
-											imgCount
+											imgCount,
 										);
 									})
 									.catch((error) =>
 										console.error(
 											'Error fetching image:',
-											error
-										)
+											error,
+										),
 									);
 							});
 						}
@@ -2771,7 +2771,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 			}
 			function createGifPreviews(results) {
 				let gifPreviews = Array.from(
-					gifResults.querySelectorAll('.gif-preview')
+					gifResults.querySelectorAll('.gif-preview'),
 				);
 				if (fresh) {
 					let removed = gifPreviews.splice(results.length);
@@ -2792,7 +2792,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 					gifResults.appendChild(gifPreview);
 				}
 				gifPreviews = Array.from(
-					gifResults.querySelectorAll('.gif-preview')
+					gifResults.querySelectorAll('.gif-preview'),
 				);
 				if (gifPreviews && gifPreviews.length > 0) {
 					for (let g of gifPreviews) {
@@ -2810,7 +2810,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 								displayThumbnail(
 									mediaFile,
 									imgPreview,
-									imgCount
+									imgCount,
 								);
 								gifDialog.close();
 							} else {
@@ -2908,7 +2908,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 									quoteUrl,
 									quote,
 									quoteUrls,
-									'paste'
+									'paste',
 								);
 							}
 						}
@@ -2920,7 +2920,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 						quoteUrl,
 						quote,
 						quoteUrls,
-						'paste'
+						'paste',
 					);
 				}
 			}
@@ -2933,7 +2933,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 					language = lang;
 				} else {
 					let guess = iso6393.find(
-						(l) => l.iso6393 === language
+						(l) => l.iso6393 === language,
 					).iso6391;
 					if (guess) {
 						lang = guess;
@@ -2972,7 +2972,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 			if (fileType.includes('video')) {
 				if (mediaFile.file.size > vidSizeLimit) {
 					window.alert(
-						`${locData['over-limit']} ${vidSizeLimit / 1000000} MB.`
+						`${locData['over-limit']} ${vidSizeLimit / 1000000} MB.`,
 					);
 					const index = files.indexOf(mediaFile);
 					if (index > -1) {
@@ -3006,7 +3006,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 			} else if (fileType.includes('image') || fileType.includes('img')) {
 				if (mediaFile.file.size > imgSizeLimit) {
 					window.alert(
-						`${locData['over-limit']} ${imgSizeLimit / 1000000} MB.`
+						`${locData['over-limit']} ${imgSizeLimit / 1000000} MB.`,
 					);
 					const index = files.indexOf(mediaFile);
 					if (index > -1) {
@@ -3219,6 +3219,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 				handlePollOptions(true);
 			} else {
 				addPoll.style.backgroundColor = '#563acc';
+				addPoll.style.borderColor = '#563acc';
 				addPoll.innerHTML = `<i class="fa-solid fa-square-poll-vertical" style="color: #ffffff;"></i>`;
 				addImg.disabled = true;
 				addGif.disabled = true;
@@ -3233,7 +3234,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 			if (clear) {
 				delete polls[`polls${id}`];
 				const pollAnswers = Array.from(
-					pollContainer.querySelectorAll('.poll-option')
+					pollContainer.querySelectorAll('.poll-option'),
 				);
 				pollAnswers.forEach((answer) => {
 					const index = pollAnswers.indexOf(answer);
@@ -3249,7 +3250,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 			const maxExp = pollOptions.max_expiration || 2629746;
 			polls[`polls${id}`] = poll;
 			const expSelect = pollContainer.querySelector(
-				'.poll-duration-select'
+				'.poll-duration-select',
 			);
 			const expOptions = expSelect.querySelectorAll('option');
 			expOptions.forEach((option) => {
@@ -3263,7 +3264,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 				poll.expires_in = e.target.value;
 			});
 			const multipleChoiceCheckbox = pollContainer.querySelector(
-				'.poll-multiple-input'
+				'.poll-multiple-input',
 			);
 			multipleChoiceCheckbox.checked = poll.multiple || false;
 			poll.multiple = multipleChoiceCheckbox.checked;
@@ -3291,7 +3292,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 				answerInput.maxLength = maxOptionChars;
 				answerInput.setAttribute(
 					'placeholder',
-					`${locData['poll-option-placeholder']} ${i}`
+					`${locData['poll-option-placeholder']} ${i}`,
 				);
 				answerInput.addEventListener('input', (e) => {
 					const optionText = e.target.value.trim();
@@ -3389,7 +3390,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 		quoteUrl,
 		quote,
 		quoteUrls,
-		reason
+		reason,
 	) {
 		if (isSplitting) {
 			return;
@@ -3420,7 +3421,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 			quoteUrl,
 			quote,
 			quoteUrls,
-			'aftersplit'
+			'aftersplit',
 		);
 
 		if (
@@ -3448,7 +3449,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 							quoteUrl,
 							quote,
 							quoteUrls,
-							reason
+							reason,
 						);
 						if (ok) {
 							break;
@@ -3478,9 +3479,9 @@ document.addEventListener('DOMContentLoaded', async function () {
 							quoteUrl,
 							quote,
 							quoteUrls,
-							`overflow`
+							`overflow`,
 						);
-					}
+					},
 				);
 			}
 		} else {
@@ -3489,7 +3490,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 			});
 			updatePostList(
 				'Updating list of posts after splitting',
-				postCounters
+				postCounters,
 			);
 			textarea.focus();
 		}
@@ -3503,7 +3504,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 		quoteUrl,
 		quote,
 		quoteUrls,
-		reason
+		reason,
 	) {
 		const quotePreview = newPost.querySelector('.quote-preview');
 		quotePreview.style.backgroundColor = 'rgba(0, 0, 0, 0.05)';
@@ -3540,7 +3541,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 							headers: {
 								Authorization: `Bearer ${token}`,
 							},
-						}
+						},
 					);
 					if (res.ok) {
 						let data = await res.json();
@@ -3568,12 +3569,12 @@ document.addEventListener('DOMContentLoaded', async function () {
 			addGif.disabled = true;
 			addPoll.disabled = true;
 			const quotePostPreview = quotePreview.querySelector(
-				'.quote-post-preview'
+				'.quote-post-preview',
 			);
 			const quotePostAvatar =
 				quotePreview.querySelector('.quote-post-avatar');
 			const quotePostDisplayName = quotePreview.querySelector(
-				'.quote-post-display-name'
+				'.quote-post-display-name',
 			);
 			const quotePostTime =
 				quotePreview.querySelector('.quote-post-time');
@@ -3592,7 +3593,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 			quotePostDisplayName.appendChild(name);
 			const time = document.createElement('time');
 			time.textContent = new Date(
-				quotedStatus.created_at
+				quotedStatus.created_at,
 			).toLocaleString();
 			quotePostTime.innerHTML = '';
 			quotePostTime.appendChild(time);
@@ -3611,7 +3612,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 			quotePreview.style.height = 'auto';
 			quotePostPreview.style.display = 'flex';
 			const quoteCloseBtn = quotePreview.querySelector(
-				'.quote-preview-close'
+				'.quote-preview-close',
 			);
 			quoteCloseBtn.onclick = () => {
 				quotePreview.style.display = 'none';
@@ -3640,7 +3641,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 	async function getQuoteStatus(url) {
 		let searchUrl = `https://${instance}/api/v2/search?q=${encodeURIComponent(
-			url
+			url,
 		)}&type=statuses&resolve=true&limit=2`;
 		try {
 			let res = await fetch(searchUrl, {
@@ -3689,7 +3690,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 		let numberPosts = numberPostsCheckbox.checked;
 		optionsDiv.style.marginBottom = '10px';
 		let threadLinks = Array.from(
-			document.querySelectorAll('.thread-link')
+			document.querySelectorAll('.thread-link'),
 		).filter((t) => t.style.display === 'block');
 		threadLinks.forEach((t) => t.remove());
 		let times = 1;
@@ -3757,7 +3758,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 		if (NbOfMediaFiles > 30) {
 			if (
 				window.confirm(
-					`${locData['stagger-upload-confirm-1']}${NbOfMediaFiles}${locData['stagger-upload-confirm-2']}`
+					`${locData['stagger-upload-confirm-1']}${NbOfMediaFiles}${locData['stagger-upload-confirm-2']}`,
 				)
 			) {
 				window.alert(locData['stagger-upload-alert']);
@@ -3773,7 +3774,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 						if (!window.confirm(locData['media-error-confirm'])) {
 							const number = key.split('mediaFiles')[1];
 							const post = document.getElementById(
-								`post-${number}`
+								`post-${number}`,
 							);
 							post.scrollIntoView();
 							return;
@@ -3834,7 +3835,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 				const errorData = await response.json();
 				console.error('Error uploading media: ', errorData);
 				window.alert(
-					`${locData['media-error-alert']} : ${errorData.error}`
+					`${locData['media-error-alert']} : ${errorData.error}`,
 				);
 				return;
 			} else if (response.status === 202) {
@@ -3849,7 +3850,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 								Authorization: `Bearer ${token}`,
 								scope: 'write',
 							},
-						}
+						},
 					);
 					if (res.status === 401) {
 						const errorData = await res.json();
@@ -3925,7 +3926,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 					}/${postMedia.length}...)`;
 					let mediaId = await uploadMedia(
 						media.file,
-						media.description
+						media.description,
 					);
 					if (!mediaId) {
 						window.alert(locData['media-error-alert']);
@@ -3934,7 +3935,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 					postMediaIds.push(mediaId);
 					if (staggerMediaUploads) {
 						await new Promise((resolve) =>
-							setTimeout(resolve, 60000)
+							setTimeout(resolve, 60000),
 						);
 					}
 				}
@@ -3954,7 +3955,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 			const postPoll = polls[`polls${id}`];
 			if (postPoll) {
 				postPoll.options = postPoll.options.filter(
-					(option) => option && option.length > 0
+					(option) => option && option.length > 0,
 				);
 				if (postPoll.options.length < 2) {
 					window.alert(locData['poll-option-alert']);
@@ -3994,7 +3995,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 							scope: 'write',
 						},
 						body: JSON.stringify(body),
-					}
+					},
 				);
 
 				if (!response.ok) {
@@ -4005,7 +4006,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 					const errorData = await response.json();
 					console.error('Error posting status: ', errorData);
 					window.alert(
-						`${locData['posting-error-1']}${id} ${locData['posting-error-2']}\n${errorData.error}`
+						`${locData['posting-error-1']}${id} ${locData['posting-error-2']}\n${errorData.error}`,
 					);
 					return;
 				}
@@ -4014,7 +4015,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 				if (scheduledAt) {
 					const seconds = scheduledAt.getUTCSeconds();
 					scheduledAt = new Date(
-						scheduledAt.setUTCSeconds(seconds + 1)
+						scheduledAt.setUTCSeconds(seconds + 1),
 					);
 				}
 				if (i === 0) {

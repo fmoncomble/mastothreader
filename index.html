@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 	<head>
 		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
@@ -179,8 +179,15 @@
 			</div>
 		</div>
 		<div id="instance-div">
-			<div id="instructions-btn" data-lang="instructions-btn">
-				Afficher les instructions
+			<div id="btn-container">
+				<i id="open-options" class="fa-solid fa-gear open-options"></i>
+				<i
+					id="instructions-btn"
+					class="fa-regular fa-circle-question"></i>
+				<i
+					id="logout-btn"
+					class="fa-solid fa-right-from-bracket"
+					style="display: none"></i>
 			</div>
 			<div id="instructions">
 				<p data-lang="instructions-p1">
@@ -245,12 +252,6 @@
 			</div>
 		</div>
 		<div id="content-container">
-			<div
-				id="open-options"
-				class="open-options"
-				data-lang="open-options">
-				Afficher les options
-			</div>
 			<div id="options-container" class="options-container">
 				<div id="schedule-thread" class="options-div">
 					<label for="schedule-thread-input" class="schedule-label">
