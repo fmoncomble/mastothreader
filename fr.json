@@ -121,5 +121,20 @@
 	"poll-3day": "3 jours",
 	"poll-7day": "7 jours",
 	"poll-option-alert": "Un sondage doit comporter au moins deux options.",
-	"powered-by": "PROPULSÉ PAR"
+	"powered-by": "PROPULSÉ PAR",
+	"logout-confirm": "Êtes-vous sûr·e de vouloir vous déconnecter ?",
+	"open-settings": "Ouvrir les paramètres",
+	"show-help": "Afficher l'aide",
+	"hide-help": "Masquer l'aide",
+	"log-out": "Se déconnecter",
+	"set-visibility": "Définir la visibilité",
+	"set-quote-permission": "Définir l'autorisation de citation",
+	"add-content-warning": "Ajouter un avertissement de contenu",
+	"create-poll": "Créer un sondage",
+	"add-media": "Ajouter des médias",
+	"add-gif": "Ajouter un GIF",
+	"insert-emoji": "Insérer un emoji",
+	"bluesky-log-out": "Se déconnecter de Bluesky",
+	"delete-post": "Supprimer le pouet",
+	"add-post": "Ajouter un pouet"
 }

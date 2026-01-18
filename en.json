@@ -121,5 +121,20 @@
 	"poll-3day": "3 days",
 	"poll-7day": "7 days",
 	"poll-option-alert": "Please provide at least two options for the poll.",
-	"powered-by": "POWERED BY"
+	"powered-by": "POWERED BY",
+	"logout-confirm": "Are you sure you want to log out?",
+	"open-settings": "Open settings",
+	"show-help": "Show help",
+	"hide-help": "Hide help",
+	"log-out": "Log out",
+	"set-visibility": "Set visibility",
+	"set-quote-permission": "Set quote permission",
+	"add-content-warning": "Add content warning",
+	"create-poll": "Create poll",
+	"add-media": "Add media",
+	"add-gif": "Add GIF",
+	"insert-emoji": "Insert emoji",
+	"bluesky-log-out": "Log out of Bluesky",
+	"delete-post": "Delete toot",
+	"add-post": "Add toot"
 }

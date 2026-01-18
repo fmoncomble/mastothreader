@@ -260,11 +260,15 @@ button:hover {
 .post-item {
 	width: 550px;
 	border: solid 1px light-dark(#d9d9e8, #313144);
+	background-color: light-dark(white, #181821);
 	border-radius: 4px;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
+	justify-content: center;
 	position: relative;
+	margin-bottom: 20px;
+	padding: 0.5rem 0;
 }
 
 .overlay {
@@ -529,11 +533,6 @@ div#dl-msg {
 	margin: 0 auto 20px auto;
 }
 
-.post-item {
-	margin-bottom: 20px;
-	background-color: light-dark(white, #181821);
-}
-
 .add-post-btn,
 .delete-post-btn {
 	background-color: light-dark(#563acc, #6364ff);
@@ -722,15 +721,14 @@ button:disabled i {
 
 .remove-btn {
 	position: absolute;
-	top: 2px;
-	right: 2px;
-	background: rgba(255, 255, 255, 0.8);
-	color: red;
+	top: 0.2rem;
+	right: 0.2rem;
+	width: auto;
+	height: auto;
+	background: white;
 	border: none;
 	border-radius: 50%;
 	cursor: pointer;
-	width: 20px;
-	height: 20px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -740,7 +738,16 @@ button:disabled i {
 
 .remove-btn:hover {
 	background: white;
+}
+
+.remove-btn i {
+	width: 100%;
 	color: #cc0000;
+	font-size: large;
+}
+
+.remove-btn i:hover {
+	color: #b30000;
 }
 
 .alt-btn {
@@ -761,17 +768,28 @@ button:disabled i {
 	margin: 0;
 }
 
-.alt-btn:hover {
-	background-color: rgb(255, 102, 0);
+.alt-btn:focus-visible {
+	outline: none;
+}
+
+.alt-btn i {
 	color: white;
 }
 
-.alt-btn.alt-set {
+.alt-btn:hover,
+.alt-btn:hover i {
+	color: rgb(255, 102, 0);
 	background-color: white;
-	color: #009900;
 }
 
-.alt-btn.alt-set:hover {
+.alt-btn.alt-set,
+.alt-btn.alt-set i {
+	color: white;
+	background-color: #009900;
+}
+
+.alt-btn.alt-set:hover,
+.alt-btn.alt-set:hover i {
 	background-color: white;
 	color: #009900;
 }
@@ -782,9 +800,12 @@ button:disabled i {
 }
 
 .img-thumbnail,
-.img-thumbnail img {
+.img-thumbnail img,
+.img-thumbnail video {
 	cursor: auto !important;
 	width: auto !important;
+	height: auto;
+	max-height: 30vh;
 }
 
 .alt-div {
@@ -805,7 +826,7 @@ button:disabled i {
 	flex-direction: row;
 	align-items: center;
 	justify-content: space-between;
-	width: 98%;
+	width: 100%;
 	margin: 0;
 	cursor: auto !important;
 }
@@ -825,7 +846,7 @@ button:disabled i {
 .alt-text {
 	margin: 0 !important;
 	box-sizing: border-box;
-	width: 98%;
+	width: 100%;
 	height: 150px;
 	border: solid 1px light-dark(#d9d9e8, #313144);
 	background-color: light-dark(#f9f9fb, #292938);
@@ -1179,19 +1200,25 @@ dialog.zoomed {
 	border: none;
 	border-radius: 5px;
 	box-shadow: 0 0 5px gray;
-	cursor: zoom-out;
+}
+
+.zoomed-btn-div {
+	display: flex;
+	width: 100%;
+	justify-content: flex-end;
+	color: #cc0000;
+	position: relative;
+	height: 28px;
+	margin-bottom: 16px;
 }
 
 img.zoomed,
 video.zoomed,
 audio.zoomed {
-	max-width: 20vw;
-	cursor: zoom-out;
+	max-width: 100%;
 }
 
-div.zoomed-close {
-	font-weight: bold;
-	font-size: x-large;
+i.zoomed-close {
 	position: absolute;
 	right: 0px;
 	top: 0px;
@@ -1199,7 +1226,14 @@ div.zoomed-close {
 	width: 28px;
 	height: 28px;
 	color: #cc0000;
-	text-shadow: 0 0 5px white;
+	font-size: x-large;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.zoomed-close:hover {
+	color: #b30000;
 }
 
 dialog {
@@ -1293,6 +1327,11 @@ div.header-2 {
 	display: flex;
 	position: relative;
 	gap: 10px;
+	margin: 0.5rem 0;
+}
+
+div.header-2 * {
+	margin: 0;
 }
 
 div.toot-btns {
@@ -1351,6 +1390,10 @@ input#gif-search {
 	border-radius: 4px;
 	cursor: pointer;
 	margin-left: 1rem;
+}
+
+#gif-cancel-btn:hover {
+	color: #b30000;
 }
 
 #powered-by {
@@ -1420,6 +1463,10 @@ div.gif-cancel-div {
 		padding: 0 1rem;
 		box-sizing: border-box;
 		font-size: large;
+	}
+
+	#btn-container i:hover {
+		color: light-dark(#563acc, #8886ff);
 	}
 
 	#logged-in-as {
@@ -1558,6 +1605,10 @@ div.gif-cancel-div {
 		display: none;
 	}
 
+	dialog {
+		max-width: 90%;
+	}
+
 	#gif-dialog {
 		max-width: 100%;
 	}
@@ -1615,13 +1666,13 @@ div.gif-cancel-div {
 		font-size: small;
 	}
 
-	img.zoomed {
-		width: 95%;
-		max-width: none;
-	}
-
 	.zoomed {
 		text-align: center;
+	}
+
+	dialog.zoomed {
+		width: auto;
+		max-width: 90%;
 	}
 
 	.count {
@@ -1658,12 +1709,21 @@ div.gif-cancel-div {
 		justify-content: center;
 	}
 
-	.alt-div {
-		height: 220px;
+	.alt-dialog {
+		width: auto;
+		padding: 0.5rem;
+		max-width: 90%;
 	}
 
-	.alt-dialog {
-		width: 100%;
+	img.zoomed,
+	video.zoomed,
+	audio.zoomed,
+	.img-thumbnail img,
+	.img-thumbnail video {
+		width: auto;
+		height: auto;
+		max-height: 30vh;
+		max-width: 100%;
 	}
 
 	button#post-thread-btn {

@@ -348,14 +348,20 @@ document.addEventListener('DOMContentLoaded', async function () {
 			const key = element.getAttribute('placeholder-lang');
 			element.placeholder = locData[key];
 		});
+		document.querySelectorAll('[aria-label]').forEach((element) => {
+			const key = element.getAttribute('aria-label');
+			element.setAttribute('aria-label', locData[key]);
+		});
 	}
 
 	// Handle instructions display
 	instructionsBtn.addEventListener('click', () => {
 		if (instructionsDiv.style.display === 'none') {
 			instructionsDiv.style.display = 'flex';
+			instructionsBtn.setAttribute('aria-label', locData['hide-help']);
 		} else {
 			instructionsDiv.style.display = 'none';
+			instructionsBtn.setAttribute('aria-label', locData['show-help']);
 		}
 	});
 
@@ -707,14 +713,16 @@ document.addEventListener('DOMContentLoaded', async function () {
 	});
 
 	logOutBtn.addEventListener('click', async () => {
-		instanceInput.value = null;
-		instanceInput.disabled = false;
-		instanceBtn.textContent = locData['instance-btn'];
-		localStorage.removeItem('mastothreadinstance');
-		instanceInput.value = null;
-		counter.style.display = 'none';
-		await removeToken();
-		window.location.href = window.location.href.split('?')[0];
+		if (window.confirm(locData['logout-confirm'])) {
+			instanceInput.value = null;
+			instanceInput.disabled = false;
+			instanceBtn.textContent = locData['instance-btn'];
+			localStorage.removeItem('mastothreadinstance');
+			instanceInput.value = null;
+			counter.style.display = 'none';
+			await removeToken();
+			window.location.href = window.location.href.split('?')[0];
+		}
 	});
 
 	async function createMastoApp() {
@@ -2399,7 +2407,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 		cwBtn.addEventListener('click', () => {
 			if (cwDiv.style.display === 'none') {
 				cwDiv.style.display = 'inline-flex';
-				cwBtn.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="color: #ffffff;"></i>`;
+				cwBtn.querySelector('i').style.color = '#ffffff';
 				cwBtn.style.backgroundColor = '#563acc';
 				cwBtn.style.borderColor = '#563acc';
 				cwBtn.title = "Supprimer l'avertissement";
@@ -2409,7 +2417,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 				cwDiv.style.display = 'none';
 				cwBtn.removeAttribute('style');
 				cwBtn.title = 'Ajouter un avertissement';
-				cwBtn.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i>`;
+				cwBtn.querySelector('i').removeAttribute('style');
 			}
 		});
 
@@ -3052,7 +3060,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 				div.appendChild(audioImg);
 			}
 
-			removeBtn.textContent = '✖';
+			removeBtn.innerHTML = '<i class="fa-solid fa-circle-xmark"></i>';
 			removeBtn.classList.add('remove-btn');
 
 			removeBtn.addEventListener('click', async (e) => {
@@ -3073,8 +3081,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 			div.addEventListener('click', (e) => {
 				e.preventDefault();
-				const zoomed = document.createElement('dialog');
-				zoomed.classList.add('zoomed');
+				const zoomed = document.getElementById('zoomed-dialog');
 				const zoomedElt = previewElt.cloneNode(true);
 				zoomedElt.classList.add('zoomed');
 				if (
@@ -3083,21 +3090,20 @@ document.addEventListener('DOMContentLoaded', async function () {
 				) {
 					zoomedElt.controls = true;
 				}
-				zoomed.addEventListener('click', (e) => {
-					e.preventDefault();
-					zoomed.remove();
-				});
+				zoomed.querySelector('.zoomed-close').onclick = () => {
+					zoomedElt.remove();
+					zoomed.close();
+				};
 				zoomed.addEventListener('keydown', (e) => {
-					e.preventDefault();
 					if (e.key === 'Escape') {
-						zoomed.remove();
+						zoomedElt.remove();
+						zoomed.close();
 					}
 				});
 				zoomedElt.addEventListener('play', () => {
 					zoomed.focus();
 				});
 				zoomed.appendChild(zoomedElt);
-				document.body.appendChild(zoomed);
 				zoomed.showModal();
 			});
 
@@ -3105,7 +3111,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 			imgPreview.appendChild(div);
 
 			const altBtn = document.createElement('button');
-			altBtn.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="color: #ffffff;"></i><span>&nbsp;ALT</span>`;
+			altBtn.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i><span>&nbsp;ALT</span>`;
 			altBtn.classList.add('alt-btn');
 			const altDialog = imgPreview.querySelector('.alt-dialog');
 			const newAltDialog = altDialog.cloneNode(true);
@@ -3154,7 +3160,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 			function setAltBtn() {
 				altBtn.classList.add('alt-set');
-				altBtn.innerHTML = `<i class="fa-solid fa-check" style="color: #009900;"></i><span>&nbsp;ALT</span>`;
+				altBtn.innerHTML = `<i class="fa-solid fa-check"></i><span>&nbsp;ALT</span>`;
 			}
 
 			function unsetAltBtn() {
@@ -3212,7 +3218,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 		addPoll.addEventListener('click', () => {
 			if (pollContainer.style.display === 'flex') {
 				addPoll.removeAttribute('style');
-				addPoll.innerHTML = `<i class="fa-solid fa-square-poll-vertical"></i>`;
+				addPoll.querySelector('i').removeAttribute('style');
 				addImg.disabled = false;
 				addGif.disabled = false;
 				pollContainer.style.display = 'none';
@@ -3220,7 +3226,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 			} else {
 				addPoll.style.backgroundColor = '#563acc';
 				addPoll.style.borderColor = '#563acc';
-				addPoll.innerHTML = `<i class="fa-solid fa-square-poll-vertical" style="color: #ffffff;"></i>`;
+				addPoll.querySelector('i').style.color = '#ffffff';
 				addImg.disabled = true;
 				addGif.disabled = true;
 				pollContainer.style.display = 'flex';

@@ -180,12 +180,17 @@
 		</div>
 		<div id="instance-div">
 			<div id="btn-container">
-				<i id="open-options" class="fa-solid fa-gear open-options"></i>
+				<i
+					id="open-options"
+					aria-label="open-settings"
+					class="fa-solid fa-gear open-options"></i>
 				<i
 					id="instructions-btn"
+					aria-label="show-help"
 					class="fa-regular fa-circle-question"></i>
 				<i
 					id="logout-btn"
+					aria-label="log-out"
 					class="fa-solid fa-right-from-bracket"
 					style="display: none"></i>
 			</div>
@@ -308,6 +313,7 @@
 					</select>
 					<button
 						id="bsky-reset"
+						aria-label="bluesky-log-out"
 						class="bsky-reset cancel"
 						style="display: none">
 						<i
@@ -355,6 +361,7 @@
 						<button
 							class="viz-select"
 							title="Régler la visibilité"
+							aria-label="set-visibility"
 							data-value="public">
 							<i class="fa-solid fa-earth-europe"></i>
 						</button>
@@ -384,6 +391,7 @@
 						<button
 							class="quote-select"
 							title="Qui peut citer ?"
+							aria-label="set-quote-permission"
 							data-value="public">
 							<i class="fa-solid fa-quote-left"></i>
 						</button>
@@ -412,7 +420,10 @@
 								>
 							</div>
 						</div>
-						<button class="cw-btn" title="Ajouter un avertissement">
+						<button
+							class="cw-btn"
+							title="Ajouter un avertissement"
+							aria-label="add-content-warning">
 							<i class="fa-solid fa-triangle-exclamation"></i>
 						</button>
 						<select
@@ -513,25 +524,32 @@
 				</div>
 				<div class="addons-btn-div">
 					<button class="add-poll">
-						<i class="fa-solid fa-square-poll-vertical"></i>
+						<i
+							class="fa-solid fa-chart-column"
+							aria-label="create-poll"></i>
 					</button>
 					<button class="add-img">
-						<i class="fa-regular fa-images"></i>
+						<i
+							class="fa-regular fa-images"
+							aria-label="add-media"></i>
 					</button>
-					<button class="add-gif">GIF</button>
-					<button class="emoji-btn">
+					<button class="add-gif" aria-label="add-gif">GIF</button>
+					<button class="emoji-btn" aria-label="add-emoji">
 						<i class="fa-regular fa-face-laugh"></i>
 					</button>
 					<div class="count">
 						<div class="char-count"></div>
 					</div>
 					<div class="toot-btns">
-						<button class="delete-post-btn" style="display: none">
+						<button
+							class="delete-post-btn"
+							aria-label="delete-post"
+							style="display: none">
 							<i
 								class="fa-solid fa-trash-can"
 								style="color: #ffffff"></i>
 						</button>
-						<button class="add-post-btn">
+						<button class="add-post-btn" aria-label="add-post">
 							<i
 								class="fa-solid fa-plus"
 								style="color: #ffffff"></i>
@@ -706,7 +724,7 @@
 		<dialog id="gif-dialog">
 			<div class="gif-dialog">
 				<div class="gif-cancel-div">
-					<div id="gif-cancel-btn" class="cancel">✕</div>
+					<i id="gif-cancel-btn" class="fa-solid fa-circle-xmark"></i>
 				</div>
 				<div id="gif-search-div">
 					<input
@@ -749,6 +767,11 @@
 					id="gif-spinner"
 					class="spinner"
 					style="display: none"></div>
+			</div>
+		</dialog>
+		<dialog id="zoomed-dialog">
+			<div class="zoomed-btn-div">
+				<i class="zoomed-close fa-solid fa-circle-xmark"></i>
 			</div>
 		</dialog>
 		<div id="app" style="display: none"></div>
