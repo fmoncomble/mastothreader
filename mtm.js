@@ -1021,7 +1021,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 		};
 
 		optionsDiv.style.display = 'flex';
-		openOptionsBtn.textContent = locData['close-options'];
 		previewDiv.style.display = 'flex';
 		let message = 'Updating post list after setting in-reply-to';
 		updatePostList(message);
