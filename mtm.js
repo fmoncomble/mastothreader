@@ -622,6 +622,11 @@ document.addEventListener('DOMContentLoaded', async function () {
 	async function checkToken() {
 		token = localStorage.getItem('mastothreadtoken-v2');
 		if (token) {
+			// Warn before closing window
+			window.addEventListener('beforeunload', warnClose);
+			function warnClose(e) {
+				e.preventDefault();
+			}
 			instanceInput.value = instance + ' ✅';
 			instanceInput.disabled = true;
 			instructionsDiv.style.display = 'none';
@@ -2793,7 +2798,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 						gifPreview = document.createElement('img');
 					}
 					gifPreview.classList.add('gif-preview');
-					gifPreview.src = r.images.fixed_height_small.url;
+					gifPreview.src = r.images.fixed_height.url;
 					gifPreview.alt = r.alt_text || r.title;
 					gifPreview.setAttribute('ref', r.images.original.url);
 					gifResults.appendChild(gifPreview);

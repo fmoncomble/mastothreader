@@ -25,7 +25,6 @@ function fetchMedia()
 
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
-            curl_close($ch);
 
             http_response_code($httpCode);
             header('Content-Type: ' . $contentType);
