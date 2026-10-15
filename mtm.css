@@ -99,18 +99,40 @@ img#icon {
 	margin: 0 5px;
 }
 
-div#btn-container {
+div#btn-menu {
 	display: flex;
 	flex-direction: row;
-	gap: 0.5rem;
+	/* gap: 0.5rem; */
 	align-items: center;
-	justify-content: flex-end;
+	justify-content: space-between;
 	width: 100%;
 	margin: 10px 0;
 }
 
+div#btn-container {
+	display: flex;
+	flex-direction: row;
+	gap: 0.5rem;
+	justify-content: flex-end;
+}
+
 div#btn-container i {
 	text-align: center;
+}
+
+div#bsky-crosspost-container {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: flex-start;
+	gap: 0.5rem;
+	padding: 0 0.25rem;
+}
+
+span#bsky-handle {
+	display: none;
+	color: #0560ff;
+	font-size: small;
 }
 
 div#instructions {
@@ -329,6 +351,9 @@ button.bsky-reset {
 
 button.bsky-reset {
 	background-color: #cc0000;
+	height: 1.2rem;
+	display: inline-block;
+	margin: 0;
 }
 
 select.cancel-schedule {
@@ -1159,6 +1184,10 @@ button.cancel:hover {
 	background-color: #cc0000;
 }
 
+button.cancel i.fa-bluesky:hover {
+	color: white !important;
+}
+
 .play-icon {
 	position: absolute;
 	top: 32.5px;
@@ -1426,6 +1455,69 @@ div.gif-cancel-div {
 	justify-content: end;
 }
 
+.switch {
+	position: relative;
+	display: inline-block;
+	width: 3.2rem;
+	height: 1.2rem;
+}
+
+.switch input {
+	opacity: 0;
+	width: 0;
+	height: 0;
+}
+
+.switch .slider {
+	position: absolute;
+	cursor: pointer;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: #eee;
+	box-shadow: inset 0 0 0.1rem #aaa;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0 0.3rem;
+}
+
+i.fa-bluesky {
+	color: #aaa;
+}
+
+i.fa-bluesky:hover {
+	color: #aaa !important;
+}
+
+span.on-off {
+	color: #aaa;
+	font-size: small;
+	font-weight: bold;
+}
+
+.switch input:checked + .slider {
+	background-color: #75afff;
+	box-shadow: inset 0 0 0.1rem #0560ff;
+}
+
+.switch input:checked + .slider i.fa-bluesky {
+	color: #0560ff;
+}
+
+.switch input:checked + .slider i.fa-bluesky:hover {
+	color: #0560ff !important;
+}
+
+.switch input:checked + .slider span.on-off {
+	color: #0560ff;
+}
+
+.switch .slider.round {
+	border-radius: 4px;
+}
+
 @media screen and (max-width: 600px) {
 	body {
 		width: auto;
@@ -1467,6 +1559,10 @@ div.gif-cancel-div {
 
 	#btn-container i:hover {
 		color: light-dark(#563acc, #8886ff);
+	}
+
+	#bsky-crosspost-container {
+		padding: 0 1rem !important;
 	}
 
 	#logged-in-as {

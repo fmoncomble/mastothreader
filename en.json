@@ -10,6 +10,7 @@
 	"instructions-p2": "You can also paste text in the first box,\nif it flows over MastoThreader will split it into toots for you.",
 	"instructions-p3": "Enter your Mastodon instance below and click \"Connect\" to get started.",
 	"instructions-p4": "This is a static site which does not collect any of your data.",
+	"instructions-p5": "📣 New: you can now crosspost to Bluesky by clicking the button in the top left beforehand.\nThis functionality is still experimental.\nRemember that polls are not supported by Bluesky.",
 	"legacy": "In case of any issues, an older version of Mastothreader can be accessed",
 	"legacy-link": "here",
 	"clear-storage": "If authentication fails, click here and try again.",
@@ -136,5 +137,8 @@
 	"insert-emoji": "Insert emoji",
 	"bluesky-log-out": "Log out of Bluesky",
 	"delete-post": "Delete toot",
-	"add-post": "Add toot"
+	"add-post": "Add toot",
+	"bsky-crosspost": "Crosspost to Bluesky",
+	"resplit-warning": "If you have already typed some text, this will re-split it into 300-character posts. Do you wish to proceed?",
+	"leave-open": "Do not click away from this window until the end of the process."
 }

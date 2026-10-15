@@ -1,13 +1,18 @@
-import { franc } from 'https://esm.sh/franc@6?bundle';
-import { iso6393 } from 'https://esm.sh/iso-639-3@3?bundle';
-import { getNativeName } from 'https://esm.sh/iso-639-1@3?bundle';
-import muxjs from 'https://esm.sh/mux.js@6.3.0';
-
 const waitingDialog = document.getElementById('waiting_dialog');
 const waitingSpinner = waitingDialog.querySelector('div.spinner');
 waitingSpinner.style.display = 'flex';
 
 waitingDialog.showModal();
+
+import { franc } from 'https://esm.sh/franc@6?bundle';
+import { iso6393 } from 'https://esm.sh/iso-639-3@3?bundle';
+import { getNativeName } from 'https://esm.sh/iso-639-1@3?bundle';
+import muxjs from 'https://esm.sh/mux.js@6.3.0';
+import * as bskyApi from 'https://esm.sh/@bsky/sdk';
+import { app, com } from 'https://esm.sh/@bsky/sdk/lexicons';
+import { RichText } from 'https://esm.sh/@bsky/sdk/richtext?bundle';
+import { Client } from 'https://esm.sh/@atproto/lex';
+import { PasswordSession } from 'https://esm.sh/@atproto/lex-password-session';
 
 document.addEventListener('DOMContentLoaded', async function () {
 	// Declare page elements
@@ -32,6 +37,9 @@ document.addEventListener('DOMContentLoaded', async function () {
 	const numberPostsDiv = document.getElementById('number-posts-div');
 	const numberPostsCheckbox = document.getElementById('number-posts');
 	numberPostsCheckbox.checked = false;
+	const bskyCrosspostCheckbox = document.getElementById('bsky-crosspost');
+	const bskyCrosspostOnOff = document.getElementById('bsky-crosspost-on-off');
+	const bskyHandleSpan = document.getElementById('bsky-handle');
 	const inReplyToDiv = document.getElementById('in-reply-to');
 	const inReplyToInput = document.getElementById('in-reply-input');
 	inReplyToInput.value = null;
@@ -91,6 +99,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 	// Declare Mastodon instance & user variables
 	let mediaConfig = {};
 	let maxChars;
+	let mastoMaxChars;
 	let maxMedia;
 	let pollOptions;
 	let reservedChars;
@@ -115,21 +124,73 @@ document.addEventListener('DOMContentLoaded', async function () {
 	let i = 0;
 
 	// Declare import variables
+	let bskyCrosspost = await new Promise((resolve) => {
+		resolve(localStorage.getItem('bsky-crosspost'));
+	});
 	let mastoText = null;
 	let inReplyUrl = null;
 	let userId = null;
 	let userName = null;
+
+	// Link with Bluesky
 	let bskyDid = localStorage.getItem('bsky-did')
 		? localStorage.getItem('bsky-did')
 		: null;
 	let bskyHandle = localStorage.getItem('bsky-handle')
 		? localStorage.getItem('bsky-handle')
 		: null;
-
-	if (bskyDid && bskyHandle) {
-		bskyResetBtn.style.display = 'flex';
-	} else {
-		bskyResetBtn.style.display = 'none';
+	let bskyToken = localStorage.getItem('bsky-token')
+		? localStorage.getItem('bsky-token')
+		: null;
+	let bskyRefreshToken = localStorage.getItem('bsky-refresh-token')
+		? localStorage.getItem('bsky-refresh-token')
+		: null;
+	let bskySession = JSON.parse(localStorage.getItem('bsky-session')) || null;
+	let bskyClient;
+	if (bskySession) {
+		bskySession = await PasswordSession.resume(bskySession, {
+			onUpdated: (data) => {
+				localStorage.setItem('bsky-session', JSON.stringify(data));
+			},
+			onDeleted: () => {
+				localStorage.removeItem('bsky-session');
+			},
+		});
+		bskyClient = new Client(bskySession, {
+			service: bskyApi.api.app.service,
+		});
+		bskyToken = bskyClient.agent.session.accessJwt;
+		bskyRefreshToken = bskyClient.agent.session.refreshJwt;
+		localStorage.setItem('bsky-token', bskyToken);
+		localStorage.setItem('bsky-refresh-token', bskyRefreshToken);
+		if (bskyClient) {
+			bskyToken = bskyClient.agent.session.accessJwt;
+			bskyRefreshToken = bskyClient.agent.session.refreshJwt;
+			localStorage.setItem('bsky-token', bskyToken);
+			localStorage.setItem('bsky-refresh-token', bskyRefreshToken);
+			bskyResetBtn.style.display = 'flex';
+			bskyHandleSpan.textContent = bskyHandle.split('.')[0];
+			bskyHandleSpan.style.display = 'flex';
+			if (bskyCrosspost || bskyCrosspost === true) {
+				bskyCrosspostCheckbox.checked = true;
+				maxChars = 300;
+				bskyCrosspostOnOff.textContent = 'ON';
+			} else {
+				bskyCrosspostCheckbox.checked = false;
+				bskyCrosspostOnOff.textContent = 'OFF';
+				maxChars = mastoMaxChars;
+				bskyHandleSpan.style.color = '#aaa';
+			}
+		} else {
+			bskyResetBtn.style.display = 'none';
+			bskyHandleSpan.textContent = null;
+			bskyHandleSpan.style.display = 'none';
+		}
+	}
+	if (bskyDid && bskyHandle && !bskyToken && !bskyRefreshToken) {
+		bskyResetBtn.click();
+		window.alert('Your Bluesky session has lapsed, please log in again.');
+		bskyAuthDialog.showModal();
 	}
 	let bskyUrl = null;
 	let convertHandles = false;
@@ -558,6 +619,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 		}
 	};
 
+	// Functions to perform preliminary checks
 	async function checkApp() {
 		let res = await fetch(
 			`https://${instance}/api/v1/apps/verify_credentials`,
@@ -664,6 +726,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 		}
 	}
 
+	// Revoke Mastodon session
 	async function removeToken() {
 		localStorage.removeItem('mastothreadtoken-v2');
 		const formData = new FormData();
@@ -684,6 +747,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 		}
 	}
 
+	// Handle instance login/logout
 	instanceInput.addEventListener('keydown', async (event) => {
 		if (event.key === 'Enter') {
 			instance = instanceInput.value;
@@ -799,7 +863,12 @@ document.addEventListener('DOMContentLoaded', async function () {
 			return;
 		}
 		const data = await response.json();
-		maxChars = Number(data.configuration.statuses.max_characters);
+		mastoMaxChars = Number(data.configuration.statuses.max_characters);
+		if (!bskyCrosspost) {
+			maxChars = mastoMaxChars;
+		} else {
+			maxChars = 300;
+		}
 		maxMedia = Number(data.configuration.statuses.max_media_attachments);
 		reservedChars = Number(
 			data.configuration.statuses.characters_reserved_per_url,
@@ -872,16 +941,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 		} else {
 			scheduleInput.value = null;
 			scheduleInput.style.display = 'none';
-		}
-	});
-	scheduleInput.addEventListener('change', () => {
-		if (scheduleInput.value) {
-			console.log(
-				'Schedule date: ',
-				new Date(scheduleInput.value).toISOString(),
-			);
-		} else {
-			console.log('No schedule date selected');
 		}
 	});
 
@@ -1040,6 +1099,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 		quoteUrls,
 		reason,
 	) {
+		textarea.style.minHeight = Number((maxChars / 50) * 20) + 'px';
 		const postId = post.id.split('-')[1];
 		const charCount = post.querySelector('.char-count');
 		let postLength = adjustCount(postText.trim());
@@ -1067,71 +1127,123 @@ document.addEventListener('DOMContentLoaded', async function () {
 		}
 	}
 
-	// Handle imports
-	bskyResetBtn.addEventListener('click', () => {
+	// Handle Bluesky link
+	bskyResetBtn.addEventListener('click', async () => {
+		await bskySession.logout();
+		if (bskyDid && bskyHandle && bskyToken && bskyRefreshToken) {
+			window.alert(locData['bsky-reset']);
+		}
 		bskyDid = null;
 		bskyHandle = null;
+		bskyToken = null;
+		bskyRefreshToken = null;
 		localStorage.removeItem('bsky-did');
 		localStorage.removeItem('bsky-handle');
+		localStorage.removeItem('bsky-token');
+		localStorage.removeItem('bsky-refresh-token');
 		bskyLink = null;
 		bskyThreadInput.value = null;
-		window.alert(locData['bsky-reset']);
+		bskyHandleSpan.textContent = null;
+		bskyHandleSpan.style.display = 'none';
 		bskyResetBtn.style.display = 'none';
+		if (bskyCrosspost) {
+			bskyCrosspost = false;
+			bskyCrosspostCheckbox.checked = false;
+			bskyCrosspostOnOff.textContent = 'OFF';
+			localStorage.removeItem('bsky-crosspost');
+			maxChars = mastoMaxChars;
+			for (let p of postItems) {
+				let textarea = p.querySelector('.post-text');
+				updateCharCount(p, textarea.value, textarea);
+			}
+		}
 	});
 
 	cancelBskyLoginBtn.addEventListener('click', () => {
 		importSelect.value = '0';
+		bskyResetBtn.click();
 		bskyAuthDialog.close();
 	});
+	if (bskyAuthDialog.style.display !== 'none') {
+		bskyAuthDialog.onkeydown = (e) => {
+			if (e.key === 'Escape') {
+				cancelBskyLoginBtn.click();
+			}
+			if (e.key === 'Enter') {
+				submitBtn.click();
+			}
+		};
+	}
 	submitBtn.addEventListener('click', async () => {
 		const form = {};
 		form.identifier = idInput.value;
 		form.password = pwdInput.value;
-		const res = await fetch(
-			`https://bsky.social/xrpc/com.atproto.server.createSession`,
-			{
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify(form),
+		bskySession = await PasswordSession.login({
+			service: 'https://bsky.social',
+			identifier: idInput.value.trim(),
+			password: pwdInput.value.trim(),
+			onUpdated: (data) => {
+				localStorage.setItem('bsky-session', JSON.stringify(data));
 			},
-		);
-		if (res.ok) {
-			const data = await res.json();
+			onDeleted: () => {
+				localStorage.removeItem('bsky-session');
+			},
+		});
+		bskyClient = new Client(bskySession, {
+			service: bskyApi.api.app.service,
+		});
+		if (bskyClient) {
 			bskyAuthDialog.close();
-			bskyDid = data.did;
+			bskyDid = bskyClient.agent.did;
 			localStorage.setItem('bsky-did', bskyDid);
-			bskyHandle = data.handle;
+			bskyHandle = bskyClient.agent.handle;
 			localStorage.setItem('bsky-handle', bskyHandle);
+			bskyToken = bskyClient.agent.session.accessJwt;
+			bskyRefreshToken = bskyClient.agent.session.refreshJwt;
+			localStorage.setItem('bsky-token', bskyToken);
+			localStorage.setItem('bsky-refresh-token', bskyRefreshToken);
+			bskyHandleSpan.textContent = bskyHandle.split('.')[0];
+			bskyHandleSpan.style.display = 'flex';
+			bskyHandleSpan.style.color = '#aaa';
+			if (bskyCrosspostCheckbox.checked) {
+				localStorage.setItem('bsky-crosspost', true);
+				bskyCrosspost = true;
+				maxChars = 300;
+				bskyCrosspostOnOff.textContent = 'ON';
+				bskyHandleSpan.style.color = '#0560ff';
+				const firstPostItem = postItems[0];
+				const textarea = firstPostItem.querySelector('.post-text');
+				if (postItems.length) {
+					const textareas = postItems.map((p) =>
+						p.querySelector('.post-text'),
+					);
+					if (textareas.some((t) => t.value.length)) {
+						resplitToots();
+					} else {
+						updateCharCount(
+							firstPostItem,
+							textarea.value,
+							textarea,
+						);
+					}
+				}
+			}
 			bskyResetBtn.style.display = 'flex';
 			idInput.value = null;
 			pwdInput.value = null;
 			await new Promise((resolve) => setTimeout(resolve, 0));
-			if (!bskyLink) {
-				bskyThreadInput.value = null;
-				bskyThreadDialog.showModal();
-			} else {
-				getBskyThread();
+			if (importSelect.value === 'bsky') {
+				if (!bskyLink) {
+					bskyThreadInput.value = null;
+					bskyThreadDialog.showModal();
+				} else {
+					getBskyThread();
+				}
 			}
 		} else {
 			idInput.value = null;
 			pwdInput.value = null;
-			const errorData = await res.json();
-			if (res.status === 429) {
-				const resHeaders = res.headers;
-				const resetTime = resHeaders.get('Ratelimit-Reset');
-				const now = Math.floor(Date.now() / 1000);
-				const waitTime = resetTime - now;
-				const hours = Math.floor(waitTime / 3600);
-				const minutes = Math.floor((waitTime % 3600) / 60);
-				const seconds = waitTime % 60;
-				const timeString = `${hours} heures, ${minutes} minutes et ${seconds} secondes`;
-				window.alert(locData['bsky-rate-warning'] + timeString);
-				bskyAuthDialog.close();
-				return;
-			}
-			window.alert(`${locData['auth-error']} ${errorData.message}`);
+			window.alert(`${locData['auth-error']}`);
 			bskyAuthDialog.close();
 			return;
 		}
@@ -1165,7 +1277,67 @@ document.addEventListener('DOMContentLoaded', async function () {
 		bskyThreadInput.value = null;
 		bskyThreadDialog.close();
 	});
+	bskyCrosspostCheckbox.addEventListener('change', async () => {
+		const firstPostItem = postItems[0];
+		const textarea = firstPostItem.querySelector('.post-text');
+		if (bskyCrosspostCheckbox.checked) {
+			const textareas = postItems.map((p) =>
+				p.querySelector('.post-text'),
+			);
+			if (textareas.some((t) => t.value.length)) {
+				if (!window.confirm(locData['resplit-warning'])) {
+					bskyCrosspostCheckbox.checked = false;
+					return;
+				}
+			}
+			if (!bskyDid) {
+				bskyAuthDialog.showModal();
+				return;
+			} else {
+				bskyCrosspost = true;
+				localStorage.setItem('bsky-crosspost', true);
+				maxChars = 300;
+				bskyCrosspostOnOff.textContent = 'ON';
+				bskyHandleSpan.textContent = bskyHandle.split('.')[0];
+				bskyHandleSpan.style.display = 'flex';
+				bskyHandleSpan.style.color = '#0560ff';
+				if (postItems.length) {
+					const textareas = postItems.map((p) =>
+						p.querySelector('.post-text'),
+					);
+					if (textareas.some((t) => t.value.length)) {
+						resplitToots();
+					} else {
+						updateCharCount(
+							firstPostItem,
+							textarea.value,
+							textarea,
+						);
+					}
+				} else {
+					updateCharCount(firstPostItem, textarea.value, textarea);
+				}
+			}
+		} else if (!bskyCrosspostCheckbox.checked) {
+			maxChars = mastoMaxChars;
+			bskyCrosspost = false;
+			bskyCrosspostOnOff.textContent = 'OFF';
+			localStorage.removeItem('bsky-crosspost');
+			bskyHandleSpan.style.color = '#aaa';
+			updateCharCount(firstPostItem, textarea.value, textarea);
+		}
+	});
 
+	function resplitToots() {
+		const textareas = postItems.map((p) => p.querySelector('.post-text'));
+		const text = textareas.map((t) => t.value.trim()).join(' ');
+		for (let p of postItems) {
+			const textarea = p.querySelector('.post-text');
+			updateCharCount(p, textarea.value, textarea);
+		}
+	}
+
+	// Handle Wordpress link
 	wpImportOk.addEventListener('click', async () => {
 		let url = wpUrlInput.value;
 		WPUrl = await resolveWPUrl(url);
@@ -2723,7 +2895,14 @@ document.addEventListener('DOMContentLoaded', async function () {
 				return;
 			} else {
 				for (let f of newFiles) {
-					if (files.length < maxMedia) {
+					if (files.length && f.type.includes('video')) {
+						window.alert(locData['media-alert']);
+						continue;
+					} else if (files.length < maxMedia) {
+						if (files.some((file) => file.type.includes('video'))) {
+							window.alert(locData['media-alert']);
+							break;
+						}
 						let mediaFile = {};
 						mediaFile.file = f;
 						files.push(mediaFile);
@@ -2798,9 +2977,14 @@ document.addEventListener('DOMContentLoaded', async function () {
 						gifPreview = document.createElement('img');
 					}
 					gifPreview.classList.add('gif-preview');
-					gifPreview.src = r.images.fixed_height.url;
+					gifPreview.src = r.images.fixed_height_small.url;
 					gifPreview.alt = r.alt_text || r.title;
-					gifPreview.setAttribute('ref', r.images.original.url);
+					gifPreview.setAttribute(
+						'ref',
+						bskyCrosspost
+							? r.images.downsized.url
+							: r.images.original.url,
+					);
 					gifResults.appendChild(gifPreview);
 				}
 				gifPreviews = Array.from(
@@ -3001,6 +3185,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 					return;
 				}
 				const video = document.createElement('video');
+				video.setAttribute('disablepictureinpicture', true);
 				if (!video.canPlayType(mediaFile.file.type)) {
 					video.poster = 'icons/video_placeholder.webp';
 					video.controls = false;
@@ -3015,6 +3200,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 				}
 				previewElt = video;
 				div.appendChild(video);
+				addImg.disabled = true;
+				addGif.disabled = true;
 			} else if (fileType.includes('image') || fileType.includes('img')) {
 				if (mediaFile.file.size > imgSizeLimit) {
 					window.alert(
@@ -3080,6 +3267,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 					imgPreview.style.display = 'none';
 					imgCount.style.display = 'none';
 					addPoll.disabled = false;
+					addImg.disabled = false;
+					addGif.disabled = false;
 				}
 			});
 
@@ -3762,6 +3951,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 	// Functions to upload thread to Mastodon
 	let threadUrl;
+	let bskyThreadUrl;
 	postThreadBtn.addEventListener('click', async () => {
 		let staggerMediaUploads = false;
 		const NbOfMediaFiles = Object.values(mediaFiles).flat().length;
@@ -3797,17 +3987,30 @@ document.addEventListener('DOMContentLoaded', async function () {
 		contentContainer.style.display = 'none';
 		counter.style.display = 'block';
 		counter.style.marginTop = '50px';
-		let ok = await postThread(staggerMediaUploads);
-		if (!ok) {
+		threadUrl = await postThread(staggerMediaUploads);
+		if (!threadUrl) {
 			spinner.style.display = 'none';
 			counter.style.display = 'none';
 			postThreadBtn.style.display = 'flex';
 			contentContainer.style.display = 'flex';
 			return;
 		}
+		if (bskyCrosspost) {
+			bskyThreadUrl = await postToBsky();
+		}
 		spinner.remove();
 		counter.textContent = locData['thread-published'];
 		counter.style.color = '#563acc';
+		if (threadUrl) {
+			const p = document.createElement('p');
+			p.innerHTML = `<a href="${threadUrl}" target="_blank">Read Mastodon thread.</a>`;
+			counter.appendChild(p);
+		}
+		if (bskyThreadUrl) {
+			const p = document.createElement('p');
+			p.innerHTML = `<a href="${bskyThreadUrl}" target="_blank">Read Bluesky thread.</a>`;
+			counter.appendChild(p);
+		}
 		const restartBtn = document.createElement('button');
 		restartBtn.textContent = locData['restart'];
 		restartBtn.style.marginTop = '50px';
@@ -3816,9 +4019,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 		};
 		counter.after(restartBtn);
 		postThreadBtn.style.display = 'none';
-		if (threadUrl) {
-			window.open(threadUrl, '_blank');
-		}
 	});
 
 	async function uploadMedia(f, d) {
@@ -3901,9 +4101,9 @@ document.addEventListener('DOMContentLoaded', async function () {
 		}
 		for (let post of postItems) {
 			const i = postItems.indexOf(post);
-			counter.textContent = `${locData['posting-toot']} ${i + 1}/${
+			counter.innerHTML = `${locData['posting-toot']} ${i + 1}/${
 				postItems.length
-			}...`;
+			}...<br/>${locData['leave-open']}`;
 
 			const langSelect = post.querySelector('.lang-select');
 			const postLang = langSelect.value;
@@ -4040,6 +4240,245 @@ document.addEventListener('DOMContentLoaded', async function () {
 			return true;
 		} else {
 			return threadUrl;
+		}
+	}
+
+	async function postToBsky() {
+		const sessionData = bskySession;
+		if (!sessionData) {
+			window.alert(
+				'There was a problem with your Bluesky session, posting to Bluesky disabled.',
+			);
+			return;
+		}
+		let root = null;
+		let parent = null;
+		for (let post of postItems) {
+			const i = postItems.indexOf(post);
+			counter.innerHTML = `Posting to Bluesky: ${i + 1}/${postItems.length}...<br/>${locData['leave-open']}`;
+			const langSelect = post.querySelector('.lang-select');
+			const postLang = langSelect.value;
+			const textarea = post.querySelector('.post-text');
+			const postText = textarea.value;
+			const rt = new RichText({
+				text: postText,
+			});
+			await rt.detectFacets(bskyClient);
+			const id = post.id.split('-')[1];
+			const postMediaIds = [];
+			const postMedia = mediaFiles[`mediaFiles${id}`];
+			if (postMedia && postMedia.length) {
+				const mediaCounter = document.createElement('div');
+				mediaCounter.classList.add('counter');
+				counter.appendChild(mediaCounter);
+				for (let media of postMedia) {
+					mediaCounter.textContent = `(${locData['media-upload']} ${
+						postMedia.indexOf(media) + 1
+					}/${postMedia.length}...)`;
+					let mediaBlob = await uploadMediatoBluesky(
+						media.file,
+						sessionData,
+					);
+					if (!mediaBlob) {
+						window.alert(locData['media-error-alert']);
+						return;
+					}
+					postMediaIds.push({
+						blob: mediaBlob,
+						alt: media.description,
+					});
+				}
+				mediaCounter.remove();
+			}
+			if (!postText && postMedia.length === 0) {
+				if (i === 0) {
+					if (postItems.length === 1) {
+						window.alert(locData['empty-thread']);
+						return;
+					}
+					window.alert(locData['empty-toot']);
+					return;
+				}
+				continue;
+			}
+			try {
+				const now = new Date().toISOString();
+				const record = {
+					text: rt.text,
+					facets: rt.facets,
+					langs: [postLang],
+					createdAt: now,
+				};
+				if (postMediaIds && postMediaIds.length) {
+					let media = postMediaIds.map((m) => {
+						return {
+							alt: m.alt,
+							image: m.blob,
+						};
+					});
+					if (media.some((m) => m.image.mimeType.includes('image'))) {
+						record['embed'] = {
+							$type: 'app.bsky.embed.images',
+							images: media,
+						};
+					} else if (
+						media.some((m) => m.image.mimeType.includes('video'))
+					) {
+						record['embed'] = {
+							$type: 'app.bsky.embed.video',
+							video: media[0].image,
+						};
+					}
+				}
+				if (root && parent) {
+					record['reply'] = {
+						root: {
+							uri: root.uri,
+							cid: root.cid,
+						},
+						parent: {
+							uri: parent.uri,
+							cid: parent.cid,
+						},
+					};
+				}
+				const data = await bskyClient.call(bskyApi.post, record);
+				if (!data) {
+					window.alert(
+						`Post #${id} could not be published on Bluesky. Aborting crossposting.`,
+					);
+					return;
+				}
+				if (i === 0) {
+					root = {
+						uri: data.uri,
+						cid: data.cid,
+					};
+					bskyThreadUrl = `https://bsky.app/profile/${bskyHandle}/post/${data.uri.split('/').pop()}`;
+				}
+				parent = {
+					uri: data.uri,
+					cid: data.cid,
+				};
+			} catch (error) {
+				console.error(error);
+			}
+		}
+		return bskyThreadUrl;
+	}
+
+	async function uploadMediatoBluesky(f, session) {
+		try {
+			let url;
+			if (f.type.includes('image')) {
+				const image = new Uint8Array(await f.arrayBuffer());
+				const { body } = await bskyClient.uploadBlob(image, {
+					encoding: f.type,
+				});
+				if (body && body.blob) {
+					return body.blob;
+				} else {
+					return false;
+				}
+			} else if (f.type.includes('video')) {
+				let service = session.session.didDoc.service.find((s) =>
+					s.id.endsWith('#atproto_pds'),
+				);
+				let pdsHost = new URL(service.serviceEndpoint).host;
+				let { token } = await bskyClient.call(
+					com.atproto.server.getServiceAuth,
+					{
+						aud: `did:web:${pdsHost}`,
+						exp: Math.ceil(Date.now() / 1000 + 60 * 30),
+						lxm: 'com.atproto.repo.uploadBlob',
+					},
+				);
+				if (token) {
+					url = `https://video.bsky.app/xrpc/app.bsky.video.uploadVideo?did=${bskyDid}&name=${f.name}`;
+					const response = await fetch(url, {
+						method: 'POST',
+						headers: {
+							'Content-Type': f.type,
+							'Content-Length': f.size,
+							Authorization: `Bearer ${token}`,
+						},
+						body: f,
+					});
+					if (!response.ok) {
+						let error = await response.json();
+						console.error(error);
+						if (response.status === 400) {
+							window.alert(`${error.error}: ${error.message}`);
+							return;
+						}
+						if (response.status === 401) {
+							window.alert('Not authorized');
+							return;
+						}
+						if (response.status === 409) {
+							let jobId = error.jobId;
+							let jobStatusRes = await fetch(
+								`https://video.bsky.app/xrpc/app.bsky.video.getJobStatus?jobId=${jobId}`,
+								{
+									headers: {
+										Authorization: `Bearer ${token}`,
+									},
+								},
+							);
+							if (!jobStatusRes.ok) {
+								const error = await jobStatusRes.json();
+								window.alert(
+									`${error.error}: ${error.message}`,
+								);
+								return;
+							}
+							let jobStatusData = await jobStatusRes.json();
+							if (
+								jobStatusData.jobStatus &&
+								jobStatusData.jobStatus.blob
+							) {
+								let blob = jobStatusData.jobStatus.blob;
+								return blob;
+							} else {
+								window.alert('Could not find media');
+								return;
+							}
+						}
+					} else if (response.status === 200) {
+						const data = await response.json();
+						let blob = data.blob;
+						if (blob) return blob;
+						while (!blob) {
+							await new Promise((resolve) =>
+								setTimeout(resolve, 1000),
+							);
+							let jobId = data.jobId;
+							let jobStatusRes = await fetch(
+								`https://video.bsky.app/xrpc/app.bsky.video.getJobStatus?jobId=${jobId}`,
+								{
+									headers: {
+										Authorization: `Bearer ${token}`,
+									},
+								},
+							);
+							if (!jobStatusRes.ok) {
+								console.error('Could not check job status');
+								break;
+							}
+							let jobStatusData = await jobStatusRes.json();
+							let blob = jobStatusData.jobStatus.blob;
+							if (blob) {
+								return blob;
+							}
+						}
+					}
+				} else {
+					window.alert('Could not generate video upload token');
+					return;
+				}
+			}
+		} catch (error) {
+			console.error(error);
 		}
 	}
 });

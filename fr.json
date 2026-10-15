@@ -10,6 +10,7 @@
 	"instructions-p2": "Vous pouvez aussi coller un texte dans le premier encadré,\n si ça dépasse MastoThreader se chargera de le segmenter. 😉",
 	"instructions-p3": "Entrez votre instance Mastodon ci-dessous\net cliquez sur \"Valider\" pour commencer.",
 	"instructions-p4": "Ceci est un site statique qui ne collecte aucune de vos données.",
+	"instructions-p5": "📣 Nouveau : vous pouvez poster aussi sur Bluesky en cliquant sur le bouton en haut à gauche.\nCette fonction est encore expérimentale.\nRappel : les sondages ne sont pas pris en charge par Bluesky.",
 	"legacy": "En cas de problème, une version antérieure de Mastothreader est accessible",
 	"legacy-link": "ici",
 	"clear-storage": "Si l'authentification échoue, cliquez ici et réessayez.",
@@ -136,5 +137,8 @@
 	"insert-emoji": "Insérer un emoji",
 	"bluesky-log-out": "Se déconnecter de Bluesky",
 	"delete-post": "Supprimer le pouet",
-	"add-post": "Ajouter un pouet"
+	"add-post": "Ajouter un pouet",
+	"bsky-crosspost": "Poster aussi sur Bluesky",
+	"resplit-warning": "Si vous avez déjà entré du texte, ceci le redécoupera en posts de 300 caractères maximum. Souhaitez-vous continuer ?",
+	"leave-open": "Gardez cette fenêtre apparente jusqu'à la fin du processus."
 }
