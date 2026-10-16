@@ -993,6 +993,11 @@ button#view-thread-btn:hover {
 	justify-content: center;
 }
 
+.footer * {
+	color: #aaa;
+	font-size: small;
+}
+
 div.footer div {
 	margin: 0 5px;
 }
