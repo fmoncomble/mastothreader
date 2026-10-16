@@ -7,7 +7,8 @@
 Entrez votre instance Mastodon, authentifiez-vous, autorisez l'appli et c'est parti !
 Le site ne collecte aucune de vos données. Les identifiants sont stockés localement dans votre navigateur.
 
-<img width="621" height="778" alt="Screenshot 2026-01-04 at 14 53 22" src="https://github.com/user-attachments/assets/9bf7a4e1-2689-44b7-a772-357b2bf1ed7e" />
+<img width="611" height="566" alt="Screenshot 2026-10-16 at 10 22 47" src="https://github.com/user-attachments/assets/00ebaddf-1f1b-420c-b4f9-653facc04e86" />
+
 
 ### Fonctionnalités
 
@@ -31,6 +32,7 @@ Le site ne collecte aucune de vos données. Les identifiants sont stockés local
 -   [x] Localisation.
 -   [x] Sondages.
 -   [x] Citation de pouet avec aperçu.
+-   [x] Publication simultanée sur Bluesky (beta).
 
 ### Extension pour navigateur
 
