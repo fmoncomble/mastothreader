@@ -133,64 +133,51 @@ document.addEventListener('DOMContentLoaded', async function () {
 	let userName = null;
 
 	// Link with Bluesky
-	let bskyDid = localStorage.getItem('bsky-did')
-		? localStorage.getItem('bsky-did')
-		: null;
-	let bskyHandle = localStorage.getItem('bsky-handle')
-		? localStorage.getItem('bsky-handle')
-		: null;
-	let bskyToken = localStorage.getItem('bsky-token')
-		? localStorage.getItem('bsky-token')
-		: null;
-	let bskyRefreshToken = localStorage.getItem('bsky-refresh-token')
-		? localStorage.getItem('bsky-refresh-token')
-		: null;
+	let bskyDid = localStorage.getItem('bsky-did') || null;
+	let bskyHandle = localStorage.getItem('bsky-handle') || null;
+	localStorage.removeItem('bsky-token');
+	localStorage.removeItem('bsky-refresh-token');
 	let bskySession = JSON.parse(localStorage.getItem('bsky-session')) || null;
 	let bskyClient;
-	if (bskySession) {
-		bskySession = await PasswordSession.resume(bskySession, {
-			onUpdated: (data) => {
-				localStorage.setItem('bsky-session', JSON.stringify(data));
-			},
-			onDeleted: () => {
-				localStorage.removeItem('bsky-session');
-			},
-		});
-		bskyClient = new Client(bskySession, {
-			service: bskyApi.api.app.service,
-		});
-		bskyToken = bskyClient.agent.session.accessJwt;
-		bskyRefreshToken = bskyClient.agent.session.refreshJwt;
-		localStorage.setItem('bsky-token', bskyToken);
-		localStorage.setItem('bsky-refresh-token', bskyRefreshToken);
-		if (bskyClient) {
-			bskyToken = bskyClient.agent.session.accessJwt;
-			bskyRefreshToken = bskyClient.agent.session.refreshJwt;
-			localStorage.setItem('bsky-token', bskyToken);
-			localStorage.setItem('bsky-refresh-token', bskyRefreshToken);
-			bskyResetBtn.style.display = 'flex';
-			bskyHandleSpan.textContent = bskyHandle.split('.')[0];
-			bskyHandleSpan.style.display = 'flex';
-			if (bskyCrosspost || bskyCrosspost === true) {
-				bskyCrosspostCheckbox.checked = true;
-				maxChars = 300;
-				bskyCrosspostOnOff.textContent = 'ON';
+	async function checkBskySession() {
+		if (bskySession) {
+			bskySession = await PasswordSession.resume(bskySession, {
+				onUpdated: (data) => {
+					localStorage.setItem('bsky-session', JSON.stringify(data));
+				},
+				onDeleted: () => {
+					localStorage.removeItem('bsky-session');
+				},
+			});
+			bskyClient = new Client(bskySession, {
+				service: bskyApi.api.app.service,
+			});
+			if (bskyClient) {
+				bskyResetBtn.style.display = 'flex';
+				bskyHandleSpan.textContent = bskyHandle.split('.')[0];
+				bskyHandleSpan.style.display = 'flex';
+				if (bskyCrosspost || bskyCrosspost === true) {
+					bskyCrosspostCheckbox.checked = true;
+					maxChars = 300;
+					bskyCrosspostOnOff.textContent = 'ON';
+				} else {
+					bskyCrosspostCheckbox.checked = false;
+					bskyCrosspostOnOff.textContent = 'OFF';
+					maxChars = mastoMaxChars;
+					bskyHandleSpan.style.color = '#aaa';
+				}
 			} else {
-				bskyCrosspostCheckbox.checked = false;
-				bskyCrosspostOnOff.textContent = 'OFF';
-				maxChars = mastoMaxChars;
-				bskyHandleSpan.style.color = '#aaa';
+				bskyResetBtn.style.display = 'none';
+				bskyHandleSpan.textContent = null;
+				bskyHandleSpan.style.display = 'none';
 			}
-		} else {
-			bskyResetBtn.style.display = 'none';
-			bskyHandleSpan.textContent = null;
-			bskyHandleSpan.style.display = 'none';
 		}
-	}
-	if (bskyDid && bskyHandle && !bskyToken && !bskyRefreshToken) {
-		bskyResetBtn.click();
-		window.alert('Your Bluesky session has lapsed, please log in again.');
-		bskyAuthDialog.showModal();
+		if (bskyDid && bskyHandle && !bskySession) {
+			window.alert(
+				'Your Bluesky session has lapsed, please log in again.',
+			);
+			resetBskySession();
+		}
 	}
 	let bskyUrl = null;
 	let convertHandles = false;
@@ -341,6 +328,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 				}
 				await checkScheduledPosts();
 				customEmoji = await getCustomEmoji(instance);
+				await checkBskySession();
 				waitingDialog.close();
 				if (bskyLink || inReplyUrl || WPUrl) {
 					optionsDiv.style.display = 'flex';
@@ -373,6 +361,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 	} else if (token) {
 		await checkScheduledPosts();
 		customEmoji = await getCustomEmoji(instance);
+		await checkBskySession();
 		waitingDialog.close();
 		if (bskyUrl) {
 			if (window.confirm(locData['bsky-confirm'])) {
@@ -1128,15 +1117,18 @@ document.addEventListener('DOMContentLoaded', async function () {
 	}
 
 	// Handle Bluesky link
-	bskyResetBtn.addEventListener('click', async () => {
-		await bskySession.logout();
-		if (bskyDid && bskyHandle && bskyToken && bskyRefreshToken) {
+	bskyResetBtn.onclick = resetBskySession;
+	async function resetBskySession() {
+		if (bskySession) {
+			await bskySession.logout();
+			localStorage.removeItem('bsky-session');
+		}
+		if (bskyDid && bskyHandle) {
 			window.alert(locData['bsky-reset']);
 		}
 		bskyDid = null;
 		bskyHandle = null;
-		bskyToken = null;
-		bskyRefreshToken = null;
+		bskySession = null;
 		localStorage.removeItem('bsky-did');
 		localStorage.removeItem('bsky-handle');
 		localStorage.removeItem('bsky-token');
@@ -1157,11 +1149,12 @@ document.addEventListener('DOMContentLoaded', async function () {
 				updateCharCount(p, textarea.value, textarea);
 			}
 		}
-	});
+	}
 
 	cancelBskyLoginBtn.addEventListener('click', () => {
 		importSelect.value = '0';
-		bskyResetBtn.click();
+		resetBskySession();
+		bskyCrosspostCheckbox.checked = false;
 		bskyAuthDialog.close();
 	});
 	if (bskyAuthDialog.style.display !== 'none') {
@@ -1198,10 +1191,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 			localStorage.setItem('bsky-did', bskyDid);
 			bskyHandle = bskyClient.agent.handle;
 			localStorage.setItem('bsky-handle', bskyHandle);
-			bskyToken = bskyClient.agent.session.accessJwt;
-			bskyRefreshToken = bskyClient.agent.session.refreshJwt;
-			localStorage.setItem('bsky-token', bskyToken);
-			localStorage.setItem('bsky-refresh-token', bskyRefreshToken);
 			bskyHandleSpan.textContent = bskyHandle.split('.')[0];
 			bskyHandleSpan.style.display = 'flex';
 			bskyHandleSpan.style.color = '#aaa';
@@ -1290,7 +1279,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 					return;
 				}
 			}
-			if (!bskyDid) {
+			if (!bskySession) {
 				bskyAuthDialog.showModal();
 				return;
 			} else {
@@ -4393,6 +4382,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 						lxm: 'com.atproto.repo.uploadBlob',
 					},
 				);
+				console.log('Video upload token:', token);
 				if (token) {
 					url = `https://video.bsky.app/xrpc/app.bsky.video.uploadVideo?did=${bskyDid}&name=${f.name}`;
 					const response = await fetch(url, {
