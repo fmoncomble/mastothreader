@@ -37,8 +37,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 	const numberPostsDiv = document.getElementById('number-posts-div');
 	const numberPostsCheckbox = document.getElementById('number-posts');
 	numberPostsCheckbox.checked = false;
-	const bskyCrosspostCheckbox = document.getElementById('bsky-crosspost');
-	const bskyCrosspostOnOff = document.getElementById('bsky-crosspost-on-off');
+	const bskyCrossPostBtn = document.getElementById('bsky-crosspost');
 	const bskyHandleSpan = document.getElementById('bsky-handle');
 	const inReplyToDiv = document.getElementById('in-reply-to');
 	const inReplyToInput = document.getElementById('in-reply-input');
@@ -154,17 +153,15 @@ document.addEventListener('DOMContentLoaded', async function () {
 			});
 			if (bskyClient) {
 				bskyResetBtn.style.display = 'flex';
-				bskyHandleSpan.textContent = bskyHandle.split('.')[0];
+				bskyHandleSpan.textContent = '@' + bskyHandle.split('.')[0];
 				bskyHandleSpan.style.display = 'flex';
 				if (bskyCrosspost || bskyCrosspost === true) {
-					bskyCrosspostCheckbox.checked = true;
+					bskyCrossPostBtn.classList.add('active');
 					maxChars = 300;
-					bskyCrosspostOnOff.textContent = 'ON';
 				} else {
-					bskyCrosspostCheckbox.checked = false;
-					bskyCrosspostOnOff.textContent = 'OFF';
+					bskyCrossPostBtn.classList.remove('active');
 					maxChars = mastoMaxChars;
-					bskyHandleSpan.style.color = '#aaa';
+					bskyHandleSpan.style.color = '#eee';
 				}
 			} else {
 				bskyResetBtn.style.display = 'none';
@@ -1140,8 +1137,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 		bskyResetBtn.style.display = 'none';
 		if (bskyCrosspost) {
 			bskyCrosspost = false;
-			bskyCrosspostCheckbox.checked = false;
-			bskyCrosspostOnOff.textContent = 'OFF';
+			bskyCrossPostBtn.classList.remove('active');
 			localStorage.removeItem('bsky-crosspost');
 			maxChars = mastoMaxChars;
 			for (let p of postItems) {
@@ -1154,7 +1150,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 	cancelBskyLoginBtn.addEventListener('click', () => {
 		importSelect.value = '0';
 		resetBskySession();
-		bskyCrosspostCheckbox.checked = false;
+		bskyCrossPostBtn.classList.remove('active');
 		bskyAuthDialog.close();
 	});
 	if (bskyAuthDialog.style.display !== 'none') {
@@ -1191,15 +1187,15 @@ document.addEventListener('DOMContentLoaded', async function () {
 			localStorage.setItem('bsky-did', bskyDid);
 			bskyHandle = bskyClient.agent.handle;
 			localStorage.setItem('bsky-handle', bskyHandle);
-			bskyHandleSpan.textContent = bskyHandle.split('.')[0];
+			bskyHandleSpan.textContent = '@' + bskyHandle.split('.')[0];
 			bskyHandleSpan.style.display = 'flex';
-			bskyHandleSpan.style.color = '#aaa';
-			if (bskyCrosspostCheckbox.checked) {
+			bskyHandleSpan.style.color = '#eee';
+			if (!bskyCrossPostBtn.classList.contains('active')) {
+				bskyCrossPostBtn.classList.add('active');
 				localStorage.setItem('bsky-crosspost', true);
 				bskyCrosspost = true;
 				maxChars = 300;
-				bskyCrosspostOnOff.textContent = 'ON';
-				bskyHandleSpan.style.color = '#0560ff';
+				bskyHandleSpan.style.color = 'white';
 				const firstPostItem = postItems[0];
 				const textarea = firstPostItem.querySelector('.post-text');
 				if (postItems.length) {
@@ -1266,16 +1262,16 @@ document.addEventListener('DOMContentLoaded', async function () {
 		bskyThreadInput.value = null;
 		bskyThreadDialog.close();
 	});
-	bskyCrosspostCheckbox.addEventListener('change', async () => {
+	bskyCrossPostBtn.addEventListener('click', async () => {
 		const firstPostItem = postItems[0];
 		const textarea = firstPostItem.querySelector('.post-text');
-		if (bskyCrosspostCheckbox.checked) {
+		if (!bskyCrossPostBtn.classList.contains('active')) {
 			const textareas = postItems.map((p) =>
 				p.querySelector('.post-text'),
 			);
 			if (textareas.some((t) => t.value.length)) {
 				if (!window.confirm(locData['resplit-warning'])) {
-					bskyCrosspostCheckbox.checked = false;
+					bskyCrossPostBtn.classList.remove('active');
 					return;
 				}
 			}
@@ -1283,13 +1279,13 @@ document.addEventListener('DOMContentLoaded', async function () {
 				bskyAuthDialog.showModal();
 				return;
 			} else {
+				bskyCrossPostBtn.classList.add('active');
 				bskyCrosspost = true;
 				localStorage.setItem('bsky-crosspost', true);
 				maxChars = 300;
-				bskyCrosspostOnOff.textContent = 'ON';
-				bskyHandleSpan.textContent = bskyHandle.split('.')[0];
+				bskyHandleSpan.textContent = '@' + bskyHandle.split('.')[0];
 				bskyHandleSpan.style.display = 'flex';
-				bskyHandleSpan.style.color = '#0560ff';
+				bskyHandleSpan.style.color = 'white';
 				if (postItems.length) {
 					const textareas = postItems.map((p) =>
 						p.querySelector('.post-text'),
@@ -1307,12 +1303,12 @@ document.addEventListener('DOMContentLoaded', async function () {
 					updateCharCount(firstPostItem, textarea.value, textarea);
 				}
 			}
-		} else if (!bskyCrosspostCheckbox.checked) {
+		} else {
 			maxChars = mastoMaxChars;
+			bskyCrossPostBtn.classList.remove('active');
 			bskyCrosspost = false;
-			bskyCrosspostOnOff.textContent = 'OFF';
 			localStorage.removeItem('bsky-crosspost');
-			bskyHandleSpan.style.color = '#aaa';
+			bskyHandleSpan.style.color = '#eee';
 			updateCharCount(firstPostItem, textarea.value, textarea);
 		}
 	});

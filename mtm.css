@@ -124,14 +124,18 @@ div#bsky-crosspost-container {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
-	justify-content: flex-start;
+	justify-content: space-between;
 	gap: 0.5rem;
-	padding: 0 0.25rem;
+	padding: 0.1rem;
+	box-sizing: border-box;
+	background-color: #0560ff;
+	height: 1.4rem;
+	border-radius: 0.75rem;
 }
 
 span#bsky-handle {
 	display: none;
-	color: #0560ff;
+	color: white;
 	font-size: small;
 }
 
@@ -335,8 +339,7 @@ select.cancel-schedule,
 .emoji-btn,
 .poll-duration-select,
 .add-post-btn,
-.delete-post-btn,
-button.bsky-reset {
+.delete-post-btn {
 	height: 30px;
 	width: auto;
 	color: light-dark(#563acc, #8886ff);
@@ -349,12 +352,15 @@ button.bsky-reset {
 	justify-content: center;
 }
 
-button.bsky-reset {
+/* button.bsky-reset {
 	background-color: #cc0000;
 	height: 1.2rem;
-	display: inline-block;
+	display: inline-flex;
 	margin: 0;
-}
+	align-items: center;
+	justify-content: space-between;
+	padding: 0 0.3rem;
+} */
 
 select.cancel-schedule {
 	margin: 0;
@@ -1179,20 +1185,6 @@ img.avatar {
 	align-items: center;
 }
 
-button.cancel {
-	background-color: #cc0000;
-	border-color: #cc0000;
-	color: white;
-}
-
-button.cancel:hover {
-	background-color: #cc0000;
-}
-
-button.cancel i.fa-bluesky:hover {
-	color: white !important;
-}
-
 .play-icon {
 	position: absolute;
 	top: 32.5px;
@@ -1460,67 +1452,83 @@ div.gif-cancel-div {
 	justify-content: end;
 }
 
-.switch {
-	position: relative;
-	display: inline-block;
-	width: 3.2rem;
+button.bsky {
+	display: inline-flex;
+	/* gap: 0.3rem; */
 	height: 1.2rem;
-}
-
-.switch input {
-	opacity: 0;
-	width: 0;
-	height: 0;
-}
-
-.switch .slider {
-	position: absolute;
+	width: 1.2rem;
 	cursor: pointer;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	background-color: #eee;
-	box-shadow: inset 0 0 0.1rem #aaa;
-	display: flex;
+	background-color: #aaa;
+	/* box-shadow: inset 0 0 0.1rem #eee; */
 	align-items: center;
-	justify-content: space-between;
-	padding: 0 0.3rem;
+	justify-content: center;
+	padding: 0;
+	border-radius: 50%;
+	margin: 0;
 }
 
-i.fa-bluesky {
-	color: #aaa;
+button.bsky *,
+button.bsky *:hover {
+	color: white;
 }
 
+i.fa-bluesky,
 i.fa-bluesky:hover {
-	color: #aaa !important;
+	margin-left: 0.2rem;
+	color: white;
+}
+
+button.switch {
+	position: relative;
+	width: 2.2rem;
+	border-radius: 0.6rem;
+	padding: 0 0.1rem;
+	justify-content: flex-start;
+	background-color: #cc0000;
+	box-shadow: inset 0 0 0.3rem #800000;
+	transition: justify-content 0.5s ease-in-out;
+}
+
+button.switch.active {
+	/* background-color: #75afff; */
+	box-shadow: inset 0 0 0.3rem green;
+	/* color: white; */
+	background-color: #00cc00;
+	justify-content: flex-end;
 }
 
 span.on-off {
-	color: #aaa;
-	font-size: small;
-	font-weight: bold;
+	background-color: #eee;
+	box-shadow: 0 0 0.1rem #800000;
+	box-shadow: inset 0 0 0.3rem white;
+	height: 1rem;
+	width: 1rem;
+	border-radius: 50%;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	transition: 0.5s;
 }
 
-.switch input:checked + .slider {
-	background-color: #75afff;
-	box-shadow: inset 0 0 0.1rem #0560ff;
+button.switch.active span.on-off {
+	/* right: 0; */
+	/* transform: translateX(1rem); */
+	box-shadow: 0 0 0.1rem green;
+	box-shadow: inset 0 0 0.3rem white;
 }
 
-.switch input:checked + .slider i.fa-bluesky {
-	color: #0560ff;
+button.cancel {
+	background-color: #cc0000;
+	border-color: #cc0000;
+	color: white;
 }
 
-.switch input:checked + .slider i.fa-bluesky:hover {
-	color: #0560ff !important;
+button.cancel:hover {
+	background-color: #cc0000;
 }
 
-.switch input:checked + .slider span.on-off {
-	color: #0560ff;
-}
-
-.switch .slider.round {
-	border-radius: 4px;
+button.cancel i.fa-bluesky:hover {
+	color: white !important;
 }
 
 @media screen and (max-width: 600px) {
@@ -1564,10 +1572,6 @@ span.on-off {
 
 	#btn-container i:hover {
 		color: light-dark(#563acc, #8886ff);
-	}
-
-	#bsky-crosspost-container {
-		padding: 0 1rem !important;
 	}
 
 	#logged-in-as {
@@ -1801,6 +1805,9 @@ span.on-off {
 	button.bsky-reset {
 		font-size: 100%;
 		margin: 0px;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
 	}
 
 	button#cancel-schedule-btn {

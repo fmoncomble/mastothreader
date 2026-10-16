@@ -15,7 +15,6 @@
 			}
 		</script>
 		<script src="mtm.js" type="module"></script>
-		<!-- <script src="https://esm.sh/@bsky/sdk/richtext" type="module"></script> -->
 		<script src="https://cdn.jsdelivr.net/npm/emoji-mart@latest/dist/browser.js"></script>
 		<script
 			src="https://kit.fontawesome.com/1f4426d936.js"
@@ -182,26 +181,21 @@
 		<div id="instance-div">
 			<div id="btn-menu">
 				<div id="bsky-crosspost-container">
-					<label class="switch">
-						<input type="checkbox" id="bsky-crosspost" />
-						<span class="slider round" title="Crosspost to Bluesky"
-							><i class="fa-brands fa-bluesky fa-xs"></i>
-							<span class="on-off" id="bsky-crosspost-on-off"
-								>OFF</span
-							></span
-						>
-					</label>
+					<i class="fa-brands fa-bluesky fa-xs"></i>
+					<button
+						class="bsky switch"
+						id="bsky-crosspost"
+						title="Crosspost to Bluesky">
+						<span class="on-off" id="bsky-crosspost-on-off"></span>
+					</button>
 					<span id="bsky-handle"></span>
 					<button
 						id="bsky-reset"
 						aria-label="bluesky-log-out"
-						class="bsky-reset cancel"
+						class="bsky cancel"
 						style="display: none">
 						<i
-							class="fa-brands fa-bluesky"
-							style="color: #ffffff"></i
-						><i
-							class="fa-solid fa-link-slash"
+							class="fa-solid fa-right-from-bracket fa-xs"
 							style="color: #ffffff"></i>
 					</button>
 				</div>
