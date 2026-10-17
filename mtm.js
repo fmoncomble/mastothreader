@@ -1431,6 +1431,9 @@ document.addEventListener('DOMContentLoaded', async function () {
 			}
 		}
 		if (bskyLink) {
+			if (bskyCrosspost) {
+				bskyCrossPostBtn.click();
+			}
 			const bskyLoadingText =
 				document.getElementById('bsky-loading-text');
 			bskyLoadingSpinner.showModal();

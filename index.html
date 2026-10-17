@@ -185,9 +185,7 @@
 					<button
 						class="bsky switch"
 						id="bsky-crosspost"
-						title="Crosspost to Bluesky">
-						<span class="on-off" id="bsky-crosspost-on-off"></span>
-					</button>
+						title="Crosspost to Bluesky"></button>
 					<span id="bsky-handle"></span>
 					<button
 						id="bsky-reset"
@@ -289,8 +287,14 @@
 		<div id="content-container">
 			<div id="options-container" class="options-container">
 				<div id="schedule-thread" class="options-div">
-					<label for="schedule-thread-input" class="schedule-label">
-						<input type="checkbox" id="schedule-thread-checkbox" />
+					<label
+						for="schedule-thread-checkbox"
+						class="schedule-label">
+						<input
+							type="checkbox"
+							class="invisible"
+							id="schedule-thread-checkbox" />
+						<span class="slider"></span>
 						<span data-lang="schedule-thread-input"
 							>Programmer le fil</span
 						>
@@ -323,8 +327,11 @@
 					<label for="number-posts" class="number-posts">
 						<input
 							type="checkbox"
+							class="invisible"
 							name="number-posts"
-							id="number-posts" /><span data-lang="number-posts"
+							id="number-posts" />
+						<span class="slider"></span
+						><span data-lang="number-posts"
 							>Numéroter les pouets</span
 						></label
 					>
