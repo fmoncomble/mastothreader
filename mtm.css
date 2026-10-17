@@ -1695,6 +1695,9 @@ button.cancel i.fa-bluesky:hover {
 		font-size: 100%;
 		display: flex;
 		align-items: center;
+	}
+
+	label[for='in-reply-input'] {
 		width: 100%;
 	}
 
