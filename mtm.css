@@ -244,7 +244,7 @@ input.schedule-input {
 
 .options-container div.options-div {
 	display: flex;
-	align-items: center;
+	align-items: flex-start;
 	width: 100%;
 	margin-bottom: 10px;
 	gap: 10px;
@@ -1892,5 +1892,9 @@ button.cancel i.fa-bluesky:hover {
 	input,
 	textarea {
 		font-size: 100%;
+	}
+
+	input[type='datetime-local'] {
+		height: auto;
 	}
 }
