@@ -142,6 +142,7 @@ span#bsky-handle {
 div#instructions {
 	display: flex;
 	flex-direction: column;
+	align-items: center;
 	align-self: center;
 	text-align: center;
 	font-size: small;
