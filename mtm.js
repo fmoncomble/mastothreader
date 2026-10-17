@@ -1149,6 +1149,9 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 	cancelBskyLoginBtn.addEventListener('click', () => {
 		importSelect.value = '0';
+		Array.from(bskyAuthDialog.querySelectorAll('input')).forEach((i) => {
+			i.value = null;
+		});
 		resetBskySession();
 		bskyCrossPostBtn.classList.remove('active');
 		bskyAuthDialog.close();
