@@ -7,7 +7,7 @@
 Entrez votre instance Mastodon, authentifiez-vous, autorisez l'appli et c'est parti !
 Le site ne collecte aucune de vos données. Les identifiants sont stockés localement dans votre navigateur.
 
-<img width="611" height="566" alt="Screenshot 2026-10-16 at 10 22 47" src="https://github.com/user-attachments/assets/00ebaddf-1f1b-420c-b4f9-653facc04e86" />
+<img width="567" height="574" alt="Screenshot 2026-10-18 at 12 00 23" src="https://github.com/user-attachments/assets/b7b40685-9a31-4166-b3c2-bd64d24c7094" />
 
 
 ### Fonctionnalités
