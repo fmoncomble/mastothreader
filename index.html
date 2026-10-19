@@ -469,9 +469,19 @@
 							aria-label="add-content-warning">
 							<i class="fa-solid fa-triangle-exclamation"></i>
 						</button>
-						<select
+						<!-- <select
 							class="lang-select"
-							title="Choisir la langue"></select>
+							title="Choisir la langue"></select> -->
+						<button class="lang-select" title="Choisir la langue">
+							<i class="fa-solid fa-language"></i>
+							<span class="lang-short"></span>
+						</button>
+					</div>
+					<div class="lang-div hidden">
+						<span class="lang-search">
+							<i class="fa-solid fa-magnifying-glass"></i>
+							<input class="lang-input" list="lang-list"
+						/></span>
 					</div>
 				</div>
 				<div class="cw-div" style="display: none">
@@ -823,6 +833,8 @@
 				<i class="zoomed-close fa-solid fa-circle-xmark"></i>
 			</div>
 		</dialog>
+		<!-- <datalist id="lang-list"></datalist> -->
+		<div id="lang-list" class="lang-list hidden"></div>
 		<div id="app" style="display: none"></div>
 	</body>
 </html>

@@ -47,6 +47,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 	const threadLink = document.getElementById('thread-link');
 	const postItem = document.getElementById('post-item');
 	const languageSelect = document.querySelector('.lang-select');
+	const languageList = document.getElementById('lang-list');
 	const postThreadBtn = document.getElementById('post-thread-btn');
 	const spinner = document.getElementById('spinner');
 	const counter = document.getElementById('counter');
@@ -549,15 +550,25 @@ document.addEventListener('DOMContentLoaded', async function () {
 					const langValue = lang.code;
 					const langName = lang.name;
 					const nativeName = lang.native_name;
-					const option = document.createElement('option');
-					option.value = langValue;
+					// const option = document.createElement('option');
+					// option.value = langValue;
+					// option.textContent = langName;
+					// if (nativeName) {
+					// 	option.textContent = `${nativeName} (${langName})`;
+					// } else {
+					// 	continue;
+					// }
+					const option = document.createElement('div');
+					option.classList.add('lang-option');
+					option.setAttribute('lang-value', langValue);
 					option.textContent = langName;
 					if (nativeName) {
 						option.textContent = `${nativeName} (${langName})`;
 					} else {
 						continue;
 					}
-					languageSelect.appendChild(option);
+					// languageSelect.appendChild(option);
+					languageList.appendChild(option);
 				}
 			}
 		} catch (error) {
@@ -2195,9 +2206,139 @@ document.addEventListener('DOMContentLoaded', async function () {
 		});
 
 		const langSelect = newPost.querySelector('.lang-select');
-		langSelect.value = lang;
-		langSelect.addEventListener('change', () => {
-			lang = langSelect.value;
+		const langShort = newPost.querySelector('.lang-short');
+		const langDiv = newPost.querySelector('.lang-div');
+		const langInput = newPost.querySelector('.lang-input');
+		langShort.textContent = lang.toUpperCase();
+		const langListTemplate = document.getElementById('lang-list');
+		let langList;
+		let langIndex = -1;
+		langSelect.addEventListener('click', () => {
+			if (langList) {
+				langList.remove();
+			}
+			langList = langListTemplate.cloneNode(true);
+			langList.removeAttribute('id');
+			const langOptions = Array.from(
+				langList.querySelectorAll('.lang-option'),
+			);
+			langIndex = -1;
+			if (langDiv.classList.contains('hidden')) {
+				langInput.value = null;
+				langDiv.classList.remove('hidden');
+				langList.classList.remove('hidden');
+				langOptions.forEach((o) => {
+					o.onclick = () => {
+						lang = o.getAttribute('lang-value');
+						langShort.textContent = lang.toUpperCase();
+						langDiv.classList.add('hidden');
+					};
+				});
+				langDiv.appendChild(langList);
+				langInput.focus();
+			} else {
+				langDiv.classList.add('hidden');
+			}
+			document.addEventListener('click', function onClickOutsideLang(e) {
+				if (
+					!langDiv.classList.contains('hidden') &&
+					!langSelect.contains(e.target) &&
+					!langDiv.contains(e.target)
+				) {
+					langDiv.classList.add('hidden');
+					document.removeEventListener('click', onClickOutsideLang);
+				}
+			});
+		});
+		langInput.addEventListener('input', (e) => {
+			langIndex = -1;
+			const langOptions = Array.from(
+				langList.querySelectorAll('.lang-option'),
+			);
+			langOptions.forEach((o) => {
+				if (
+					o.textContent
+						.toLowerCase()
+						.includes(e.target.value.trim().toLowerCase())
+				) {
+					o.style.display = 'flex';
+				} else {
+					o.style.display = 'none';
+				}
+			});
+		});
+		langInput.addEventListener('keydown', (e) => {
+			if (e.key === 'ArrowDown') {
+				e.preventDefault();
+				const langListBottom = langList.getBoundingClientRect().bottom;
+				let langItems = Array.from(
+					langList.querySelectorAll('.lang-option'),
+				).filter((o) => o.style.display !== 'none');
+				let currentLang = langItems[langIndex];
+				if (langIndex < langItems.length - 1) {
+					langIndex++;
+					let oldLang = langItems[langIndex - 1];
+					currentLang = langItems[langIndex];
+					if (oldLang) {
+						oldLang.classList.remove('selected');
+					}
+					if (currentLang) {
+						currentLang.classList.add('selected');
+						const currentLangTop =
+							currentLang.getBoundingClientRect().top;
+						if (currentLangTop > langListBottom) {
+							currentLang.scrollIntoView({ block: 'center' });
+						}
+						langShort.textContent = currentLang
+							.getAttribute('lang-value')
+							.toUpperCase();
+					}
+				}
+			} else if (e.key === 'ArrowUp') {
+				e.preventDefault();
+				const langListTop = langList.getBoundingClientRect().top;
+				let langItems = Array.from(
+					langList.querySelectorAll('.lang-option'),
+				).filter((o) => o.style.display !== 'none');
+				let currentLang = langItems[langIndex];
+				if (langIndex > 0) {
+					langIndex--;
+					let oldLang = langItems[langIndex + 1];
+					currentLang = langItems[langIndex];
+					if (oldLang) {
+						oldLang.classList.remove('selected');
+					}
+					if (currentLang) {
+						currentLang.classList.add('selected');
+						const currentLangBottom =
+							currentLang.getBoundingClientRect().bottom;
+						if (currentLangBottom < langListTop) {
+							currentLang.scrollIntoView({ block: 'center' });
+						}
+						langShort.textContent = currentLang
+							.getAttribute('lang-value')
+							.toUpperCase();
+					}
+				}
+			} else if (e.key === 'Escape') {
+				langInput.value = null;
+				langDiv.classList.add('hidden');
+				langShort.textContent = lang.toUpperCase();
+			} else if (e.key === 'Enter' || e.key === 'Tab') {
+				e.preventDefault();
+				let langItems = Array.from(
+					langList.querySelectorAll('.lang-option'),
+				).filter((o) => o.style.display !== 'none');
+				let currentLang = langItems[langIndex];
+				const langOptions = Array.from(
+					langList.querySelectorAll('.lang-option'),
+				);
+				if (langOptions.some((o) => o.style.display !== 'none')) {
+					lang = currentLang.getAttribute('lang-value');
+					langShort.textContent = lang.toUpperCase();
+				}
+				langDiv.classList.add('hidden');
+			}
 		});
 
 		i++;
@@ -3124,7 +3265,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 					).iso6391;
 					if (guess) {
 						lang = guess;
-						langSelect.value = lang;
+						langShort.textContent = lang.toUpperCase();
+						// langSelect.value = lang;
 					}
 				}
 			}
@@ -4096,8 +4238,10 @@ document.addEventListener('DOMContentLoaded', async function () {
 				postItems.length
 			}...<br/>${locData['leave-open']}`;
 
-			const langSelect = post.querySelector('.lang-select');
-			const postLang = langSelect.value;
+			// const langSelect = post.querySelector('.lang-select');
+			const langShort = post.querySelector('.lang-short');
+			const postLang = langShort.textContent.toLowerCase();
+			// const postLang = langSelect.value;
 
 			const vizSelect = post.querySelector('.viz-select');
 			const visibility = vizSelect.getAttribute('data-value');
@@ -4247,8 +4391,11 @@ document.addEventListener('DOMContentLoaded', async function () {
 		for (let post of postItems) {
 			const i = postItems.indexOf(post);
 			counter.innerHTML = `Posting to Bluesky: ${i + 1}/${postItems.length}...<br/>${locData['leave-open']}`;
-			const langSelect = post.querySelector('.lang-select');
-			const postLang = langSelect.value;
+			// const langSelect = post.querySelector('.lang-select');
+			// const postLang = langSelect.value;
+			const langShort = post.querySelector('.lang-short');
+			const postLang = langShort.textContent.toLowerCase();
+
 			const textarea = post.querySelector('.post-text');
 			const postText = textarea.value;
 			const rt = new RichText({
@@ -4384,7 +4531,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 						lxm: 'com.atproto.repo.uploadBlob',
 					},
 				);
-				console.log('Video upload token:', token);
 				if (token) {
 					url = `https://video.bsky.app/xrpc/app.bsky.video.uploadVideo?did=${bskyDid}&name=${f.name}`;
 					const response = await fetch(url, {

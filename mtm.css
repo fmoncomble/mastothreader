@@ -376,7 +376,8 @@ select.cancel-schedule {
 }
 
 .lang-select {
-	max-width: 200px;
+	width: 3.5rem;
+	justify-content: space-around;
 	text-overflow: ellipsis;
 }
 
@@ -387,7 +388,8 @@ select:hover,
 .add-img:hover,
 .add-gif:hover,
 .add-poll:hover,
-.emoji-btn:hover {
+.emoji-btn:hover,
+.lang-select:hover {
 	background-color: light-dark(rgba(97, 71, 230, 0.08), #292938);
 }
 
@@ -406,7 +408,8 @@ select:hover,
 }
 
 .viz-list,
-.quote-list {
+.quote-list,
+.lang-div {
 	position: absolute;
 	top: 100%;
 	border: 1px solid light-dark(#d9d9e8, #313144);
@@ -1176,6 +1179,7 @@ div.post-header {
 	justify-content: space-between;
 	margin: 0 14px;
 	width: 500px;
+	position: relative;
 }
 
 img.avatar {
@@ -1571,6 +1575,69 @@ button.cancel i.fa-bluesky:hover {
 	color: white !important;
 }
 
+/* .lang-input {
+	position: absolute;
+	right: 0;
+	top: 100%;
+	z-index: 100;
+} */
+
+.lang-div {
+	display: flex;
+	overflow-y: hidden;
+	width: 60%;
+	right: 0;
+}
+
+.lang-search {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0.2rem;
+}
+
+.lang-input {
+	width: 100%;
+	border: none;
+	margin: 0;
+}
+
+.lang-input:focus {
+	outline: none;
+}
+
+.lang-list {
+	display: flex;
+	border-top: solid 1px light-dark(#d9d9e8, #313144);
+	flex-direction: column;
+	gap: 0.2rem;
+	position: static;
+	max-height: 10rem;
+	overflow-y: scroll;
+	scrollbar-width: none;
+}
+
+.lang-option {
+	width: auto;
+	color: light-dark(black, #9c9cc9);
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	text-align: left;
+	padding: 0.2rem;
+}
+
+.lang-option:hover,
+.lang-option.selected {
+	background-color: light-dark(#d9d9e8, #313144);
+}
+
+.hidden {
+	display: none;
+}
+
 @media screen and (max-width: 600px) {
 	body {
 		width: auto;
@@ -1638,7 +1705,7 @@ button.cancel i.fa-bluesky:hover {
 
 	select,
 	select.import,
-	.lang-select,
+	/* .lang-select, */
 	.poll-duration-select {
 		height: 2rem;
 		padding: 0 0.5rem;
@@ -1701,7 +1768,7 @@ button.cancel i.fa-bluesky:hover {
 		width: 100%;
 	}
 
-	div.post-header {
+	/* div.post-header {
 		flex-direction: column;
 		align-items: flex-start;
 		margin: 0;
@@ -1720,6 +1787,11 @@ button.cancel i.fa-bluesky:hover {
 		width: 100%;
 		justify-content: space-between;
 		gap: 0.5rem;
+	} */
+
+	div.post-header {
+		margin: 0;
+		width: 100%;
 	}
 
 	.textarea,
