@@ -13,6 +13,7 @@ import { app, com } from 'https://esm.sh/@bsky/sdk/lexicons';
 import { RichText } from 'https://esm.sh/@bsky/sdk/richtext?bundle';
 import { Client } from 'https://esm.sh/@atproto/lex';
 import { PasswordSession } from 'https://esm.sh/@atproto/lex-password-session';
+import Compressor from 'https://cdn.jsdelivr.net/npm/compressorjs@1.4.0/+esm';
 
 document.addEventListener('DOMContentLoaded', async function () {
 	// Declare page elements
@@ -37,16 +38,16 @@ document.addEventListener('DOMContentLoaded', async function () {
 	const numberPostsDiv = document.getElementById('number-posts-div');
 	const numberPostsCheckbox = document.getElementById('number-posts');
 	numberPostsCheckbox.checked = false;
+	const bskyCrossPostContainer = document.getElementById(
+		'bsky-crosspost-container',
+	);
 	const bskyCrossPostBtn = document.getElementById('bsky-crosspost');
 	const bskyHandleSpan = document.getElementById('bsky-handle');
-	const inReplyToDiv = document.getElementById('in-reply-to');
 	const inReplyToInput = document.getElementById('in-reply-input');
 	inReplyToInput.value = null;
-	const replyPreview = document.getElementById('reply-preview');
 	const previewDiv = document.getElementById('replied-post-preview');
 	const threadLink = document.getElementById('thread-link');
 	const postItem = document.getElementById('post-item');
-	const languageSelect = document.querySelector('.lang-select');
 	const languageList = document.getElementById('lang-list');
 	const postThreadBtn = document.getElementById('post-thread-btn');
 	const spinner = document.getElementById('spinner');
@@ -84,6 +85,11 @@ document.addEventListener('DOMContentLoaded', async function () {
 		window.location.reload();
 	});
 
+	// Clear inputs
+	Array.from(document.querySelectorAll('input')).forEach(
+		(i) => (i.value = null),
+	);
+
 	// Declare localisation variables
 	const uiLang = navigator.language.split('-')[0].toLowerCase();
 	let locData;
@@ -120,6 +126,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 	let mediaFiles = {};
 	let polls = {};
 	let quotedStatuses = {};
+	let siteCards = {};
 	let oldPosts = [];
 	let i = 0;
 
@@ -326,6 +333,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 				}
 				await checkScheduledPosts();
 				customEmoji = await getCustomEmoji(instance);
+				bskyCrossPostContainer.classList.remove('disabled');
 				await checkBskySession();
 				waitingDialog.close();
 				if (bskyLink || inReplyUrl || WPUrl) {
@@ -351,14 +359,15 @@ document.addEventListener('DOMContentLoaded', async function () {
 			}
 		}
 	} else if (!token) {
+		bskyCrossPostContainer.classList.add('disabled');
 		for (let [key, value] of urlParams) {
 			sessionStorage.setItem(key, value);
 		}
-		window.alert(locData['instance-warning']);
 		instanceInput.focus();
 	} else if (token) {
 		await checkScheduledPosts();
 		customEmoji = await getCustomEmoji(instance);
+		bskyCrossPostContainer.classList.remove('disabled');
 		await checkBskySession();
 		waitingDialog.close();
 		if (bskyUrl) {
@@ -416,7 +425,17 @@ document.addEventListener('DOMContentLoaded', async function () {
 	// Functions to gather instance information
 	let instanceList = document.getElementById('instance-list');
 	instanceList.style.left = `${instanceInput.offsetLeft}px`;
-
+	let instances =
+		JSON.parse(localStorage.getItem('masto-instances')) ||
+		(await fetch('inst.php')
+			.then((res) => res.json())
+			.then((data) => {
+				let result = data.instances
+					.sort((a, b) => a.name.localeCompare(b.name))
+					.map((i) => i.name);
+				localStorage.setItem('masto-instances', JSON.stringify(result));
+				return result;
+			}));
 	instanceInput.addEventListener('input', async (e) => {
 		e.preventDefault();
 		let input = e.target.value;
@@ -463,23 +482,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 	}
 
 	async function searchInstance(input) {
-		try {
-			let res = await fetch('inst.php?input=' + input);
-			if (res.ok) {
-				let matches = [];
-				let data = await res.json();
-				let instances = data.instances
-					.filter((i) => i.dead === false)
-					.sort((a, b) => a.name.localeCompare(b.name));
-				let results = instances.filter((i) => i.name.startsWith(input));
-				for (let r of results) {
-					matches.push(r.name);
-				}
-				return matches;
-			}
-		} catch (error) {
-			console.error('Error fetching instances: ', error);
-		}
+		return instances.filter((i) => i.startsWith(input));
 	}
 	let instIndex = 0;
 	instanceInput.addEventListener('keydown', (e) => {
@@ -519,6 +522,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 			} else if (e.key === 'Escape') {
 				e.preventDefault();
 				instanceList.style.display = 'none';
+				instanceInput.value = null;
+				instanceInput.focus();
 			} else if (e.key === 'Tab' || e.key === 'Enter') {
 				e.preventDefault();
 				currentInst = instanceList.querySelector('.selected');
@@ -550,14 +555,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 					const langValue = lang.code;
 					const langName = lang.name;
 					const nativeName = lang.native_name;
-					// const option = document.createElement('option');
-					// option.value = langValue;
-					// option.textContent = langName;
-					// if (nativeName) {
-					// 	option.textContent = `${nativeName} (${langName})`;
-					// } else {
-					// 	continue;
-					// }
 					const option = document.createElement('div');
 					option.classList.add('lang-option');
 					option.setAttribute('lang-value', langValue);
@@ -567,7 +564,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 					} else {
 						continue;
 					}
-					// languageSelect.appendChild(option);
 					languageList.appendChild(option);
 				}
 			}
@@ -671,11 +667,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 	function checkInstance() {
 		instance = localStorage.getItem('mastothreadinstance');
-		if (instance) {
-			instanceInput.value = instance;
-		} else if (!instance) {
-			instanceInput.value = null;
-		}
 	}
 
 	async function checkToken() {
@@ -780,6 +771,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 	logOutBtn.addEventListener('click', async () => {
 		if (window.confirm(locData['logout-confirm'])) {
+			await resetBskySession();
 			instanceInput.value = null;
 			instanceInput.disabled = false;
 			instanceBtn.textContent = locData['instance-btn'];
@@ -1096,8 +1088,10 @@ document.addEventListener('DOMContentLoaded', async function () {
 		quoteUrls,
 		reason,
 	) {
-		textarea.style.minHeight = Number((maxChars / 50) * 20) + 'px';
-		const postId = post.id.split('-')[1];
+		textarea.style.minHeight =
+			maxChars <= 500
+				? Number((500 / 50) * 20) + 'px'
+				: Number((maxChars / 50) * 20) + 'px';
 		const charCount = post.querySelector('.char-count');
 		let postLength = adjustCount(postText.trim());
 		charCount.textContent = `${postLength}/${maxChars}`;
@@ -1131,9 +1125,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 			await bskySession.logout();
 			localStorage.removeItem('bsky-session');
 		}
-		if (bskyDid && bskyHandle) {
-			window.alert(locData['bsky-reset']);
-		}
 		bskyDid = null;
 		bskyHandle = null;
 		bskySession = null;
@@ -1156,6 +1147,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 				updateCharCount(p, textarea.value, textarea);
 			}
 		}
+		window.alert(locData['bsky-reset']);
 	}
 
 	cancelBskyLoginBtn.addEventListener('click', () => {
@@ -1163,7 +1155,9 @@ document.addEventListener('DOMContentLoaded', async function () {
 		Array.from(bskyAuthDialog.querySelectorAll('input')).forEach((i) => {
 			i.value = null;
 		});
-		resetBskySession();
+		if (bskySession || bskyDid || bskyHandle) {
+			resetBskySession();
+		}
 		bskyCrossPostBtn.classList.remove('active');
 		bskyAuthDialog.close();
 	});
@@ -2212,6 +2206,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 		langShort.textContent = lang.toUpperCase();
 		const langListTemplate = document.getElementById('lang-list');
 		let langList;
+		let currentLang;
 		let langIndex = -1;
 		langSelect.addEventListener('click', () => {
 			if (langList) {
@@ -2222,7 +2217,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 			const langOptions = Array.from(
 				langList.querySelectorAll('.lang-option'),
 			);
-			langIndex = -1;
 			if (langDiv.classList.contains('hidden')) {
 				langInput.value = null;
 				langDiv.classList.remove('hidden');
@@ -2235,6 +2229,19 @@ document.addEventListener('DOMContentLoaded', async function () {
 					};
 				});
 				langDiv.appendChild(langList);
+				const currentOption = langOptions.find(
+					(o) => o.getAttribute('lang-value') === lang,
+				);
+				if (currentOption) {
+					currentOption.scrollIntoView({
+						block: 'center',
+						behavior: 'smooth',
+					});
+					currentOption.classList.add('current');
+					currentOption.classList.add('selected');
+					currentLang = currentOption;
+					langIndex = langOptions.indexOf(currentOption);
+				}
 				langInput.focus();
 			} else {
 				langDiv.classList.add('hidden');
@@ -2245,13 +2252,14 @@ document.addEventListener('DOMContentLoaded', async function () {
 					!langSelect.contains(e.target) &&
 					!langDiv.contains(e.target)
 				) {
+					langInput.value = null;
 					langDiv.classList.add('hidden');
+					langShort.textContent = lang.toUpperCase();
 					document.removeEventListener('click', onClickOutsideLang);
 				}
 			});
 		});
 		langInput.addEventListener('input', (e) => {
-			langIndex = -1;
 			const langOptions = Array.from(
 				langList.querySelectorAll('.lang-option'),
 			);
@@ -2262,6 +2270,15 @@ document.addEventListener('DOMContentLoaded', async function () {
 						.includes(e.target.value.trim().toLowerCase())
 				) {
 					o.style.display = 'flex';
+					if (o.getAttribute('lang-value') === lang) {
+						o.classList.add('selected');
+						o.scrollIntoView({
+							block: 'center',
+							behavior: 'smooth',
+						});
+					} else if (o.classList.contains('selected')) {
+						o.classList.remove('selected');
+					}
 				} else {
 					o.style.display = 'none';
 				}
@@ -2274,7 +2291,10 @@ document.addEventListener('DOMContentLoaded', async function () {
 				let langItems = Array.from(
 					langList.querySelectorAll('.lang-option'),
 				).filter((o) => o.style.display !== 'none');
-				let currentLang = langItems[langIndex];
+				currentLang = langItems.find((i) =>
+					i.classList.contains('selected'),
+				);
+				langIndex = currentLang ? langItems.indexOf(currentLang) : -1;
 				if (langIndex < langItems.length - 1) {
 					langIndex++;
 					let oldLang = langItems[langIndex - 1];
@@ -2286,8 +2306,14 @@ document.addEventListener('DOMContentLoaded', async function () {
 						currentLang.classList.add('selected');
 						const currentLangTop =
 							currentLang.getBoundingClientRect().top;
-						if (currentLangTop > langListBottom) {
-							currentLang.scrollIntoView({ block: 'center' });
+						if (
+							langListBottom - currentLangTop <=
+							currentLang.scrollHeight
+						) {
+							currentLang.scrollIntoView({
+								block: 'center',
+								behavior: 'smooth',
+							});
 						}
 						langShort.textContent = currentLang
 							.getAttribute('lang-value')
@@ -2300,7 +2326,10 @@ document.addEventListener('DOMContentLoaded', async function () {
 				let langItems = Array.from(
 					langList.querySelectorAll('.lang-option'),
 				).filter((o) => o.style.display !== 'none');
-				let currentLang = langItems[langIndex];
+				currentLang = langItems.find((i) =>
+					i.classList.contains('selected'),
+				);
+				langIndex = currentLang ? langItems.indexOf(currentLang) : -1;
 				if (langIndex > 0) {
 					langIndex--;
 					let oldLang = langItems[langIndex + 1];
@@ -2312,8 +2341,14 @@ document.addEventListener('DOMContentLoaded', async function () {
 						currentLang.classList.add('selected');
 						const currentLangBottom =
 							currentLang.getBoundingClientRect().bottom;
-						if (currentLangBottom < langListTop) {
-							currentLang.scrollIntoView({ block: 'center' });
+						if (
+							currentLangBottom - langListTop <=
+							currentLang.scrollHeight
+						) {
+							currentLang.scrollIntoView({
+								block: 'center',
+								behavior: 'smooth',
+							});
 						}
 						langShort.textContent = currentLang
 							.getAttribute('lang-value')
@@ -2366,7 +2401,10 @@ document.addEventListener('DOMContentLoaded', async function () {
 		let quoteUrl = null;
 
 		const textarea = newPost.querySelector('.post-text');
-		textarea.style.minHeight = Number((maxChars / 50) * 20) + 'px';
+		textarea.style.minHeight =
+			maxChars <= 500
+				? Number((500 / 50) * 20) + 'px'
+				: Number((maxChars / 50) * 20) + 'px';
 		if (text) {
 			text = text.trim();
 			textarea.value = text;
@@ -2384,7 +2422,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 				const urlMatches = textarea.value.match(urlRegexp);
 				if (urlMatches && urlMatches.length > 0) {
 					let thisUrl = urlMatches[0];
-					if (thisUrl.includes('@') && !quoteUrls.has(thisUrl)) {
+					if (!quoteUrls.has(thisUrl)) {
 						const data = await processQuotedToot(
 							thisUrl,
 							i,
@@ -2708,6 +2746,32 @@ document.addEventListener('DOMContentLoaded', async function () {
 			);
 			textarea.addEventListener('paste', getPaste);
 		}
+
+		textarea.onkeydown = async (e) => {
+			if (e.key === 'Enter' || e.key === ' ') {
+				const urlRegexp = /https?:\/\/[^\s]+/g;
+				const cursorPosition = textarea.selectionStart;
+				const textToCheck = textarea.value.substring(0, cursorPosition);
+				const urlMatches = textToCheck.match(urlRegexp);
+				if (urlMatches && urlMatches.length) {
+					const thisUrl = urlMatches[urlMatches.length - 1];
+					if (!quoteUrls.has(thisUrl)) {
+						const data = await processQuotedToot(
+							url,
+							i,
+							newPost,
+							quoteUrl,
+							quote,
+							quoteUrls,
+							reason,
+						);
+						quoteUrl = data.quoteUrl;
+						quote = data.quote;
+						quoteUrls = data.quoteUrls;
+					}
+				}
+			}
+		};
 
 		const cwDiv = newPost.querySelector('.cw-div');
 		const cwText = newPost.querySelector('.cw-text');
@@ -3210,7 +3274,10 @@ document.addEventListener('DOMContentLoaded', async function () {
 							resolve(s);
 						});
 					});
-					textarea.value += text;
+					textarea.value =
+						textarea.value.slice(0, textarea.selectionStart) +
+						text +
+						textarea.value.slice(textarea.selectionEnd);
 					identifyLanguage(textarea.value);
 					const id = newPost.id.split('-')[1];
 					if (
@@ -3225,11 +3292,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 						const urlMatches = text.match(urlRegexp);
 						if (urlMatches && urlMatches.length > 0) {
 							let thisUrl = urlMatches[urlMatches.length - 1];
-							if (
-								thisUrl.includes('@') &&
-								!quoteUrls.has(thisUrl)
-							) {
-								await processQuotedToot(
+							if (!quoteUrls.has(thisUrl)) {
+								const data = await processQuotedToot(
 									thisUrl,
 									id,
 									newPost,
@@ -3238,6 +3302,9 @@ document.addEventListener('DOMContentLoaded', async function () {
 									quoteUrls,
 									'paste',
 								);
+								quoteUrl = data.quoteUrl;
+								quote = data.quote;
+								quoteUrls = data.quoteUrls;
 							}
 						}
 					}
@@ -3266,13 +3333,12 @@ document.addEventListener('DOMContentLoaded', async function () {
 					if (guess) {
 						lang = guess;
 						langShort.textContent = lang.toUpperCase();
-						// langSelect.value = lang;
 					}
 				}
 			}
 		}
 
-		function displayThumbnail(mediaFile, imgPreview, imgCount) {
+		async function displayThumbnail(mediaFile, imgPreview, imgCount) {
 			dropzone.style.display = 'flex';
 			imgPreview.style.display = 'flex';
 			imgCount.style.display = 'flex';
@@ -3319,18 +3385,24 @@ document.addEventListener('DOMContentLoaded', async function () {
 				}
 				const video = document.createElement('video');
 				video.setAttribute('disablepictureinpicture', true);
-				if (!video.canPlayType(mediaFile.file.type)) {
-					video.poster = 'icons/video_placeholder.webp';
-					video.controls = false;
-				} else {
-					video.src = URL.createObjectURL(mediaFile.file);
-					video.controls = false;
-					video.muted = true;
-					video.playsinline = true;
-					if (mediaFile.thumbnail) {
-						video.poster = mediaFile.thumbnail;
-					}
+				video.onloadedmetadata = () => {
+					mediaFile['aspectRatio'] = {
+						width: video.videoWidth,
+						height: video.videoHeight,
+					};
+				};
+				// if (!video.canPlayType(mediaFile.file.type)) {
+				// 	video.poster = 'icons/video_placeholder.webp';
+				// 	video.controls = false;
+				// } else {
+				video.src = URL.createObjectURL(mediaFile.file);
+				video.controls = false;
+				video.muted = true;
+				video.playsinline = true;
+				if (mediaFile.thumbnail) {
+					video.poster = mediaFile.thumbnail;
 				}
+				// }
 				previewElt = video;
 				div.appendChild(video);
 				addImg.disabled = true;
@@ -3354,13 +3426,17 @@ document.addEventListener('DOMContentLoaded', async function () {
 					}
 					return;
 				}
-				const image = mediaFile.file;
+				let image = mediaFile.file;
 				const imgReader = new FileReader();
 				imgReader.onload = function (e) {
 					const img = new Image();
 					img.src = e.target.result;
 					img.alt = mediaFile.description;
 					img.onload = function () {
+						mediaFile['aspectRatio'] = {
+							width: img.width,
+							height: img.height,
+						};
 						previewElt = img;
 						div.lastElementChild.before(img);
 					};
@@ -3708,7 +3784,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 		if (urlMatches && urlMatches.length) {
 			for (let url of urlMatches) {
 				if (url.length > reservedChars)
-					textLength -= url.length - reservedChars - 1;
+					textLength -= url.length - reservedChars;
 			}
 		}
 		return textLength;
@@ -3767,14 +3843,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 			const urlMatches = textarea.value.match(urlRegexp);
 			if (urlMatches && urlMatches.length > 0) {
 				for (let thisUrl of urlMatches) {
-					if (!thisUrl.includes('@')) {
-						continue;
-					}
-					if (
-						thisUrl.includes('@') &&
-						(!quoteUrls || !quoteUrls.has(thisUrl))
-					) {
-						let ok = await processQuotedToot(
+					if (!quoteUrls || !quoteUrls.has(thisUrl)) {
+						let data = await processQuotedToot(
 							thisUrl,
 							i,
 							newPost,
@@ -3783,7 +3853,10 @@ document.addEventListener('DOMContentLoaded', async function () {
 							quoteUrls,
 							reason,
 						);
-						if (ok) {
+						if (data) {
+							quoteUrl = data.quoteUrl;
+							quote = data.quote;
+							quoteUrls = data.quoteUrls;
 							break;
 						}
 					}
@@ -3844,116 +3917,212 @@ document.addEventListener('DOMContentLoaded', async function () {
 		quotePreview.style.display = 'flex';
 		const quoteSpinner = quotePreview.querySelector('.quote-spinner');
 		quoteSpinner.style.display = 'flex';
-		let quotedStatus = await getQuoteStatus(thisUrl);
-		quotedStatus ? (quote = true) : (quote = false);
-		if (quotedStatus) {
-			quote = true;
-			quoteUrl = thisUrl;
-			quoteUrls.add(quoteUrl);
-			let quotedStatusApproval = quotedStatus.quote_approval.current_user;
-			if (quotedStatusApproval === 'automatic') {
-				quotedStatusApproval = quotedStatus.quote_approval.automatic[0];
-			}
-			if (
-				quotedStatusApproval === 'denied' ||
-				quotedStatusApproval === 'manual' ||
-				quotedStatusApproval === 'unknown'
-			) {
+		if (thisUrl.includes('@')) {
+			let quotedStatus = await getQuoteStatus(thisUrl);
+			quotedStatus ? (quote = true) : (quote = false);
+			if (quotedStatus) {
+				quote = true;
+				quoteUrl = thisUrl;
+				quoteUrls.add(quoteUrl);
+				let quotedStatusApproval =
+					quotedStatus.quote_approval.current_user;
+				if (quotedStatusApproval === 'automatic') {
+					quotedStatusApproval =
+						quotedStatus.quote_approval.automatic[0];
+				}
+				if (
+					quotedStatusApproval === 'denied' ||
+					quotedStatusApproval === 'manual' ||
+					quotedStatusApproval === 'unknown'
+				) {
+					quote = false;
+					quoteSpinner.style.display = 'none';
+					quotePreview.style.backgroundColor = 'transparent';
+					quotePreview.style.height = 'auto';
+					quotePreview.style.display = 'none';
+					return;
+				} else if (quotedStatusApproval === 'followers') {
+					try {
+						let res = await fetch(
+							`https://${instance}/api/v1/accounts/relationships?id[]=${quotedStatus.account.id}`,
+							{
+								headers: {
+									Authorization: `Bearer ${token}`,
+								},
+							},
+						);
+						if (res.ok) {
+							let data = await res.json();
+							if (!data[0].following) {
+								quote = false;
+								quoteSpinner.style.display = 'none';
+								quotePreview.style.backgroundColor =
+									'transparent';
+								quotePreview.style.height = 'auto';
+								quotePreview.style.display = 'none';
+								return;
+							}
+						}
+					} catch (error) {
+						console.error('Error checking followers: ', error);
+						quote = false;
+						return;
+					}
+				}
+				const quotedStatusId = quotedStatus.id;
+				quotedStatuses[`quotedStatuses${id}`] = quotedStatusId;
+				const addImg = newPost.querySelector('.add-img');
+				const addGif = newPost.querySelector('.add-gif');
+				const addPoll = newPost.querySelector('.add-poll');
+				addImg.disabled = true;
+				addGif.disabled = true;
+				addPoll.disabled = true;
+				const quotePostPreview = quotePreview.querySelector(
+					'.quote-post-preview',
+				);
+				const quotePostAvatar =
+					quotePreview.querySelector('.quote-post-avatar');
+				const quotePostDisplayName = quotePreview.querySelector(
+					'.quote-post-display-name',
+				);
+				const quotePostTime =
+					quotePreview.querySelector('.quote-post-time');
+				const quotePostText =
+					quotePreview.querySelector('.quote-post-text');
+				const quotePostMedia =
+					quotePreview.querySelector('.quote-post-media');
+				const avatar = document.createElement('img');
+				avatar.src = quotedStatus.account.avatar;
+				avatar.alt = quotedStatus.account.display_name;
+				quotePostAvatar.innerHTML = '';
+				quotePostAvatar.appendChild(avatar);
+				const name = document.createElement('span');
+				name.textContent = quotedStatus.account.display_name;
+				quotePostDisplayName.innerHTML = '';
+				quotePostDisplayName.appendChild(name);
+				const time = document.createElement('time');
+				time.textContent = new Date(
+					quotedStatus.created_at,
+				).toLocaleString();
+				quotePostTime.innerHTML = '';
+				quotePostTime.appendChild(time);
+				const quoteText = quotedStatus.content;
+				quotePostText.innerHTML = quoteText;
+				const media = quotedStatus.media_attachments;
+				quotePostMedia.innerHTML = '';
+				for (let m of media) {
+					const img = document.createElement('img');
+					img.src = m.preview_url;
+					img.alt = m.description ? m.description : '';
+					quotePostMedia.appendChild(img);
+				}
+				quoteSpinner.style.display = 'none';
+				quotePreview.style.backgroundColor = 'transparent';
+				quotePreview.style.height = 'auto';
+				quotePostPreview.style.display = 'flex';
+				const quoteCloseBtn = quotePreview.querySelector(
+					'.quote-preview-close',
+				);
+				quoteCloseBtn.onclick = () => {
+					quotePreview.style.display = 'none';
+					quotePostPreview.style.display = 'none';
+					quote = false;
+					delete quotedStatuses[`quotedStatuses${id}`];
+					addImg.disabled = false;
+					addGif.disabled = false;
+					addPoll.disabled = false;
+				};
+				const data = {
+					quoteUrl: quoteUrl,
+					quote: quote,
+					quoteUrls: quoteUrls,
+				};
+				return data;
+			} else {
 				quote = false;
 				quoteSpinner.style.display = 'none';
 				quotePreview.style.backgroundColor = 'transparent';
 				quotePreview.style.height = 'auto';
 				quotePreview.style.display = 'none';
-				return;
-			} else if (quotedStatusApproval === 'followers') {
-				try {
-					let res = await fetch(
-						`https://${instance}/api/v1/accounts/relationships?id[]=${quotedStatus.account.id}`,
-						{
-							headers: {
-								Authorization: `Bearer ${token}`,
-							},
-						},
-					);
-					if (res.ok) {
-						let data = await res.json();
-						if (!data[0].following) {
-							quote = false;
-							quoteSpinner.style.display = 'none';
-							quotePreview.style.backgroundColor = 'transparent';
-							quotePreview.style.height = 'auto';
-							quotePreview.style.display = 'none';
-							return;
-						}
-					}
-				} catch (error) {
-					console.error('Error checking followers: ', error);
-					quote = false;
-					return;
-				}
+				return false;
 			}
-			const quotedStatusId = quotedStatus.id;
-			quotedStatuses[`quotedStatuses${id}`] = quotedStatusId;
+		} else {
+			quote = true;
+			quoteUrl = thisUrl;
+			quoteUrls.add(quoteUrl);
+			let cardData = await getCard(thisUrl);
+			let siteCard = {
+				$type: 'app.bsky.embed.external',
+				external: {
+					uri: cardData.url,
+					title: cardData.title,
+					description: cardData.description,
+				},
+			};
+			const cardPreview = quotePreview.querySelector('.card-preview');
+			const cardAvatar = cardPreview.querySelector('.card-avatar');
+			const cardTitle = cardPreview.querySelector('.card-title');
+			const cardDisplayName =
+				quotePreview.querySelector('.card-display-name');
+			const cardText = cardPreview.querySelector('.card-text');
+			const cardMedia = cardPreview.querySelector('.card-media');
+			const title = document.createElement('span');
+			title.textContent = cardData.title;
+			cardTitle.innerHTML = '';
+			cardTitle.appendChild(title);
+			const avatar = document.createElement('img');
+			const avRes = cardData.icon ? await fetch(cardData.icon) : null;
+			if (avRes) {
+				const avBlob = await avRes.blob();
+				const avUrl = URL.createObjectURL(avBlob);
+				avatar.src = avUrl;
+				avatar.alt = cardData.url
+					? new URL(cardData.url).origin
+					: new URL(thisUrl).origin;
+				cardAvatar.innerHTML = '';
+				cardAvatar.appendChild(avatar);
+			}
+			const name = document.createElement('span');
+			name.textContent = cardData.url
+				? new URL(cardData.url).hostname
+				: new URL(thisUrl).hostname;
+			cardDisplayName.innerHTML = '';
+			cardDisplayName.appendChild(name);
+			const quoteText = cardData.description || null;
+			cardText.innerHTML = quoteText;
+			cardMedia.innerHTML = '';
+			const img = document.createElement('img');
+			const imgRes = cardData.image ? await fetch(cardData.image) : null;
+			if (imgRes) {
+				const imgBlob = await imgRes.blob();
+				siteCard.external['thumb'] = imgBlob;
+				const imgUrl = URL.createObjectURL(imgBlob);
+				img.classList.add('card-img');
+				img.src = imgUrl;
+				img.alt = '';
+				cardMedia.appendChild(img);
+			}
+			siteCards[`siteCard${id}`] = siteCard;
 			const addImg = newPost.querySelector('.add-img');
 			const addGif = newPost.querySelector('.add-gif');
 			const addPoll = newPost.querySelector('.add-poll');
 			addImg.disabled = true;
 			addGif.disabled = true;
 			addPoll.disabled = true;
-			const quotePostPreview = quotePreview.querySelector(
-				'.quote-post-preview',
-			);
-			const quotePostAvatar =
-				quotePreview.querySelector('.quote-post-avatar');
-			const quotePostDisplayName = quotePreview.querySelector(
-				'.quote-post-display-name',
-			);
-			const quotePostTime =
-				quotePreview.querySelector('.quote-post-time');
-			const quotePostText =
-				quotePreview.querySelector('.quote-post-text');
-			const quotePostMedia =
-				quotePreview.querySelector('.quote-post-media');
-			const avatar = document.createElement('img');
-			avatar.src = quotedStatus.account.avatar;
-			avatar.alt = quotedStatus.account.display_name;
-			quotePostAvatar.innerHTML = '';
-			quotePostAvatar.appendChild(avatar);
-			const name = document.createElement('span');
-			name.textContent = quotedStatus.account.display_name;
-			quotePostDisplayName.innerHTML = '';
-			quotePostDisplayName.appendChild(name);
-			const time = document.createElement('time');
-			time.textContent = new Date(
-				quotedStatus.created_at,
-			).toLocaleString();
-			quotePostTime.innerHTML = '';
-			quotePostTime.appendChild(time);
-			const quoteText = quotedStatus.content;
-			quotePostText.innerHTML = quoteText;
-			const media = quotedStatus.media_attachments;
-			quotePostMedia.innerHTML = '';
-			for (let m of media) {
-				const img = document.createElement('img');
-				img.src = m.preview_url;
-				img.alt = m.description ? m.description : '';
-				quotePostMedia.appendChild(img);
-			}
 			quoteSpinner.style.display = 'none';
 			quotePreview.style.backgroundColor = 'transparent';
 			quotePreview.style.height = 'auto';
-			quotePostPreview.style.display = 'flex';
-			const quoteCloseBtn = quotePreview.querySelector(
-				'.quote-preview-close',
+			cardPreview.style.display = 'flex';
+			const cardCloseBtn = quotePreview.querySelector(
+				'.card-preview-close',
 			);
-			quoteCloseBtn.onclick = () => {
+			cardCloseBtn.onclick = () => {
 				quotePreview.style.display = 'none';
-				quotePostPreview.style.display = 'none';
-				quote = false;
-				delete quotedStatuses[`quotedStatuses${id}`];
+				cardPreview.style.display = 'none';
 				addImg.disabled = false;
 				addGif.disabled = false;
 				addPoll.disabled = false;
+				quote = false;
 			};
 			const data = {
 				quoteUrl: quoteUrl,
@@ -3961,13 +4130,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 				quoteUrls: quoteUrls,
 			};
 			return data;
-		} else {
-			quote = false;
-			quoteSpinner.style.display = 'none';
-			quotePreview.style.backgroundColor = 'transparent';
-			quotePreview.style.height = 'auto';
-			quotePreview.style.display = 'none';
-			return false;
 		}
 	}
 
@@ -3993,6 +4155,28 @@ document.addEventListener('DOMContentLoaded', async function () {
 			}
 		} catch (error) {
 			console.error('Error fetching quote status: ', error);
+			return null;
+		}
+	}
+
+	async function getCard(url) {
+		let cardUrl = `https://cardyb.bsky.app/v1/extract?url=${encodeURIComponent(url)}`;
+		try {
+			let res = await fetch(cardUrl, {
+				headers: {
+					'User-Agent': 'Bluesky Cardyb',
+				},
+			});
+			if (!res.ok) {
+				return null;
+			}
+			let data = await res.json();
+			if (data.error) {
+				return null;
+			}
+			return data;
+		} catch (error) {
+			console.error('Error fetching card: ', error);
 			return null;
 		}
 	}
@@ -4238,10 +4422,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 				postItems.length
 			}...<br/>${locData['leave-open']}`;
 
-			// const langSelect = post.querySelector('.lang-select');
 			const langShort = post.querySelector('.lang-short');
 			const postLang = langShort.textContent.toLowerCase();
-			// const postLang = langSelect.value;
 
 			const vizSelect = post.querySelector('.viz-select');
 			const visibility = vizSelect.getAttribute('data-value');
@@ -4391,8 +4573,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 		for (let post of postItems) {
 			const i = postItems.indexOf(post);
 			counter.innerHTML = `Posting to Bluesky: ${i + 1}/${postItems.length}...<br/>${locData['leave-open']}`;
-			// const langSelect = post.querySelector('.lang-select');
-			// const postLang = langSelect.value;
 			const langShort = post.querySelector('.lang-short');
 			const postLang = langShort.textContent.toLowerCase();
 
@@ -4424,9 +4604,19 @@ document.addEventListener('DOMContentLoaded', async function () {
 					postMediaIds.push({
 						blob: mediaBlob,
 						alt: media.description,
+						aspectRatio: media.aspectRatio,
 					});
 				}
 				mediaCounter.remove();
+			}
+			const siteCard = siteCards[`siteCard${id}`];
+			if (siteCard) {
+				let thumbImg = siteCard.external.thumb;
+				let thumbBlob = await uploadMediatoBluesky(
+					thumbImg,
+					sessionData,
+				);
+				siteCard.external.thumb = thumbBlob;
 			}
 			if (!postText && postMedia.length === 0) {
 				if (i === 0) {
@@ -4452,6 +4642,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 						return {
 							alt: m.alt,
 							image: m.blob,
+							aspectRatio: m.aspectRatio,
 						};
 					});
 					if (media.some((m) => m.image.mimeType.includes('image'))) {
@@ -4467,6 +4658,9 @@ document.addEventListener('DOMContentLoaded', async function () {
 							video: media[0].image,
 						};
 					}
+				}
+				if (siteCard) {
+					record['embed'] = siteCard;
 				}
 				if (root && parent) {
 					record['reply'] = {
@@ -4509,6 +4703,17 @@ document.addEventListener('DOMContentLoaded', async function () {
 		try {
 			let url;
 			if (f.type.includes('image')) {
+				if (f.size > 2000000) {
+					let quality = 2000000 / f.size;
+					f = await new Promise((resolve) => {
+						new Compressor(f, {
+							quality: quality,
+							success(result) {
+								resolve(result);
+							},
+						});
+					});
+				}
 				const image = new Uint8Array(await f.arrayBuffer());
 				const { body } = await bskyClient.uploadBlob(image, {
 					encoding: f.type,
