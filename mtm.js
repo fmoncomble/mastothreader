@@ -2757,7 +2757,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 					const thisUrl = urlMatches[urlMatches.length - 1];
 					if (!quoteUrls.has(thisUrl)) {
 						const data = await processQuotedToot(
-							url,
+							thisUrl,
 							i,
 							newPost,
 							quoteUrl,
@@ -4071,7 +4071,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 			cardTitle.innerHTML = '';
 			cardTitle.appendChild(title);
 			const avatar = document.createElement('img');
-			const avRes = cardData.icon ? await fetch(cardData.icon) : null;
+			const iconUrl = cardData.icon ? cardData.icon : null;
+			const avRes = iconUrl ? await fetch(iconUrl) : null;
 			if (avRes) {
 				const avBlob = await avRes.blob();
 				const avUrl = URL.createObjectURL(avBlob);
@@ -4092,7 +4093,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 			cardText.innerHTML = quoteText;
 			cardMedia.innerHTML = '';
 			const img = document.createElement('img');
-			const imgRes = cardData.image ? await fetch(cardData.image) : null;
+			const imgUrl = cardData.image ? cardData.image : null;
+			const imgRes = imgUrl ? await fetch(imgUrl) : null;
 			if (imgRes) {
 				const imgBlob = await imgRes.blob();
 				siteCard.external['thumb'] = imgBlob;
@@ -4162,10 +4164,11 @@ document.addEventListener('DOMContentLoaded', async function () {
 	async function getCard(url) {
 		let cardUrl = `https://cardyb.bsky.app/v1/extract?url=${encodeURIComponent(url)}`;
 		try {
-			let res = await fetch(cardUrl, {
-				headers: {
-					'User-Agent': 'Bluesky Cardyb',
-				},
+			let form = new FormData();
+			form.append('url', cardUrl);
+			let res = await fetch('proxy.php', {
+				method: 'POST',
+				body: form,
 			});
 			if (!res.ok) {
 				return null;

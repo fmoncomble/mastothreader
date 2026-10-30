@@ -1137,6 +1137,7 @@ div.card-content {
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
+	background-color: light-dark(white, black);
 }
 
 div#replied-post-text,
